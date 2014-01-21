@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-var DGTable = (function () {
+(function () {
     "use strict";
 
     // TODO: Allow non-virtual tables
@@ -33,7 +33,7 @@ var DGTable = (function () {
     var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
 
     /**
-     * @class
+     * @class DGTable
      * @extends Backbone.View
      */
     var DGTable = Backbone.View.extend(
@@ -44,7 +44,8 @@ var DGTable = (function () {
 
             /**
              * @constructs
-             * @param {DGTable.InitOptions?} options initialization options
+             * @expose
+             * @param {DGTable_InitOptions?} options initialization options
              */
             initialize: function (options) {
 
@@ -198,7 +199,7 @@ var DGTable = (function () {
 
             /**
              * @private
-             * @param {DGTable.ColumnOptions} columnData
+             * @param {DGTable_ColumnOptions} columnData
              */
             _initColumnFromData: (function () {
 
@@ -215,7 +216,7 @@ var DGTable = (function () {
 
                 /**
                  * @private
-                 * @param {DGTable.ColumnOptions} columnData
+                 * @param {DGTable_ColumnOptions} columnData
                  */
                 return function(columnData) {
                     return {
@@ -234,6 +235,7 @@ var DGTable = (function () {
             /**
              * Destroy, releasing all memory, events and DOM elements
              * @public
+             * @expose
              */
             close: function () {
                 if (this._$resizer) {
@@ -259,6 +261,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {DGTable} self
              */
             render: function () {
@@ -302,7 +305,8 @@ var DGTable = (function () {
             /**
              * Add a column to the table
              * @public
-             * @param {DGTable.ColumnOptions} columnData column properties
+             * @expose
+             * @param {DGTable_ColumnOptions} columnData column properties
              * @param {String|int} [before=-1] column name or order to be inserted before
              * @returns {DGTable} self
              */
@@ -337,6 +341,7 @@ var DGTable = (function () {
             /**
              * Remove a column from the table
              * @public
+             * @expose
              * @param {String} column column name
              * @returns {DGTable} self
              */
@@ -357,6 +362,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {String} column name of the column to filter on
              * @param {String} filter check specified column for existence of this string
              * @param {boolean=false} caseSensitive use caseSensitive filtering
@@ -394,6 +400,7 @@ var DGTable = (function () {
             /**
              * Set a new label to a column
              * @public
+             * @expose
              * @param {String} column name of the column
              * @param {String} label new label for the column
              * @returns {DGTable} self
@@ -419,6 +426,7 @@ var DGTable = (function () {
             /**
              * Move a column to a new position
              * @public
+             * @expose
              * @param {String|int} src name or position of the column to be moved
              * @param {String|int} dest name of the column currently in the desired position, or the position itself
              * @returns {DGTable} self
@@ -454,6 +462,7 @@ var DGTable = (function () {
             /**
              * Set a new width to a column
              * @public
+             * @expose
              * @param {String} column name of the column to resize
              * @param {int} width new column width in pixels
              * @returns {DGTable} self
@@ -473,6 +482,7 @@ var DGTable = (function () {
             /**
              * Re-sort the table
              * @public
+             * @expose
              * @param {String} column name of the column to sort on
              * @param {boolean=} descending sort in descending order
              * @param {boolean=false} add should this sort be on top of the existing sort?
@@ -540,6 +550,7 @@ var DGTable = (function () {
             /**
              * Show a column which is currently invisible
              * @public
+             * @expose
              * @param {String} column unique column name
              * @returns {DGTable} self
              */
@@ -559,6 +570,7 @@ var DGTable = (function () {
             /**
              * Hide a column which is currently visible
              * @public
+             * @expose
              * @param {String} column column name
              * @returns {DGTable} self
              */
@@ -577,6 +589,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {int} minColumnWidth minimum column width
              * @returns {DGTable} self
              */
@@ -587,6 +600,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {int} minimum column width
              */
             getMinColumnWidth: function () {
@@ -595,6 +609,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {int} sortableColumns how many sortable columns to allow?
              * @returns {DGTable} self
              */
@@ -613,6 +628,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {int} how many sortable columns to allow?
              */
             getSortableColumns: function () {
@@ -621,6 +637,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {boolean} movableColumns are the columns movable?
              * @returns {DGTable} self
              */
@@ -634,6 +651,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {boolean} are the columns movable?
              */
             getMovableColumns: function () {
@@ -642,6 +660,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {boolean} resizableColumns are the columns resizable?
              * @returns {DGTable} self
              */
@@ -655,6 +674,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {boolean} are the columns resizable?
              */
             getResizableColumns: function () {
@@ -663,6 +683,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @param {Function(string,boolean)} comparatorCallback a callback function that returns the comparator for a specific column
              * @returns {DGTable} self
              */
@@ -675,6 +696,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {Function(string,boolean)} a callback function that returns the comparator for a specific column
              */
             getComparatorCallback: function () {
@@ -684,6 +706,7 @@ var DGTable = (function () {
             /**
              * Add rows to the table
              * @public
+             * @expose
              * @param {Object[]} data array of rows to add to the table
              * @returns {DGTable} self
              */
@@ -703,6 +726,7 @@ var DGTable = (function () {
             /**
              * Replace the whole dataset
              * @public
+             * @expose
              * @param {Object[]} data array of rows to add to the table
              * @returns {DGTable} self
              */
@@ -720,6 +744,7 @@ var DGTable = (function () {
              * This uses the Blob or BlobBuilder of the modern browsers.
              * The url can be used for a Web Worker.
              * @public
+             * @expose
              * @param {string} id Id of the element containing your data
              * @returns {string?} the url, or null if not supported
              */
@@ -742,6 +767,7 @@ var DGTable = (function () {
 
             /**
              * @public
+             * @expose
              * @returns {boolean} A value indicating whether Web Workers are supported
              */
             isWorkerSupported: function() {
@@ -751,6 +777,7 @@ var DGTable = (function () {
             /**
              * Creates a Web Worker for updating the table.
              * @public
+             * @expose
              * @param {string} url Url to the script for the Web Worker
              * @returns {Worker?} the Web Worker, or null if not supported
              * @param {boolean=true} start if true, starts the Worker immediately
@@ -774,6 +801,7 @@ var DGTable = (function () {
             /**
              * Unbinds a Web Worker from the table, stopping updates.
              * @public
+             * @expose
              * @param {Worker} worker the Web Worker
              * @returns {DGTable} self
              */
@@ -1273,8 +1301,10 @@ var DGTable = (function () {
                 var thead = document.createElement("thead");
                 thead.style.display = 'block';
                 if (hasIeTableDisplayBlockBug) {
-                    thead.style.float = this.$el.css('direction') == 'rtl' ? 'right' : 'left';
-                    thead.style.clear = 'both';
+                    $(thead).css({
+                        'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                        'clear': 'both'
+                    });
                 }
                 table.appendChild(thead);
 
@@ -1284,8 +1314,10 @@ var DGTable = (function () {
                 tbody.style.overflowY = 'auto';
                 tbody.style.overflowX = 'hidden';
                 if (hasIeTableDisplayBlockBug) {
-                    tbody.style.float = this.$el.css('direction') == 'rtl' ? 'right' : 'left';
-                    tbody.style.clear = 'both';
+                    $(tbody).css({
+                        'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                        'clear': 'both'
+                    });
                 }
                 table.appendChild(tbody);
 
@@ -1458,7 +1490,16 @@ var DGTable = (function () {
              * @param {boolean} prepend add rows to the beginning of the table
              */
             _addRows: function (start, end, prepend) {
-                var rowToInsertBefore = (prepend ? /** @type {HTMLRowElement} */this._virtualScrollTopRow.nextElementSibling : this._virtualScrollBottomRow);
+                var rowToInsertBefore;
+                if (prepend) {
+                    var nextElementSibling = this._virtualScrollTopRow.nextSibling;
+                    while (nextElementSibling && nextElementSibling.nodeType == Element.TEXT_NODE) {
+                        nextElementSibling = nextElementSibling.nextSibling;
+                    }
+                    rowToInsertBefore = nextElementSibling;
+                } else {
+                    rowToInsertBefore = this._virtualScrollBottomRow;
+                }
                 for (var i = start; i < end; i++) {
                     this._addRow(i, rowToInsertBefore);
                 }
@@ -1553,44 +1594,75 @@ var DGTable = (function () {
         }
     );
 
-    /** @typedef {{
-    * column:String,
-    * descending:boolean=false
-    * }} */
-    DGTable.ColumnSortOptions;
+    /**
+     * @typedef
+     * @param {String} column
+     * @param {boolean=false} descending
+     * */
+    var DGTable_ColumnSortOptions = {
+        /** @expose */ column: null,
+        /** @expose */ descending: null
+    };
 
-    /** @typedef {{
-    * name:String,
-    * label:String=name,
-    * width:int,
-    * resizable:boolean=true,
-    * sortable:boolean=true,
-    * visible:boolean=true,
-    * cellClasses:String
-    * }} */
-    DGTable.ColumnOptions;
+    /**
+     * @typedef
+     * @param {String} name
+     * @param {String=name} label
+     * @param {int} width
+     * @param {boolean=true} resizable
+     * @param {boolean=true} sortable
+     * @param {boolean=true} visible
+     * @param {String} cellClasses
+     * */
+    var DGTable_ColumnOptions = {
+        /** @expose */ name: null,
+        /** @expose */ label: null,
+        /** @expose */ width: null,
+        /** @expose */ resizable: null,
+        /** @expose */ sortable: null,
+        /** @expose */ visible: null,
+        /** @expose */ cellClasses: null
+    };
 
-    /** @typedef {{
-    * columns:DGTable.ColumnOptions[],
-    * height:int,
-    * virtualTable:boolean=true,
-    * resizableColumns:boolean=true,
-    * movableColumns:boolean=true,
-    * sortableColumns:int=1,
-    * cellClasses:String,
-    * sortColumn:String|String[]|DGTable.ColumnSortOptions|DGTable.ColumnSortOptions[],
-    * formatter:Function?,
-    * rowsBufferSize:int=10,
-    * minColumnWidth:int=35,
-    * resizeAreaWidth:int=8,
-    * comparatorCallback:Function(string,boolean),
-    * resizerClassName:String?,
-    * tableClassName:String?,
-    * className:String?,
-    * tagName:String?
-    * }} */
-    DGTable.InitOptions;
+    /**
+     * @typedef
+     * @param {DGTable.ColumnOptions[]} columns
+     * @param {int} height
+     * @param {boolean=true} virtualTable
+     * @param {boolean=true} resizableColumns
+     * @param {boolean=true} movableColumns
+     * @param {int=1} sortableColumns
+     * @param {String} cellClasses
+     * @param {String|String[]|DGTable_ColumnSortOptions|DGTable_ColumnSortOptions[]} sortColumn
+     * @param {Function?} formatter
+     * @param {int=10} rowsBufferSize
+     * @param {int=35} minColumnWidth
+     * @param {int=8} resizeAreaWidth
+     * @param {Function(string}boolean)} comparatorCallback
+     * @param {String?} resizerClassName
+     * @param {String?} tableClassName
+     * @param {String?} className
+     * @param {String?} tagName
+     * */
+    var DGTable_InitOptions = {
+        /** @expose */ columns: null,
+        /** @expose */ height: null,
+        /** @expose */ virtualTable: null,
+        /** @expose */ resizableColumns: null,
+        /** @expose */ movableColumns: null,
+        /** @expose */ sortableColumns: null,
+        /** @expose */ cellClasses: null,
+        /** @expose */ sortColumn: null,
+        /** @expose */ rowsBufferSize: null,
+        /** @expose */ minColumnWidth: null,
+        /** @expose */ resizeAreaWidth: null,
+        /** @expose */ comparatorCallback: null,
+        /** @expose */ resizerClassName: null,
+        /** @expose */ tableClassName: null,
+        /** @expose */ className: null,
+        /** @expose */ tagName: null
+    };
 
-    return DGTable;
+    /** @expose */ window.DGTable = DGTable;
 
 })();
