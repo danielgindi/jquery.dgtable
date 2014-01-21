@@ -11,6 +11,7 @@
 <script type="text/javascript" src="../src/DGTable.js"></script>
 <script type="text/javascript" src="../src/DGTable.ColumnCollection.js"></script>
 <script type="text/javascript" src="../src/DGTable.RowCollection.js"></script>
+<!-- <script type="text/javascript" src="../compiled/DGTable.min.js"></script> -->
 <script>
     var sampleData = [
         { first: 'Pearl', last: 'Button', address: '69 Hendford Hill', city: 'MOSS-SIDE' },
@@ -330,7 +331,7 @@
     <div id='example'></div>
 
     <script>
-        var table =  new DGTable({
+        var table = new DGTable({
             columns : [
                 {name : 'first', label: 'Locked column', movable: false},
                 {name : 'last', label: 'Test data'},
