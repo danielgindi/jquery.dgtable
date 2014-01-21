@@ -39,8 +39,10 @@
     var DGTable = Backbone.View.extend(
         /** @lends DGTable.prototype */
         {
-            className: 'dgtable-wrapper',
-            tagName: 'div',
+            /** @expose */ className: 'dgtable-wrapper',
+            /** @expose */ tagName: 'div',
+			
+			/** @expose */ VERSION: "0.1",
 
             /**
              * @constructs
