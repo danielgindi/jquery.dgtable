@@ -764,7 +764,6 @@
                              j++) {
                             row = data[j];
                             tr = document.createElement('tr');
-                            tr.setAttribute('data-row', j);
                             for (colIndex = 0; colIndex < colCount; colIndex++) {
                                 column = this._visibleColumns[colIndex];
                                 div = document.createElement('div');
@@ -1456,7 +1455,7 @@
                      j++) {
                     row = rows[j];
                     tr = document.createElement('tr');
-                    tr.setAttribute('data-row', j);
+                    if (this._virtualTable) tr.setAttribute('data-row', j);
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = this._visibleColumns[colIndex];
                         div = document.createElement('div');
