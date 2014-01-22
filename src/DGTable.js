@@ -24,7 +24,6 @@
 (function () {
     "use strict";
 
-    // TODO: Allow non-virtual tables
     // TODO: Variable row height?
 
     var userAgent = navigator.userAgent;
@@ -73,8 +72,7 @@
                 /**
                  * @private
                  * @field {boolean} _virtualTable */
-                this._virtualTable = options._virtualTable == undefined ? true : !!options.virtualTable;
-
+                this._virtualTable = options.virtualTable == undefined ? true : !!options.virtualTable;
 
                 /**
                  * @private
@@ -283,9 +281,11 @@
                     }
 
                     this._$tbody[0].scrollTop = this._prevScrollTop;
-                    this._$tbody.on('scroll', _.bind(this._onTableScrolled, this));
 
-                    this._onTableScrolled(true);
+                    if (this._virtualTable) {
+                        this._$tbody.on('scroll', _.bind(this._onVirtualTableScrolled, this));
+                        this._onVirtualTableScrolled(true);
+                    }
 
                     this._updateTableWidth();
 
@@ -297,8 +297,8 @@
                     this._dataAppended = false;
 
                     this.trigger('renderSkeleton');
-                } else {
-                    this._renderRows(this._prevScrollTop, this._$tbody[0].scrollTop);
+                } else if (this._virtualTable) {
+                    this._renderVirtualRows(this._prevScrollTop, this._$tbody[0].scrollTop);
                 }
                 this.trigger('render');
                 return this;
@@ -450,11 +450,31 @@
                 if (!destCol) throw "Invalid dest column: " + dest;
                 if (src === dest) return this;
 
-                var srcOrder = col.order, destOrder = destCol.order; // Keep for the event trigger
+                var srcOrder = col.order, destOrder = destCol.order;
 
-                this._tableSkeletonNeedsRendering = true;
                 this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
-                this.render();
+
+                if (this._virtualTable) {
+                    this._tableSkeletonNeedsRendering = true;
+                    this.render();
+                } else {
+                    var th = this._$thead.find('>tr>th');
+                    var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
+                        fromPos = srcOrder;
+                    th[0].parentNode.insertBefore(th[fromPos], th[beforePos]);
+
+                    var srcWidth = (this._visibleColumns[srcOrder].width - ((srcOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
+                    var destWidth = (this._visibleColumns[destOrder].width - ((destOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
+
+                    var tbodyChildren = this._$tbody[0].childNodes;
+                    for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
+                        tr = tbodyChildren[i];
+                        if (tr.nodeType != 1) continue;
+                        tr.insertBefore(tr.childNodes[fromPos], tr.childNodes[beforePos]);
+                        tr.childNodes[destOrder].firstChild.style.width = destWidth;
+                        tr.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                    }
+                }
 
                 this.trigger("moveColumn", col.name, srcOrder, destOrder);
 
@@ -533,6 +553,9 @@
                         this._showSortArrow(currentSort[i].column, currentSort[i].descending);
                     }
 
+                    if (!this._virtualTable) {
+                        this._tableSkeletonNeedsRendering = true;
+                    }
                     this._rows.sort(!!this._filteredRows);
                     this._refilter();
                     if (this._filteredRows) {
@@ -713,15 +736,52 @@
              * @returns {DGTable} self
              */
             addRows: function (data) {
+                if (!data) return this;
+
                 this.scrollTop = this.$el.find(".table").scrollTop();
                 var oldRowCount = this._rows.length;
                 this._dataAppended = true;
                 this._rows.add(data);
-                this._refilter();
-                if (oldRowCount == 0 && (this._filteredRows || this._rows).length) {
-                    this._tableSkeletonNeedsRendering = true;
+                if (this._virtualTable) {
+                    this._refilter();
+                    if (oldRowCount == 0 && (this._filteredRows || this._rows).length) {
+                        this._tableSkeletonNeedsRendering = true;
+                    }
+                    this.render();
+                } else {
+                    if (this._filteredRows) {
+                        var filteredCount = this._filteredRows.length;
+                        this._refilter();
+                        if (!this._filteredRows || this._filteredRows.length != filteredCount) {
+                            this._tableSkeletonNeedsRendering = true;
+                            this.render();
+                        }
+                    } else {
+                        var tr, div, td, bodyFragment;
+                        bodyFragment = document.createDocumentFragment();
+                        for (var j = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
+                             j < rowCount;
+                             j++) {
+                            row = data[j];
+                            tr = document.createElement('tr');
+                            tr.setAttribute('data-row', j);
+                            for (colIndex = 0; colIndex < colCount; colIndex++) {
+                                column = this._visibleColumns[colIndex];
+                                div = document.createElement('div');
+                                div.style.width = column.width + 'px';
+                                div.innerHTML = this._formatter(row[column.name], column.name);
+                                td = document.createElement('td');
+                                if (column.cellClasses) td.className = column.cellClasses;
+                                td.appendChild(div);
+                                tr.appendChild(td);
+                            }
+                            bodyFragment.appendChild(tr);
+                        }
+                        this._$tbody[0].appendChild(bodyFragment);
+                        this._updateLastCellWidthFromScrollbar();
+                    }
                 }
-                this.render().trigger('addRows', data.length, false);
+                this.trigger('addRows', data.length, false);
                 return this;
             },
 
@@ -823,7 +883,7 @@
             /**
              * @param {boolean?} forceUpdate
              */
-            _onTableScrolled: function (forceUpdate) {
+            _onVirtualTableScrolled: function (forceUpdate) {
                 if (forceUpdate || this._prevScrollTop !== this._$tbody[0].scrollTop) {
                     var firstVisibleRow = parseInt(this._$tbody[0].scrollTop / this._virtualRowHeight, 10);
                     var firstRenderedRow = firstVisibleRow - this._rowsBufferSize;
@@ -837,7 +897,7 @@
                         this._virtualRowRange.last = rows.length;
                         this._virtualRowRange.first = Math.max(0, this._virtualRowRange.last - this._virtualVisibleRows - this._rowsBufferSize);
                     }
-                    this._renderRows(this._prevScrollTop, this._$tbody[0].scrollTop);
+                    this._renderVirtualRows(this._prevScrollTop, this._$tbody[0].scrollTop);
                 }
             },
 
@@ -847,14 +907,14 @@
              * @param {jQuery.Event} e jQuery mouse event
              * @returns {String} name of the column which the mouse is over, or null if the mouse is not in resize position
              */
-            _getResizeColumn: function (e) {
+            _getColumnByResizePosition: function (e) {
 
                 var rtl = this._$table.css('direction') == 'rtl';
 
                 var $th = $(this._ieBugDragStart || e.target).closest("th"), th = $th[0];
 
                 var previousElementSibling = $th[0].previousSibling;
-                while (previousElementSibling && previousElementSibling.nodeType == Element.TEXT_NODE) {
+                while (previousElementSibling && previousElementSibling.nodeType != 1) {
                     previousElementSibling = previousElementSibling.previousSibling;
                 }
 
@@ -887,7 +947,7 @@
 
                 var rtl = this._$table.css('direction') == 'rtl';
 
-                var col = this._getResizeColumn(e);
+                var col = this._getColumnByResizePosition(e);
                 var th = $(e.target).closest("th")[0];
                 if (!col || !this._columns.get(col).resizable) {
                     th.style.cursor = '';
@@ -910,7 +970,7 @@
              * @param {jQuery.Event} e event
              */
             _onClickColumnHeader: function (e) {
-                if (!this._getResizeColumn(e)) {
+                if (!this._getColumnByResizePosition(e)) {
                     var th = $(e.target).closest("th")[0];
                     if (this._sortableColumns) {
                         var column = this._columns.get(th.columnName);
@@ -926,7 +986,7 @@
              * @param {jQuery.Event} e event
              */
             _onStartDragColumnHeader: function (e) {
-                var col = this._getResizeColumn(e);
+                var col = this._getColumnByResizePosition(e);
                 if (col) {
                     var column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
@@ -1203,11 +1263,17 @@
                 var col = this._columns.get(headers[cellIndex].columnName);
                 col.width = width;
                 if (cellIndex === headers.length - 1) {
-                    width -= this.scrollbarWidth;
+                    width -= this._scrollbarWidth;
                 }
-                this._$tbody.find('td:nth-child(' + (cellIndex + 1) + ')>div').each(function () {
-                    this.style.width = width + "px";
-                });
+                width += 'px';
+
+                var tbodyChildren = this._$tbody[0].childNodes;
+                for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
+                    tr = tbodyChildren[i];
+                    if (tr.nodeType != 1) continue;
+                    tr.childNodes[cellIndex].firstChild.style.width = width;
+                }
+
                 this._updateTableWidth();
                 return this;
             },
@@ -1239,7 +1305,6 @@
             _renderSkeleton: function () {
                 var self = this;
                 var topRowHeight = 0;
-                var lastCol;
 
                 if (this._virtualScrollTopRow) {
                     topRowHeight = parseFloat(this._virtualScrollTopRow.style.height);
@@ -1251,7 +1316,6 @@
                 for (var i = 0, column, th, div; i < this._visibleColumns.length; i++) {
                     column = this._visibleColumns[i];
                     if (column.visible) {
-                        lastCol = column;
                         div = document.createElement('div');
                         div.style.width = column.width + 'px';
                         div.innerHTML = column.label;
@@ -1285,7 +1349,7 @@
                     }
                 }
 
-                if (this._$table) {
+                if (this._$table && this._virtualTable) {
                     this._$tbody.off('scroll');
                     this._$table.remove();
                 }
@@ -1294,41 +1358,49 @@
                     this.$el.css('position', 'relative');
                 }
 
-                var fragment = document.createDocumentFragment();
+                var table, thead, tbody;
 
-                var table = document.createElement("table");
-                table.className = this._tableClassName;
-                fragment.appendChild(table);
+                if (this._virtualTable || !this._$table) {
+                    var fragment = document.createDocumentFragment();
+                    table = document.createElement("table");
+                    table.className = this._tableClassName;
+                    fragment.appendChild(table);
 
-                var thead = document.createElement("thead");
-                thead.style.display = 'block';
-                if (hasIeTableDisplayBlockBug) {
-                    $(thead).css({
-                        'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
-                        'clear': 'both'
-                    });
+                    thead = document.createElement("thead");
+                    thead.style.display = 'block';
+                    if (hasIeTableDisplayBlockBug) {
+                        $(thead).css({
+                            'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'clear': 'both'
+                        });
+                    }
+                    table.appendChild(thead);
+
+                    tbody = document.createElement("tbody");
+                    tbody.style.maxHeight = this._height + "px";
+                    tbody.style.display = 'block';
+                    tbody.style.overflowY = 'auto';
+                    tbody.style.overflowX = 'hidden';
+                    if (hasIeTableDisplayBlockBug) {
+                        $(tbody).css({
+                            'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'clear': 'both'
+                        });
+                    }
+                    table.appendChild(tbody);
+
+                    this.el.appendChild(fragment);
+
+                    this._$table = $(table);
+                    this._$tbody = $(tbody);
+                    this._$thead = $(thead);
+                } else {
+                    table = this._$table[0];
+                    tbody = this._$tbody[0];
+                    thead = this._$thead[0];
                 }
-                table.appendChild(thead);
 
-                var tbody = document.createElement("tbody");
-                tbody.style.maxHeight = this._height + "px";
-                tbody.style.display = 'block';
-                tbody.style.overflowY = 'auto';
-                tbody.style.overflowX = 'hidden';
-                if (hasIeTableDisplayBlockBug) {
-                    $(tbody).css({
-                        'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
-                        'clear': 'both'
-                    });
-                }
-                table.appendChild(tbody);
-
-                this.el.appendChild(fragment);
-
-                this._$table = $(table);
-                this._$tbody = $(tbody);
-
-                if (!this._virtualRowHeight) {
+                if (this._virtualTable && !this._virtualRowHeight) {
                     var tr = document.createElement("tr"),
                         td = document.createElement("td");
                     td.innerHTML = '0';
@@ -1343,29 +1415,44 @@
 
                 var rows = this._filteredRows || this._rows;
 
-                var last = this._virtualVisibleRows + this._rowsBufferSize;
-                if (last > rows.length) {
-                    last = rows.length;
+                if (this._virtualTable) {
+                    var last = this._virtualVisibleRows + this._rowsBufferSize;
+                    if (last > rows.length) {
+                        last = rows.length;
+                    }
+                    this._virtualRowRange = {
+                        first: 0,
+                        last: last,
+                        prevFirst: 0,
+                        prevLast: last
+                    };
                 }
-                this._virtualRowRange = {
-                    first: 0,
-                    last: last,
-                    prevFirst: 0,
-                    prevLast: last
-                };
 
                 var bodyFragment = document.createDocumentFragment(),
                     tr, td, div;
 
-                // Build first row (for virtual table top scroll offset)
-                tr = this._virtualScrollTopRow = document.createElement('tr')
-                tr.style.height = topRowHeight + 'px';
-                bodyFragment.appendChild(tr);
+                if (this._virtualTable) {
+                    // Build first row (for virtual table top scroll offset)
+                    tr = this._virtualScrollTopRow = document.createElement('tr')
+                    tr.style.height = topRowHeight + 'px';
+                    bodyFragment.appendChild(tr);
+                }
 
                 // Build visible rows
-                var displayCount = 0;
-                for (var j = this._virtualRowRange.first, row, colIndex, column, colCount = this._visibleColumns.length;
-                     j < rows.length && displayCount < this._virtualRowRange.last;
+                var displayCount = 0,
+                    firstDisplayedRow,
+                    lastDisplayedRow;
+
+                if (this._virtualTable) {
+                    firstDisplayedRow = this._virtualRowRange.first;
+                    lastDisplayedRow = this._virtualRowRange.last;
+                } else {
+                    firstDisplayedRow = 0;
+                    lastDisplayedRow = rows.length;
+                }
+
+                for (var j = firstDisplayedRow, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = rows.length;
+                     j < rowCount && displayCount < lastDisplayedRow;
                      j++) {
                     row = rows[j];
                     tr = document.createElement('tr');
@@ -1384,10 +1471,12 @@
                     displayCount++;
                 }
 
-                // Build last row (for virtual table bottom scroll offset)
-                tr = this._virtualScrollBottomRow = document.createElement('tr');
-                tr.style.height = (this._virtualRowHeight * Math.max(0, rows.length - this._virtualVisibleRows - this._rowsBufferSize) - topRowHeight) + 'px';
-                bodyFragment.appendChild(tr);
+                if (this._virtualTable) {
+                    // Build last row (for virtual table bottom scroll offset)
+                    tr = this._virtualScrollBottomRow = document.createElement('tr');
+                    tr.style.height = (this._virtualRowHeight * Math.max(0, rows.length - this._virtualVisibleRows - this._rowsBufferSize) - topRowHeight) + 'px';
+                    bodyFragment.appendChild(tr);
+                }
 
                 // Populate THEAD
                 try { thead.innerHTML = ''; } catch (e) { /* IE8 */ thead.textContent = ''; }
@@ -1397,15 +1486,35 @@
                 try { tbody.innerHTML = ''; } catch (e) { /* IE8 */ tbody.textContent = ''; }
                 tbody.appendChild(bodyFragment);
 
-                // Calculate scrollbar's width and reduce from lat column's width
-                this.scrollbarWidth = tbody.offsetWidth - tbody.clientWidth;
-                if (this.scrollbarWidth > 0) {
-                    var lastColWidth = lastCol.width;
-                    $(tbody).find('td:last-child>div').width(lastColWidth - this.scrollbarWidth);
+                this._updateLastCellWidthFromScrollbar(true);
+
+                if (this._virtualTable) {
+                    this._adjustVirtualTableScrollHeight();
                 }
 
-                this._adjustVirtualTableScrollHeight();
+                return this;
+            },
 
+            /**
+             * @private
+             * @returns {DGTable} self
+             */
+            _updateLastCellWidthFromScrollbar: function(force) {
+                // Calculate scrollbar's width and reduce from lat column's width
+                var scrollbarWidth = this._$tbody[0].offsetWidth - this._$tbody[0].clientWidth;
+                if (scrollbarWidth != this._scrollbarWidth || force) {
+                    this._scrollbarWidth = scrollbarWidth;
+                    if (this._scrollbarWidth > 0) {
+                        var lastColIndex = this._visibleColumns.length - 1;
+                        var lastColWidth = (this._visibleColumns[lastColIndex].width - this._scrollbarWidth) + 'px';
+                        var tbodyChildren = this._$tbody[0].childNodes;
+                        for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
+                            tr = tbodyChildren[i];
+                            if (tr.nodeType != 1) continue;
+                            tr.childNodes[lastColIndex].firstChild.style.width = lastColWidth;
+                        }
+                    }
+                }
                 return this;
             },
 
@@ -1415,7 +1524,7 @@
              * @param {int} prevScrollTop previous scrollTop value in pixels
              * @param {int} scrollTop current scrollTop value in pixels
              */
-            _renderRows: function (prevScrollTop, scrollTop) {
+            _renderVirtualRows: function (prevScrollTop, scrollTop) {
                 var first, last;
                 var addedRows = (this._virtualRowRange.last - this._virtualRowRange.first) - (this._virtualRowRange.prevLast - this._virtualRowRange.prevFirst);
                 var max = this._virtualVisibleRows + this._rowsBufferSize;
@@ -1426,8 +1535,8 @@
                         first = this._virtualRowRange.first;
                         last = this._virtualRowRange.last;
                     }
-                    this._removeRows(last - first - addedRows, false);
-                    this._addRows(first, last, true);
+                    this._removeVirtualRows(last - first - addedRows, false);
+                    this._addVirtualRows(first, last, true);
                     this._adjustVirtualTableScrollHeight();
                 } else if (scrollTop > prevScrollTop) {
                     first = this._virtualRowRange.prevLast;
@@ -1437,8 +1546,8 @@
                         first = this._virtualRowRange.first;
                         last = this._virtualRowRange.last;
                     }
-                    this._removeRows(last - first - addedRows, true);
-                    this._addRows(first, last, false);
+                    this._removeVirtualRows(last - first - addedRows, true);
+                    this._addVirtualRows(first, last, false);
                     this._adjustVirtualTableScrollHeight();
                 } else if (this._dataAppended) {
                     this._dataAppended = false;
@@ -1447,21 +1556,17 @@
                         first = this._virtualRowRange.last;
                         last = rows.length;
                         if (last > max) last = max;
-                        this._addRows(first, last, false);
+                        this._addVirtualRows(first, last, false);
                         this._virtualRowRange.last = last;
                     }
                     this._adjustVirtualTableScrollHeight();
                 } else {
                     this._adjustVirtualTableScrollHeight();
-                    this._refreshRows(this._virtualRowRange.first);
+                    this._refreshVirtualRows(this._virtualRowRange.first);
                     return;
                 }
-                this.scrollbarWidth = this._$tbody[0].offsetWidth - this._$tbody[0].clientWidth;
-                if (this.scrollbarWidth > 0) {
-                    var cols = this._$table.find('>thead>tr>th');
-                    var lastColWidth = this._columns.get(cols[cols.length - 1].columnName).width;
-                    this._resizeColumnElements(cols.length - 1, lastColWidth);
-                }
+                this._updateLastCellWidthFromScrollbar();
+                this._updateTableWidth();
                 this._prevScrollTop = this._$tbody[0].scrollTop;
             },
 
@@ -1491,11 +1596,11 @@
              * @param {int} end index in the row data collection of the last row to add
              * @param {boolean} prepend add rows to the beginning of the table
              */
-            _addRows: function (start, end, prepend) {
+            _addVirtualRows: function (start, end, prepend) {
                 var rowToInsertBefore;
                 if (prepend) {
                     var nextElementSibling = this._virtualScrollTopRow.nextSibling;
-                    while (nextElementSibling && nextElementSibling.nodeType == Element.TEXT_NODE) {
+                    while (nextElementSibling && nextElementSibling.nodeType != 1) {
                         nextElementSibling = nextElementSibling.nextSibling;
                     }
                     rowToInsertBefore = nextElementSibling;
@@ -1503,7 +1608,7 @@
                     rowToInsertBefore = this._virtualScrollBottomRow;
                 }
                 for (var i = start; i < end; i++) {
-                    this._addRow(i, rowToInsertBefore);
+                    this._addVirtualRow(i, rowToInsertBefore);
                 }
             },
 
@@ -1513,7 +1618,7 @@
              * @param {int} index which row in the RowCollection to add to the DOM
              * @param {HTMLRowElement} rowToInsertBefore DOM row that the new row will precede
              */
-            _addRow: function (index, rowToInsertBefore) {
+            _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement("tr");
                 tr.setAttribute("data-row", index);
                 var rows = this._filteredRows || this._rows;
@@ -1536,7 +1641,7 @@
              * @param {int} numRows number of rows to remove
              * @param {boolean} removeFromBeginning remove rows from the beginning of the table
              */
-            _removeRows: function (numRows, removeFromBeginning) {
+            _removeVirtualRows: function (numRows, removeFromBeginning) {
                 var start, end;
                 if (numRows > this._virtualVisibleRows + this._rowsBufferSize * 2) {
                     numRows = this._virtualVisibleRows + this._rowsBufferSize * 2;
@@ -1563,7 +1668,7 @@
              * @private
              * @param {int} firstRow index of the first row rendered
              */
-            _refreshRows: function (firstRow) {
+            _refreshVirtualRows: function (firstRow) {
                 var trs = this._$tbody[0].getElementsByTagName("tr");
                 var rows = this._filteredRows || this._rows;
                 for (var i = 1, tr, tdList, j, div, col, colName; i < trs.length - 1; i++) {
@@ -1636,7 +1741,7 @@
      * @param {int=1} sortableColumns
      * @param {String} cellClasses
      * @param {String|String[]|DGTable_ColumnSortOptions|DGTable_ColumnSortOptions[]} sortColumn
-     * @param {Function?} formatter
+     * @param {Function(Object,string)?} formatter
      * @param {int=10} rowsBufferSize
      * @param {int=35} minColumnWidth
      * @param {int=8} resizeAreaWidth
@@ -1655,6 +1760,7 @@
         /** @expose */ sortableColumns: null,
         /** @expose */ cellClasses: null,
         /** @expose */ sortColumn: null,
+        /** @expose */ formatter: null,
         /** @expose */ rowsBufferSize: null,
         /** @expose */ minColumnWidth: null,
         /** @expose */ resizeAreaWidth: null,

@@ -6,11 +6,12 @@ This is a table View for Backbone + jQuery, which is meant to be high-performanc
 * Sorting by more than one column
 * Moving columns
 * Resizing columns
-* Virtual table mode (to supply high performance with hundreds of thousands of rows)
+* Virtual table mode (to supply high performance with hundreds of thousands of rows). This is the default.
+* Non-virtual table mode is fully supported, but for giant amounts of data it is not recommended.
 
 A few notes:
 * TODO: Handle row height correctly when rows have different height in virtual mode.
-* TODO: Full support for non-virtual table mode.
+* THINKABOUT: Showing the full data of the cell when hovering (or touching), in case of the cell overflowing.
 
 ## Me
 * Hi! I am Daniel Cohen Gindi. Or in short- Daniel.
