@@ -11,6 +11,8 @@ This is a table View for Backbone + jQuery, which is meant to be high-performanc
 
 A few notes:
 * TODO: Handle row height correctly when rows have different height in virtual mode.
+* TODO: Support specifying column widths using percentages, and mixing percentages with fixed sizes (i.e. a checkbox column with a fixed width, the others relative to full width of the table).
+* TODO: Allow reading the current widths (fixed and percentages) of the columns.
 * THINKABOUT: Showing the full data of the cell when hovering (or touching), in case of the cell overflowing.
 
 ## Me
