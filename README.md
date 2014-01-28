@@ -15,6 +15,16 @@ A few notes:
 * TODO: Allow reading the current widths (fixed and percentages) of the columns.
 * THINKABOUT: Showing the full data of the cell when hovering (or touching), in case of the cell overflowing.
 
+## Dev environment
+
+* Using grunt over Node.js to automate validating and building.
+* After installing Node.js, use `npm install`, and `npm install -g grunt-cli` to prepare building environment.
+* Use `grunt style` to just test for correct styling.
+* Use `grunt build` or just `grunt` to compile for release.
+* I am using Google Closure Compiler, because UglifyJS does not work with the JSDoc, and there's a major difference in size & performance of the output code.
+* Some features of jshint are disabled because it does not work well with JSDoc which is used for Google Closue Compiler.
+* Indentations in my editor are set to 4 spaces, and jshint validates that.
+
 ## Me
 * Hi! I am Daniel Cohen Gindi. Or in short- Daniel.
 * danielgindi@gmail.com is my email address.
