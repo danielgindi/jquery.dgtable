@@ -21,8 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+/* global DGTable, _, Backbone */
 DGTable.RowCollection = (function () {
-    "use strict";
+    'use strict';
 
     // Define class RowCollection
     var RowCollection = function() {
@@ -30,7 +31,7 @@ DGTable.RowCollection = (function () {
     };
 
     // Inherit Array
-    RowCollection.prototype = new Array();
+    RowCollection.prototype = [];
 
     // Add events model from Backbone
     _.extend(RowCollection.prototype, Backbone.Events);
@@ -55,7 +56,7 @@ DGTable.RowCollection = (function () {
         this.filterCaseSensitive = false;
 
         /** @field {string} sortColumn */
-        this.sortColumn = options.sortColumn == undefined ? [] : options.sortColumn
+        this.sortColumn = options.sortColumn == null ? [] : options.sortColumn;
     };
 
     /**
@@ -88,7 +89,9 @@ DGTable.RowCollection = (function () {
      */
     RowCollection.prototype.reset = function (rows) {
         this.length = 0;
-        if (rows) this.add(rows);
+        if (rows) {
+            this.add(rows);
+        }
     };
 
     /**
@@ -125,7 +128,9 @@ DGTable.RowCollection = (function () {
     RowCollection.prototype.shouldBeVisible = function (row) {
         if (row && this.filterColumn) {
             var actualVal = row[this.filterColumn];
-            if (actualVal == null) return false;
+            if (actualVal == null) {
+                return false;
+            }
             actualVal = actualVal.toString();
             var filterVal = this.filterString;
             if (!this.filterCaseSensitive) {
@@ -146,38 +151,41 @@ DGTable.RowCollection = (function () {
                 var col = column, leftVal = leftRow[col], rightVal = rightRow[col];
                 return leftVal < rightVal ? lessVal : (leftVal > rightVal ? moreVal : 0);
             };
-        };
+        }
 
         /**
          * @param {Boolean=false} silent
          * @returns {DGTable.RowCollection} self
          */
         RowCollection.prototype.sort = function(silent) {
-            if (!this.sortColumn.length) return this;
+            if (this.sortColumn.length) {
+                var comparators = [], i, returnVal;
+                for (i = 0; i < this.sortColumn.length; i++) {
+                    returnVal = {};
+                    this.trigger('requiresComparatorForColumn', returnVal, this.sortColumn[i].column, this.sortColumn[i].descending);
+                    comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i].column, this.sortColumn[i].descending), this));
+                }
+                if (comparators.length === 1) {
+                    nativeSort.call(this, comparators[0]);
+                } else {
+                    var len = comparators.length,
+                        value,
+                        comparator = function(leftRow, rightRow) {
+                            for (i = 0; i < len; i++) {
+                                value = comparators[i](leftRow, rightRow);
+                                if (value !== 0) {
+                                    return value;
+                                }
+                            }
+                            return value;
+                        };
+                    nativeSort.call(this, comparator);
+                }
 
-            var comparators = [];
-            for (var i = 0, returnVal; i < this.sortColumn.length; i++) {
-                returnVal = {};
-                this.trigger('requiresComparatorForColumn', returnVal, this.sortColumn[i].column, this.sortColumn[i].descending);
-                comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i].column, this.sortColumn[i].descending), this));
+                if (!silent) {
+                    this.trigger('sort');
+                }
             }
-            if (comparators.length == 1) {
-                nativeSort.call(this, comparators[0]);
-            } else {
-                var i,
-                    len = comparators.length,
-                    value,
-                    comparator = function(leftRow, rightRow) {
-                        for (i = 0; i < len; i++) {
-                            value = comparators[i](leftRow, rightRow);
-                            if (value != 0) return value;
-                        }
-                        return value;
-                    };
-                nativeSort.call(this, comparator);
-            }
-
-            if (!silent) this.trigger('sort');
             return this;
         };
     })();

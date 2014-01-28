@@ -21,8 +21,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-(function () {
-    "use strict";
+/* global $, _, Backbone */
+(function (global) {
+    'use strict';
 
     // TODO: Variable row height?
 
@@ -38,21 +39,25 @@
     var DGTable = Backbone.View.extend(
         /** @lends DGTable.prototype */
         {
-            /** @expose */ className: 'dgtable-wrapper',
-            /** @expose */ tagName: 'div',
+            /** @expose */
+            className: 'dgtable-wrapper',
+            
+            /** @expose */
+            tagName: 'div',
 			
-			/** @expose */ VERSION: "0.1",
+			/** @expose */
+            VERSION: '@VERSION',
 
             /**
              * @constructs
              * @expose
-             * @param {DGTable_InitOptions?} options initialization options
+             * @param {INIT_OPTIONS?} options initialization options
              */
             initialize: function (options) {
 
                 options = options || {};
-
-                if (options.columns !== null && options.columns.length === 0) return null;
+                
+                options.columns = options.columns || [];
 
                 this._onMouseMoveResizeAreaBound = _.bind(this._onMouseMoveResizeArea, this);
                 this._onEndDragColumnHeaderBound = _.bind(this._onEndDragColumnHeader, this);
@@ -72,7 +77,7 @@
                 /**
                  * @private
                  * @field {boolean} _virtualTable */
-                this._virtualTable = options.virtualTable == undefined ? true : !!options.virtualTable;
+                this._virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
 
                 /**
                  * @private
@@ -92,37 +97,37 @@
                 /**
                  * @private
                  * @field {boolean} _resizableColumns */
-                this._resizableColumns = options.resizableColumns == undefined ? true : !!options.resizableColumns;
+                this._resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
 
                 /**
                  * @private
                  * @field {boolean} _movableColumns */
-                this._movableColumns = options.movableColumns == undefined ? true : !!options.movableColumns;
+                this._movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
 
                 /**
                  * @private
                  * @field {int} _sortableColumns */
-                this._sortableColumns = options.sortableColumns == undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
+                this._sortableColumns = options.sortableColumns === undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
 
                 /**
                  * @private
                  * @field {String} _cellClasses */
-                this._cellClasses = options.cellClasses == undefined ? '' : options.cellClasses;
+                this._cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
                 /**
                  * @private
                  * @field {String} _resizerClassName */
-                this._resizerClassName = options.resizerClassName == undefined ? 'dgtable-resize' : options.resizerClassName;
+                this._resizerClassName = options.resizerClassName === undefined ? 'dgtable-resize' : options.resizerClassName;
 
                 /**
                  * @private
                  * @field {String} _tableClassName */
-                this._tableClassName = options.tableClassName == undefined ? 'dgtable' : options.tableClassName;
+                this._tableClassName = options.tableClassName === undefined ? 'dgtable' : options.tableClassName;
 
                 /**
                  * @private
                  * @field {Function(string,boolean)} _comparatorCallback */
-                this._comparatorCallback = options.comparatorCallback == undefined ? null : options.comparatorCallback;
+                this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
                 /**
                  * @private
@@ -130,14 +135,18 @@
                 this._formatter = options.formatter || function (val) {
                     return val;
                 };
+                
+                var i, len, col, column, columnData, order;
 
                 // Prepare columns
                 var columns = new DGTable.ColumnCollection();
-                for (var i = 0, column, columnData, order = 0; i < options.columns.length; i++) {
+                for (i = 0, column, columnData, order = 0; i < options.columns.length; i++) {
                     columnData = options.columns[i];
                     column = this._initColumnFromData(columnData);
-                    if (columnData.order != undefined) {
-                        if (columnData.order > order) order = columnData.order + 1;
+                    if (columnData.order !== undefined) {
+                        if (columnData.order > order) {
+                            order = columnData.order + 1;
+                        }
                         column.order = columnData.order;
                     } else {
                         column.order = order++;
@@ -149,7 +158,7 @@
                 this._columns = columns;
                 this._visibleColumns = columns.getVisibleColumns();
 
-                if (options.sortColumn == undefined) {
+                if (options.sortColumn === undefined) {
                     options.sortColumn = null;
                 } else {
                     if (typeof options.sortColumn == 'string') {
@@ -160,14 +169,16 @@
                         }
                     } else if (options.sortColumn instanceof Array) {
                         var cols = [];
-                        for (var i = 0, len = options.sortColumn.length, col, column; i < len; i++) {
+                        for (i = 0, len = options.sortColumn.length, col, column; i < len; i++) {
                             col = options.sortColumn[i];
-                            col = col.column != undefined ? col : { column: col, descending: false };
+                            col = col.column !== undefined ? col : { column: col, descending: false };
                             column = this._columns.get(col.column);
                             if (column && !_.contains(cols, column.name)) {
-                                cols.push(column.name)
+                                cols.push(column.name);
                             }
-                            if (cols.length == this._sortableColumns || cols.length == this._visibleColumns.length) break;
+                            if (cols.length == this._sortableColumns || cols.length == this._visibleColumns.length) {
+                                break;
+                            }
                         }
                         options.sortColumn = cols;
                     } else if (typeof options.sortColumn == 'object') {
@@ -199,7 +210,7 @@
 
             /**
              * @private
-             * @param {DGTable_ColumnOptions} columnData
+             * @param {COLUMN_OPTIONS} columnData
              */
             _initColumnFromData: (function () {
 
@@ -216,18 +227,18 @@
 
                 /**
                  * @private
-                 * @param {DGTable_ColumnOptions} columnData
+                 * @param {COLUMN_OPTIONS} columnData
                  */
                 return function(columnData) {
                     return {
                         name: columnData.name,
-                        label: columnData.label == undefined ? columnData.name : columnData.label,
-                        width: columnData.width == undefined ? _.bind(getTextWidth, this)(columnData.label) + 20 : columnData.width,
-                        resizable: columnData.resizable == undefined ? true : columnData.resizable,
-                        sortable: columnData.sortable == undefined ? true : columnData.sortable,
-                        movable: columnData.movable == undefined ? true : columnData.movable,
-                        visible: columnData.visible == undefined ? true : columnData.visible,
-                        cellClasses: columnData.cellClasses == undefined ? this._cellClasses : columnData.cellClasses
+                        label: columnData.label === undefined ? columnData.name : columnData.label,
+                        width: columnData.width === undefined ? _.bind(getTextWidth, this)(columnData.label) + 20 : columnData.width,
+                        resizable: columnData.resizable === undefined ? true : columnData.resizable,
+                        sortable: columnData.sortable === undefined ? true : columnData.sortable,
+                        movable: columnData.movable === undefined ? true : columnData.movable,
+                        visible: columnData.visible === undefined ? true : columnData.visible,
+                        cellClasses: columnData.cellClasses === undefined ? this._cellClasses : columnData.cellClasses
                     };
                 };
             })(),
@@ -308,35 +319,36 @@
              * Add a column to the table
              * @public
              * @expose
-             * @param {DGTable_ColumnOptions} columnData column properties
+             * @param {COLUMN_OPTIONS} columnData column properties
              * @param {String|int} [before=-1] column name or order to be inserted before
              * @returns {DGTable} self
              */
             addColumn: function (columnData, before) {
-                if (!columnData || this._columns.get(columnData.name)) return this;
+                if (columnData && !this._columns.get(columnData.name)) {
+                    var beforeColumn = null;
+                    if (before !== undefined) {
+                        beforeColumn = this._columns.get(before) || this._columns.getByOrder(before);
+                    }
 
-                var beforeColumn = null;
-                if (before != undefined) {
-                    beforeColumn = this._columns.get(before) || this._columns.getByOrder(before);
+                    var column = this._initColumnFromData(columnData);
+                    column.order = beforeColumn ? beforeColumn.order : (this._columns.getMaxOrder() + 1);
+
+                    for (var i = this._columns.getMaxOrder(), to = column.order, col; i >= to ; i--) {
+                        col = this._columns.getByOrder(i);
+                        if (col) {
+                            col.order++;
+                        }
+                    }
+
+                    this._columns.push(column);
+                    this._columns.normalizeOrder();
+
+                    this._tableSkeletonNeedsRendering = true;
+                    this._visibleColumns = this._columns.getVisibleColumns();
+                    this.render();
+
+                    this.trigger('addColumn', column.name);
                 }
-
-                var column = this._initColumnFromData(columnData);
-                column.order = beforeColumn ? beforeColumn.order : (this._columns.getMaxOrder() + 1);
-
-                for (var i = this._columns.getMaxOrder(), to = column.order, col; i >= to ; i--) {
-                    col = this._columns.getByOrder(i);
-                    if (col) col.order++;
-                }
-
-                this._columns.push(column);
-                this._columns.normalizeOrder();
-
-                this._tableSkeletonNeedsRendering = true;
-                this._visibleColumns = this._columns.getVisibleColumns();
-                this.render();
-
-                this.trigger('addColumn', column.name);
-
                 return this;
             },
 
@@ -378,11 +390,11 @@
                         this._filteredRows = null; // Release array memory
                     }
                     this._filteredRows = this._rows.filteredCollection(column, filter, caseSensitive);
-                    if (!hasFilter && !this._filteredRows) return this;
-
-                    this._tableSkeletonNeedsRendering = true;
-                    this.render();
-                    this.trigger("filter", column, filter, caseSensitive);
+                    if (hasFilter || this._filteredRows) {
+                        this._tableSkeletonNeedsRendering = true;
+                        this.render();
+                        this.trigger('filter', column, filter, caseSensitive);
+                    }
                 }
                 return this;
             },
@@ -409,19 +421,19 @@
              */
             setColumnLabel: function (column, label) {
                 var col = this._columns.get(column);
-                if (!col) throw "Invalid column name";
-                col.label = label == undefined ? col.name : label;
+                if (col) {
+                    col.label = label === undefined ? col.name : label;
 
-                if (col.element) {
-                    for (var i = 0; i < col.element[0].firstChild.childNodes.length; i++) {
-                        var node = col.element[0].firstChild.childNodes[i];
-                        if(node.nodeType === 3) {
-                            node.textContent = col.label;
-                            break;
+                    if (col.element) {
+                        for (var i = 0; i < col.element[0].firstChild.childNodes.length; i++) {
+                            var node = col.element[0].firstChild.childNodes[i];
+                            if(node.nodeType === 3) {
+                                node.textContent = col.label;
+                                break;
+                            }
                         }
                     }
                 }
-
                 return this;
             },
 
@@ -435,49 +447,46 @@
              */
             moveColumn: function (src, dest) {
                 var col, destCol;
-                if (typeof src === "string") {
+                if (typeof src === 'string') {
                     col = this._columns.get(src);
-                } else if (typeof src === "number") {
-                    col = this._visibleColumns[src]
+                } else if (typeof src === 'number') {
+                    col = this._visibleColumns[src];
                 }
-                if (typeof dest === "string") {
+                if (typeof dest === 'string') {
                     destCol = this._columns.get(dest);
-                } else if (typeof dest === "number") {
+                } else if (typeof dest === 'number') {
                     destCol = this._visibleColumns[dest];
                 }
 
-                if (!col) throw "Invalid source column: " + src;
-                if (!destCol) throw "Invalid dest column: " + dest;
-                if (src === dest) return this;
+                if (col && destCol && src !== dest) {
+                    var srcOrder = col.order, destOrder = destCol.order;
 
-                var srcOrder = col.order, destOrder = destCol.order;
+                    this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
 
-                this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
+                    if (this._virtualTable) {
+                        this._tableSkeletonNeedsRendering = true;
+                        this.render();
+                    } else {
+                        var th = this._$thead.find('>tr>th');
+                        var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
+                            fromPos = srcOrder;
+                        th[0].parentNode.insertBefore(th[fromPos], th[beforePos]);
 
-                if (this._virtualTable) {
-                    this._tableSkeletonNeedsRendering = true;
-                    this.render();
-                } else {
-                    var th = this._$thead.find('>tr>th');
-                    var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
-                        fromPos = srcOrder;
-                    th[0].parentNode.insertBefore(th[fromPos], th[beforePos]);
+                        var srcWidth = (this._visibleColumns[srcOrder].width - ((srcOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
+                        var destWidth = (this._visibleColumns[destOrder].width - ((destOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
 
-                    var srcWidth = (this._visibleColumns[srcOrder].width - ((srcOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
-                    var destWidth = (this._visibleColumns[destOrder].width - ((destOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
-
-                    var tbodyChildren = this._$tbody[0].childNodes;
-                    for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
-                        tr = tbodyChildren[i];
-                        if (tr.nodeType != 1) continue;
-                        tr.insertBefore(tr.childNodes[fromPos], tr.childNodes[beforePos]);
-                        tr.childNodes[destOrder].firstChild.style.width = destWidth;
-                        tr.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                        var tbodyChildren = this._$tbody[0].childNodes;
+                        for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
+                            tr = tbodyChildren[i];
+                            if (tr.nodeType !== 1) continue;
+                            tr.insertBefore(tr.childNodes[fromPos], tr.childNodes[beforePos]);
+                            tr.childNodes[destOrder].firstChild.style.width = destWidth;
+                            tr.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                        }
                     }
+
+                    this.trigger('moveColumn', col.name, srcOrder, destOrder);
                 }
-
-                this.trigger("moveColumn", col.name, srcOrder, destOrder);
-
                 return this;
             },
 
@@ -492,11 +501,13 @@
             setColumnWidth: function (column, width) {
                 var col = this._columns.get(column);
                 if (col) {
-                    if (width < this._minColumnWidth) width = this._minColumnWidth;
+                    if (width < this._minColumnWidth) {
+                        width = this._minColumnWidth;
+                    }
                     var oldWidth = col.width;
                     col.width = width;
                     this._resizeColumnElements(col.element[0].cellIndex, width);
-                    this.trigger("setColumnWidth", col.name, oldWidth, width);
+                    this.trigger('setColumnWidth', col.name, oldWidth, width);
                 }
                 return this;
             },
@@ -511,18 +522,18 @@
              * @returns {DGTable} self
              */
             sort: function (column, descending, add) {
-                var col = this._columns.get(column);
+                var col = this._columns.get(column), i;
                 if (col) {
                     var currentSort = this._rows.sortColumn;
 
                     if (currentSort.length && currentSort[currentSort.length - 1].column == column) {
                         // Recognize current descending mode, if currently sorting by this column
-                        descending = descending == undefined ? !currentSort[currentSort.length - 1].descending : descending;
+                        descending = descending === undefined ? !currentSort[currentSort.length - 1].descending : descending;
                     }
 
                     if (add) { // Add the sort to current sort stack
 
-                        for (var i = 0; i < currentSort.length; i++) {
+                        for (i = 0; i < currentSort.length; i++) {
                             if (currentSort[i].column == col.name) {
                                 if (i < currentSort.length - 1) {
                                     currentSort.length = 0;
@@ -541,7 +552,7 @@
                     }
 
                     // Default to ascending
-                    descending = descending == undefined ? false : descending;
+                    descending = descending === undefined ? false : descending;
 
                     // Set the required column in the front of the stack
                     currentSort.push({ column: col.name, descending: !!descending });
@@ -549,7 +560,7 @@
                     this._rows.sortColumn = currentSort;
 
                     this._clearSortArrows();
-                    for (var i = 0; i < currentSort.length; i++) {
+                    for (i = 0; i < currentSort.length; i++) {
                         this._showSortArrow(currentSort[i].column, currentSort[i].descending);
                     }
 
@@ -564,10 +575,10 @@
 
                     // Build output for event, with option names that will survive compilers
                     var sorts = [];
-                    for (var i = 0; i < currentSort.length; i++) {
+                    for (i = 0; i < currentSort.length; i++) {
                         sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
                     }
-                    this.trigger("sort", sorts);
+                    this.trigger('sort', sorts);
                 }
                 return this;
             },
@@ -581,13 +592,12 @@
              */
             showColumn: function (column) {
                 var col = this._columns.get(column);
-                if (col) {
-                    if (col.visible) return this;
+                if (col && !col.visible) {
                     col.visible = true;
                     this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.render();
-                    this.trigger("showColumn", column);
+                    this.trigger('showColumn', column);
                 }
                 return this;
             },
@@ -601,13 +611,12 @@
              */
             hideColumn: function (column) {
                 var col = this._columns.get(column);
-                if (col) {
-                    if (!col.visible) return this;
+                if (col && col.visible) {
                     col.visible = false;
                     this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.render();
-                    this.trigger("hideColumn", column);
+                    this.trigger('hideColumn', column);
                 }
                 return this;
             },
@@ -736,51 +745,53 @@
              * @returns {DGTable} self
              */
             addRows: function (data) {
-                if (!data) return this;
-
-                this.scrollTop = this.$el.find(".table").scrollTop();
-                var oldRowCount = this._rows.length;
-                this._dataAppended = true;
-                this._rows.add(data);
-                if (this._virtualTable) {
-                    this._refilter();
-                    if (oldRowCount == 0 && (this._filteredRows || this._rows).length) {
-                        this._tableSkeletonNeedsRendering = true;
-                    }
-                    this.render();
-                } else {
-                    if (this._filteredRows) {
-                        var filteredCount = this._filteredRows.length;
+                if (data) {
+                    this.scrollTop = this.$el.find('.table').scrollTop();
+                    var oldRowCount = this._rows.length;
+                    this._dataAppended = true;
+                    this._rows.add(data);
+                    if (this._virtualTable) {
                         this._refilter();
-                        if (!this._filteredRows || this._filteredRows.length != filteredCount) {
+                        if (oldRowCount === 0 && (this._filteredRows || this._rows).length) {
                             this._tableSkeletonNeedsRendering = true;
-                            this.render();
                         }
+                        this.render();
                     } else {
-                        var tr, div, td, bodyFragment;
-                        bodyFragment = document.createDocumentFragment();
-                        for (var j = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
-                             j < rowCount;
-                             j++) {
-                            row = data[j];
-                            tr = document.createElement('tr');
-                            for (colIndex = 0; colIndex < colCount; colIndex++) {
-                                column = this._visibleColumns[colIndex];
-                                div = document.createElement('div');
-                                div.style.width = column.width + 'px';
-                                div.innerHTML = this._formatter(row[column.name], column.name);
-                                td = document.createElement('td');
-                                if (column.cellClasses) td.className = column.cellClasses;
-                                td.appendChild(div);
-                                tr.appendChild(td);
+                        if (this._filteredRows) {
+                            var filteredCount = this._filteredRows.length;
+                            this._refilter();
+                            if (!this._filteredRows || this._filteredRows.length != filteredCount) {
+                                this._tableSkeletonNeedsRendering = true;
+                                this.render();
                             }
-                            bodyFragment.appendChild(tr);
+                        } else {
+                            var tr, div, td, bodyFragment;
+                            bodyFragment = document.createDocumentFragment();
+                            for (var j = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
+                                 j < rowCount;
+                                 j++) {
+                                row = data[j];
+                                tr = document.createElement('tr');
+                                for (colIndex = 0; colIndex < colCount; colIndex++) {
+                                    column = this._visibleColumns[colIndex];
+                                    div = document.createElement('div');
+                                    div.style.width = column.width + 'px';
+                                    div.innerHTML = this._formatter(row[column.name], column.name);
+                                    td = document.createElement('td');
+                                    if (column.cellClasses) {
+                                        td.className = column.cellClasses;
+                                    }
+                                    td.appendChild(div);
+                                    tr.appendChild(td);
+                                }
+                                bodyFragment.appendChild(tr);
+                            }
+                            this._$tbody[0].appendChild(bodyFragment);
+                            this._updateLastCellWidthFromScrollbar();
                         }
-                        this._$tbody[0].appendChild(bodyFragment);
-                        this._updateLastCellWidthFromScrollbar();
                     }
+                    this.trigger('addRows', data.length, false);
                 }
-                this.trigger('addRows', data.length, false);
                 return this;
             },
 
@@ -792,7 +803,7 @@
              * @returns {DGTable} self
              */
             setRows: function (data) {
-                this.scrollTop = this.$el.find(".table").scrollTop();
+                this.scrollTop = this.$el.find('.table').scrollTop();
                 this._rows.reset(data);
                 this._refilter();
                 this._tableSkeletonNeedsRendering = true;
@@ -810,20 +821,24 @@
              * @returns {string?} the url, or null if not supported
              */
             getUrlForElementContent: function (id) {
-                var blob;
-                var el = document.getElementById(id);
-                if (!el) return null;
-                var data = el.textContent;
-                if (typeof Blob === "function") {
-                    blob = new Blob([data]);
-                } else {
-                    var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-                    if (!BlobBuilder) return null;
-                    var builder = new BlobBuilder();
-                    builder.append(data);
-                    blob = builder.getBlob();
+                var blob,
+                    el = document.getElementById(id);
+                if (el) {
+                    var data = el.textContent;
+                    if (typeof Blob === 'function') {
+                        blob = new Blob([data]);
+                    } else {
+                        var BlobBuilder = global.BlobBuilder || global.WebKitBlobBuilder || global.MozBlobBuilder || global.MSBlobBuilder;
+                        if (!BlobBuilder) {
+                            return null;
+                        }
+                        var builder = new BlobBuilder();
+                        builder.append(data);
+                        blob = builder.getBlob();
+                    }
+                    return (global.URL || global.webkitURL).createObjectURL(blob);
                 }
-                return (window.URL || window.webkitURL).createObjectURL(blob);
+                return null;
             },
 
             /**
@@ -832,7 +847,7 @@
              * @returns {boolean} A value indicating whether Web Workers are supported
              */
             isWorkerSupported: function() {
-                return window['Worker'] instanceof Function;
+                return global['Worker'] instanceof Function;
             },
 
             /**
@@ -844,19 +859,23 @@
              * @param {boolean=true} start if true, starts the Worker immediately
              */
             createWebWorker: function (url, start) {
-                if (!this.isWorkerSupported()) return null;
-                var self = this;
-                var worker = new Worker(url);
-                var listener = function (evt) {
-                    self.addRows(evt.data.rows, evt.data.append);
-                };
-                worker.addEventListener('message', listener, false);
-                if (!this.workerListeners) this.workerListeners = [];
-                this.workerListeners.push({worker: worker, listener: listener});
-                if (start || start == undefined) {
-                    worker.postMessage(null);
+                if (this.isWorkerSupported()) {
+                    var self = this;
+                    var worker = new Worker(url);
+                    var listener = function (evt) {
+                        self.addRows(evt.data.rows, evt.data.append);
+                    };
+                    worker.addEventListener('message', listener, false);
+                    if (!this.workerListeners) {
+                        this.workerListeners = [];
+                    }
+                    this.workerListeners.push({worker: worker, listener: listener});
+                    if (start || start === undefined) {
+                        worker.postMessage(null);
+                    }
+                    return worker;
                 }
-                return worker;
+                return null;
             },
 
             /**
@@ -886,7 +905,9 @@
                 if (forceUpdate || this._prevScrollTop !== this._$tbody[0].scrollTop) {
                     var firstVisibleRow = parseInt(this._$tbody[0].scrollTop / this._virtualRowHeight, 10);
                     var firstRenderedRow = firstVisibleRow - this._rowsBufferSize;
-                    if (firstRenderedRow < 0) firstRenderedRow = 0;
+                    if (firstRenderedRow < 0) {
+                        firstRenderedRow = 0;
+                    }
                     this._virtualRowRange.prevFirst = this._virtualRowRange.first;
                     this._virtualRowRange.prevLast = this._virtualRowRange.last;
                     this._virtualRowRange.first = firstRenderedRow;
@@ -910,7 +931,7 @@
 
                 var rtl = this._$table.css('direction') == 'rtl';
 
-                var $th = $(this._ieBugDragStart || e.target).closest("th"), th = $th[0];
+                var $th = $(this._ieBugDragStart || e.target).closest('th'), th = $th[0];
 
                 var previousElementSibling = $th[0].previousSibling;
                 while (previousElementSibling && previousElementSibling.nodeType != 1) {
@@ -942,16 +963,16 @@
              * @param {jQuery.Event} e event
              */
             _onMouseMoveColumnHeader: function (e) {
-                if (!this._resizableColumns) return;
+                if (this._resizableColumns) {
+                    //var rtl = this._$table.css('direction') == 'rtl';
 
-                var rtl = this._$table.css('direction') == 'rtl';
-
-                var col = this._getColumnByResizePosition(e);
-                var th = $(e.target).closest("th")[0];
-                if (!col || !this._columns.get(col).resizable) {
-                    th.style.cursor = '';
-                } else {
-                    th.style.cursor = 'e-resize';
+                    var col = this._getColumnByResizePosition(e);
+                    var th = $(e.target).closest('th')[0];
+                    if (!col || !this._columns.get(col).resizable) {
+                        th.style.cursor = '';
+                    } else {
+                        th.style.cursor = 'e-resize';
+                    }
                 }
             },
 
@@ -960,7 +981,7 @@
              * @param {jQuery.Event} e event
              */
             _onMouseLeaveColumnHeader: function (e) {
-                var th = $(e.target).closest("th")[0];
+                var th = $(e.target).closest('th')[0];
                 th.style.cursor = '';
             },
 
@@ -970,7 +991,7 @@
              */
             _onClickColumnHeader: function (e) {
                 if (!this._getColumnByResizePosition(e)) {
-                    var th = $(e.target).closest("th")[0];
+                    var th = $(e.target).closest('th')[0];
                     if (this._sortableColumns) {
                         var column = this._columns.get(th.columnName);
                         if (column && column.sortable) {
@@ -985,7 +1006,7 @@
              * @param {jQuery.Event} e event
              */
             _onStartDragColumnHeader: function (e) {
-                var col = this._getColumnByResizePosition(e);
+                var col = this._getColumnByResizePosition(e), column;
                 if (col) {
                     var column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
@@ -995,7 +1016,9 @@
 
                     var rtl = this._$table.css('direction') == 'rtl';
 
-                    if (this._$resizer) $(this._$resizer).remove();
+                    if (this._$resizer) {
+                        $(this._$resizer).remove();
+                    }
                     this._$resizer = $('<div></div>')
                         .addClass(this._resizerClassName)
                         .css({
@@ -1021,7 +1044,7 @@
                     posCol.left -= posRelative.left;
                     posCol.top -= posRelative.top;
                     posCol.top -= parseFloat(selectedTh.css('border-top-width')) || 0;
-                    var resizerWidth = this._$resizer.outerWidth()
+                    var resizerWidth = this._$resizer.outerWidth();
                     if (rtl) {
                         posCol.left -= Math.ceil((parseFloat(selectedTh.css('border-left-width')) || 0) / 2);
                         posCol.left -= Math.ceil(resizerWidth / 2);
@@ -1041,7 +1064,7 @@
                             'height': height
                         })
                         [0].columnName = selectedTh[0].columnName;
-                    try { this._$resizer[0].style.zIndex = ''; } catch (e) { }
+                    try { this._$resizer[0].style.zIndex = ''; } catch (err) { }
 
                     $(document).on('mousemove', this._onMouseMoveResizeAreaBound);
                     $(document).on('mouseup', this._onEndDragColumnHeaderBound);
@@ -1050,12 +1073,12 @@
 
                 } else if (this._movableColumns) {
 
-                    var th = $(this._ieBugDragStart || e.target).closest('th');
+                    var th = $(e.target).closest('th');
                     var column = this._columns.get(th[0].columnName);
                     if (column && column.movable) {
                         th[0].style.opacity = 0.35;
                         this._dragId = Math.random() * 0x9999999; // Recognize this ID on drop
-                        e.originalEvent.dataTransfer.setData("text", JSON.stringify({dragId: this._dragId, column: column.name}));
+                        e.originalEvent.dataTransfer.setData('text', JSON.stringify({dragId: this._dragId, column: column.name}));
                     } else {
                         e.preventDefault();
                     }
@@ -1080,7 +1103,7 @@
                 var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
                 posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                 posCol.left -= posRelative.left;
-                var resizerWidth = this._$resizer.outerWidth()
+                var resizerWidth = this._$resizer.outerWidth();
 
                 var actualX = e.pageX - posRelative.left;
                 var minX = posCol.left;
@@ -1090,16 +1113,20 @@
                     minX -= Math.ceil(resizerWidth / 2);
                     minX -= this._minColumnWidth;
                     minX -= (parseFloat(selectedTh.css('padding-left')) || 0) + (parseFloat(selectedTh.css('padding-right')) || 0);
-                    if (actualX > minX) actualX = minX;
+                    if (actualX > minX) {
+                        actualX = minX;
+                    }
                 } else {
                     minX += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
                     minX += this._minColumnWidth;
                     minX += (parseFloat(selectedTh.css('padding-left')) || 0) + (parseFloat(selectedTh.css('padding-right')) || 0);
-                    if (actualX < minX) actualX = minX;
+                    if (actualX < minX) {
+                        actualX = minX;
+                    }
                 }
 
-                this._$resizer.css('left', actualX + "px")
+                this._$resizer.css('left', actualX + 'px');
             },
 
             /**
@@ -1121,7 +1148,7 @@
                     var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
                     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                     posCol.left -= posRelative.left;
-                    var resizerWidth = this._$resizer.outerWidth()
+                    var resizerWidth = this._$resizer.outerWidth();
 
                     var actualX = e.pageX - posRelative.left;
                     var baseX = posCol.left, minX = posCol.left;
@@ -1133,7 +1160,9 @@
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX -= this._minColumnWidth;
-                        if (actualX > minX) actualX = minX;
+                        if (actualX > minX) {
+                            actualX = minX;
+                        }
                         width = baseX - actualX;
                     } else {
                         actualX -= (parseFloat(selectedTh.css('padding-left')) || 0) + (parseFloat(selectedTh.css('padding-right')) || 0);
@@ -1141,7 +1170,9 @@
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX += this._minColumnWidth;
-                        if (actualX < minX) actualX = minX;
+                        if (actualX < minX) {
+                            actualX = minX;
+                        }
                         width = actualX - baseX;
                     }
 
@@ -1156,19 +1187,23 @@
              * @param {jQuery.Event} e event
              */
             _onDragEnterColumnHeader: function (e) {
-                if (!this._movableColumns) return;
+                if (this._movableColumns) {
+                    var dataTransferred = e.originalEvent.dataTransfer.getData('text');
+                    if (dataTransferred) {
+                        dataTransferred = JSON.parse(dataTransferred);
+                    }
+                    else {
+                        dataTransferred = null; // WebKit does not provide the dataTransfer on dragenter?..
+                    }
 
-                var dataTransferred = e.originalEvent.dataTransfer.getData('text');
-                if (dataTransferred) dataTransferred = JSON.parse(dataTransferred);
-                else dataTransferred = null; // WebKit does not provide the dataTransfer on dragenter?..
+                    var th = $(e.target).closest('th');
+                    if (!dataTransferred ||
+                        (this._dragId == dataTransferred.dragId && th.columnName !== dataTransferred.column)) {
 
-                var th = $(e.target).closest('th');
-                if (!dataTransferred ||
-                    (this._dragId == dataTransferred.dragId && th.columnName !== dataTransferred.column)) {
-
-                    var column = this._columns.get(th[0].columnName);
-                    if (column && (column.movable || column != this._visibleColumns[0])) {
-                        $(th).addClass('drag-over');
+                        var column = this._columns.get(th[0].columnName);
+                        if (column && (column.movable || column != this._visibleColumns[0])) {
+                            $(th).addClass('drag-over');
+                        }
                     }
                 }
             },
@@ -1187,8 +1222,10 @@
              */
             _onDragLeaveColumnHeader: function (e) {
                 var th = $(e.target).closest('th');
-                if ($(th[0].firstChild).has(e.originalEvent.relatedTarget).length) return;
-                th.removeClass('drag-over');
+                if ( ! $(th[0].firstChild)
+                       .has(e.originalEvent.relatedTarget).length ) {
+                    th.removeClass('drag-over');
+                }
             },
 
             /**
@@ -1197,7 +1234,7 @@
              */
             _onDropColumnHeader: function (e) {
                 e.preventDefault();
-                var dataTransferred = JSON.parse(e.originalEvent.dataTransfer.getData("text"));
+                var dataTransferred = JSON.parse(e.originalEvent.dataTransfer.getData('text'));
                 var th = $(e.target).closest('th');
                 if (this._movableColumns && dataTransferred.dragId == this._dragId) {
                     var srcColName = dataTransferred.column,
@@ -1216,16 +1253,17 @@
              * @returns {DGTable} self
              */
             _clearSortArrows: function () {
-                if (!this._$table) return this;
-                var sortedColumns = this._$table.find('>thead>tr>th.sorted');
-                var arrows = sortedColumns.find('>div>.sort-arrow');
-                _.forEach(arrows, _.bind(function(arrow){
-                    var divWidth = arrow.parentNode.scrollWidth;
-                    var arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
-                    this._resizeColumnElements(arrow.parentNode.parentNode.cellIndex, divWidth - arrowProposedWidth);
-                    arrow.parentNode.removeChild(arrow);
-                }, this));
-                sortedColumns.removeClass('sorted').removeClass('desc');
+                if (this._$table) {
+                    var sortedColumns = this._$table.find('>thead>tr>th.sorted');
+                    var arrows = sortedColumns.find('>div>.sort-arrow');
+                    _.forEach(arrows, _.bind(function(arrow){
+                        var divWidth = arrow.parentNode.scrollWidth;
+                        var arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
+                        this._resizeColumnElements(arrow.parentNode.parentNode.cellIndex, divWidth - arrowProposedWidth);
+                        arrow.parentNode.removeChild(arrow);
+                    }, this));
+                    sortedColumns.removeClass('sorted').removeClass('desc');
+                }
                 return this;
             },
 
@@ -1237,8 +1275,8 @@
              */
             _showSortArrow: function (column, descending) {
 
-                var arrow = document.createElement("span");
-                arrow.className = "sort-arrow";
+                var arrow = document.createElement('span');
+                arrow.className = 'sort-arrow';
 
                 var col = this._columns.get(column).element;
                 col.addClass('sorted');
@@ -1257,8 +1295,8 @@
              * @returns {DGTable} self
              */
             _resizeColumnElements: function (cellIndex, width) {
-                var headers = this._$table.find(">thead>tr>th");
-                headers[cellIndex].firstChild.style.width = width + "px";
+                var headers = this._$table.find('>thead>tr>th');
+                headers[cellIndex].firstChild.style.width = width + 'px';
                 var col = this._columns.get(headers[cellIndex].columnName);
                 col.width = width;
                 if (cellIndex === headers.length - 1) {
@@ -1269,7 +1307,7 @@
                 var tbodyChildren = this._$tbody[0].childNodes;
                 for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                     tr = tbodyChildren[i];
-                    if (tr.nodeType != 1) continue;
+                    if (tr.nodeType == 1) continue;
                     tr.childNodes[cellIndex].firstChild.style.width = width;
                 }
 
@@ -1305,121 +1343,122 @@
                 var self = this;
                 var topRowHeight = 0;
 
-                if (this._virtualScrollTopRow) {
-                    topRowHeight = parseFloat(this._virtualScrollTopRow.style.height);
+                if (self._virtualScrollTopRow) {
+                    topRowHeight = parseFloat(self._virtualScrollTopRow.style.height);
                 }
 
-                this._unbindHeaderEvents();
+                self._unbindHeaderEvents();
 
-                var headerRow = document.createElement('tr');
-                for (var i = 0, column, th, div; i < this._visibleColumns.length; i++) {
-                    column = this._visibleColumns[i];
+                var headerRow = document.createElement('tr'), ieDragDropHandler;
+                if (hasIeDragAndDropBug) {
+                    ieDragDropHandler = function(evt) {
+                        evt.preventDefault();
+                        this.dragDrop();
+                        return false;
+                    };
+                }
+                for (var i = 0, column, th, div; i < self._visibleColumns.length; i++) {
+                    column = self._visibleColumns[i];
                     if (column.visible) {
                         div = document.createElement('div');
                         div.style.width = column.width + 'px';
                         div.innerHTML = column.label;
                         th = document.createElement('th');
                         th.draggable = true;
-                        if (this._sortableColumns && column.sortable) th.className = 'sortable';
+                        if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
                         th.appendChild(div);
                         headerRow.appendChild(th);
 
-                        this._visibleColumns[i].element = $(th);
+                        self._visibleColumns[i].element = $(th);
 
-                        $(th).on('mousemove', _.bind(this._onMouseMoveColumnHeader, this))
-                            .on('mouseleave', _.bind(this._onMouseLeaveColumnHeader, this))
-                            .on('dragstart', _.bind(this._onStartDragColumnHeader, this))
-                            .on('click', _.bind(this._onClickColumnHeader, this));
-                        $(div).on('dragenter', _.bind(this._onDragEnterColumnHeader, this))
-                            .on('dragover', _.bind(this._onDragOverColumnHeader, this))
-                            .on('dragleave', _.bind(this._onDragLeaveColumnHeader, this))
-                            .on('drop', _.bind(this._onDropColumnHeader, this));
+                        $(th).on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
+                            .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
+                            .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
+                            .on('click', _.bind(self._onClickColumnHeader, self));
+                        $(div).on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
+                            .on('dragover', _.bind(self._onDragOverColumnHeader, self))
+                            .on('dragleave', _.bind(self._onDragLeaveColumnHeader, self))
+                            .on('drop', _.bind(self._onDropColumnHeader, self));
 
                         if (hasIeDragAndDropBug) {
-                            $(th).on('selectstart', _.bind(function(evt) {
-                                evt.preventDefault();
-                                self._ieBugDragStart = this.firstChild;
-                                th.dragDrop();
-                                self._ieBugDragStart = null;
-                                return false;
-                            }, th));
+                            $(th).on('selectstart', _.bind(ieDragDropHandler, th));
                         }
                     }
                 }
 
-                if (this._$table && this._virtualTable) {
-                    this._$tbody.off('scroll');
-                    this._$table.remove();
+                if (self._$table && self._virtualTable) {
+                    self._$tbody.off('scroll');
+                    self._$table.remove();
                 }
 
-                if (this.$el.css('position') == 'static') {
-                    this.$el.css('position', 'relative');
+                if (self.$el.css('position') == 'static') {
+                    self.$el.css('position', 'relative');
                 }
 
                 var table, thead, tbody;
 
-                if (this._virtualTable || !this._$table) {
+                if (self._virtualTable || !self._$table) {
                     var fragment = document.createDocumentFragment();
-                    table = document.createElement("table");
-                    table.className = this._tableClassName;
+                    table = document.createElement('table');
+                    table.className = self._tableClassName;
                     fragment.appendChild(table);
 
-                    thead = document.createElement("thead");
+                    thead = document.createElement('thead');
                     thead.style.display = 'block';
                     if (hasIeTableDisplayBlockBug) {
                         $(thead).css({
-                            'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'float': self.$el.css('direction') == 'rtl' ? 'right' : 'left',
                             'clear': 'both'
                         });
                     }
                     table.appendChild(thead);
 
-                    tbody = document.createElement("tbody");
-                    tbody.style.maxHeight = this._height + "px";
+                    tbody = document.createElement('tbody');
+                    tbody.style.maxHeight = self._height + 'px';
                     tbody.style.display = 'block';
                     tbody.style.overflowY = 'auto';
                     tbody.style.overflowX = 'hidden';
                     if (hasIeTableDisplayBlockBug) {
                         $(tbody).css({
-                            'float': this.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'float': self.$el.css('direction') == 'rtl' ? 'right' : 'left',
                             'clear': 'both'
                         });
                     }
                     table.appendChild(tbody);
 
-                    this.el.appendChild(fragment);
+                    self.el.appendChild(fragment);
 
-                    this._$table = $(table);
-                    this._$tbody = $(tbody);
-                    this._$thead = $(thead);
+                    self._$table = $(table);
+                    self._$tbody = $(tbody);
+                    self._$thead = $(thead);
                 } else {
-                    table = this._$table[0];
-                    tbody = this._$tbody[0];
-                    thead = this._$thead[0];
+                    table = self._$table[0];
+                    tbody = self._$tbody[0];
+                    thead = self._$thead[0];
                 }
 
-                if (this._virtualTable && !this._virtualRowHeight) {
-                    var tr = document.createElement("tr"),
-                        td = document.createElement("td");
+                if (self._virtualTable && !self._virtualRowHeight) {
+                    var tr = document.createElement('tr'),
+                        td = document.createElement('td');
                     td.innerHTML = '0';
                     tr.appendChild(td);
-                    tr.style.visibility = "hidden";
-                    tr.style.position = "absolute";
+                    tr.style.visibility = 'hidden';
+                    tr.style.position = 'absolute';
                     tbody.appendChild(tr);
-                    this._virtualRowHeight = $(tr).outerHeight();
+                    self._virtualRowHeight = $(tr).outerHeight();
                     tbody.removeChild(tr);
-                    this._virtualVisibleRows = parseInt(this._height / this._virtualRowHeight, 10);
+                    self._virtualVisibleRows = parseInt(self._height / self._virtualRowHeight, 10);
                 }
 
-                var rows = this._filteredRows || this._rows;
+                var rows = self._filteredRows || self._rows;
 
-                if (this._virtualTable) {
-                    var last = this._virtualVisibleRows + this._rowsBufferSize;
+                if (self._virtualTable) {
+                    var last = self._virtualVisibleRows + self._rowsBufferSize;
                     if (last > rows.length) {
                         last = rows.length;
                     }
-                    this._virtualRowRange = {
+                    self._virtualRowRange = {
                         first: 0,
                         last: last,
                         prevFirst: 0,
@@ -1430,9 +1469,9 @@
                 var bodyFragment = document.createDocumentFragment(),
                     tr, td, div;
 
-                if (this._virtualTable) {
+                if (self._virtualTable) {
                     // Build first row (for virtual table top scroll offset)
-                    tr = this._virtualScrollTopRow = document.createElement('tr')
+                    tr = self._virtualScrollTopRow = document.createElement('tr');
                     tr.style.height = topRowHeight + 'px';
                     bodyFragment.appendChild(tr);
                 }
@@ -1442,25 +1481,25 @@
                     firstDisplayedRow,
                     lastDisplayedRow;
 
-                if (this._virtualTable) {
-                    firstDisplayedRow = this._virtualRowRange.first;
-                    lastDisplayedRow = this._virtualRowRange.last;
+                if (self._virtualTable) {
+                    firstDisplayedRow = self._virtualRowRange.first;
+                    lastDisplayedRow = self._virtualRowRange.last;
                 } else {
                     firstDisplayedRow = 0;
                     lastDisplayedRow = rows.length;
                 }
 
-                for (var j = firstDisplayedRow, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = rows.length;
+                for (var j = firstDisplayedRow, row, colIndex, column, colCount = self._visibleColumns.length, rowCount = rows.length;
                      j < rowCount && displayCount < lastDisplayedRow;
                      j++) {
                     row = rows[j];
                     tr = document.createElement('tr');
-                    if (this._virtualTable) tr.setAttribute('data-row', j);
+                    if (self._virtualTable) tr.setAttribute('data-row', j);
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
-                        column = this._visibleColumns[colIndex];
+                        column = self._visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.width + 'px';
-                        div.innerHTML = this._formatter(row[column.name], column.name);
+                        div.innerHTML = self._formatter(row[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
                         td.appendChild(div);
@@ -1470,10 +1509,10 @@
                     displayCount++;
                 }
 
-                if (this._virtualTable) {
+                if (self._virtualTable) {
                     // Build last row (for virtual table bottom scroll offset)
-                    tr = this._virtualScrollBottomRow = document.createElement('tr');
-                    tr.style.height = (this._virtualRowHeight * Math.max(0, rows.length - this._virtualVisibleRows - this._rowsBufferSize) - topRowHeight) + 'px';
+                    tr = self._virtualScrollBottomRow = document.createElement('tr');
+                    tr.style.height = (self._virtualRowHeight * Math.max(0, rows.length - self._virtualVisibleRows - self._rowsBufferSize) - topRowHeight) + 'px';
                     bodyFragment.appendChild(tr);
                 }
 
@@ -1485,13 +1524,13 @@
                 try { tbody.innerHTML = ''; } catch (e) { /* IE8 */ tbody.textContent = ''; }
                 tbody.appendChild(bodyFragment);
 
-                this._updateLastCellWidthFromScrollbar(true);
+                self._updateLastCellWidthFromScrollbar(true);
 
-                if (this._virtualTable) {
-                    this._adjustVirtualTableScrollHeight();
+                if (self._virtualTable) {
+                    self._adjustVirtualTableScrollHeight();
                 }
 
-                return this;
+                return self;
             },
 
             /**
@@ -1583,8 +1622,8 @@
                 } else {
                     var topHeight = this._virtualRowRange.first * this._virtualRowHeight;
                     var bottomHeight = bufferHeight - topHeight;
-                    this._virtualScrollTopRow.style.height = topHeight + "px";
-                    this._virtualScrollBottomRow.style.height = bottomHeight + "px";
+                    this._virtualScrollTopRow.style.height = topHeight + 'px';
+                    this._virtualScrollBottomRow.style.height = bottomHeight + 'px';
                 }
             },
 
@@ -1618,15 +1657,15 @@
              * @param {HTMLRowElement} rowToInsertBefore DOM row that the new row will precede
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
-                var tr = document.createElement("tr");
-                tr.setAttribute("data-row", index);
+                var tr = document.createElement('tr');
+                tr.setAttribute('data-row', index);
                 var rows = this._filteredRows || this._rows;
                 for (var i = 0, col, div, td; i < this._visibleColumns.length; i++) {
                     col = this._visibleColumns[i];
-                    div = document.createElement("div");
-                    div.style.width = col.width + "px";
+                    div = document.createElement('div');
+                    div.style.width = col.width + 'px';
                     div.innerHTML = this._formatter(rows[index][col.name], col.name);
-                    td = document.createElement("td");
+                    td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
                     td.appendChild(div);
                     tr.appendChild(td);
@@ -1668,12 +1707,12 @@
              * @param {int} firstRow index of the first row rendered
              */
             _refreshVirtualRows: function (firstRow) {
-                var trs = this._$tbody[0].getElementsByTagName("tr");
+                var trs = this._$tbody[0].getElementsByTagName('tr');
                 var rows = this._filteredRows || this._rows;
                 for (var i = 1, tr, tdList, j, div, col, colName; i < trs.length - 1; i++) {
                     tr = trs[i];
-                    tr.setAttribute("data-row", firstRow + i - 1);
-                    tdList = $("td>div", tr);
+                    tr.setAttribute('data-row', firstRow + i - 1);
+                    tdList = $('td>div', tr);
                     for (j = 0; j < tdList.length; j++) {
                         div = tdList[j];
                         col = this._visibleColumns[j];
@@ -1688,7 +1727,7 @@
              * @private
              */
             _updateTableWidth: function () {
-                var cols = this._$table.find(">thead>tr>th");
+                var cols = this._$table.find('>thead>tr>th');
                 var newWidth = 0;
                 for (var i = 0; i < cols.length; i++) {
                     newWidth += $(cols[i])[0].offsetWidth;
@@ -1705,9 +1744,12 @@
      * @param {String} column
      * @param {boolean=false} descending
      * */
-    var DGTable_ColumnSortOptions = {
-        /** @expose */ column: null,
-        /** @expose */ descending: null
+    var COLUMN_SORT_OPTIONS = {
+        /** @expose */
+        column: null,
+        
+        /** @expose */
+        descending: null
     };
 
     /**
@@ -1720,56 +1762,83 @@
      * @param {boolean=true} visible
      * @param {String} cellClasses
      * */
-    var DGTable_ColumnOptions = {
-        /** @expose */ name: null,
-        /** @expose */ label: null,
-        /** @expose */ width: null,
-        /** @expose */ resizable: null,
-        /** @expose */ sortable: null,
-        /** @expose */ visible: null,
-        /** @expose */ cellClasses: null
+    var COLUMN_OPTIONS = {
+        /** @expose */
+        name: null,
+        
+        /** @expose */
+        label: null,
+        
+        /** @expose */
+        width: null,
+        
+        /** @expose */
+        resizable: null,
+        
+        /** @expose */
+        sortable: null,
+        
+        /** @expose */
+        visible: null,
+        
+        /** @expose */
+        cellClasses: null
+    };
+    
+    var INIT_OPTIONS = {
+        /** @expose */
+        columns: null,
+        
+        /** @expose */
+        height: null,
+        
+        /** @expose */
+        virtualTable: null,
+        
+        /** @expose */
+        resizableColumns: null,
+        
+        /** @expose */
+        movableColumns: null,
+        
+        /** @expose */
+        sortableColumns: null,
+        
+        /** @expose */
+        cellClasses: null,
+        
+        /** @expose */
+        sortColumn: null,
+        
+        /** @expose */
+        formatter: null,
+        
+        /** @expose */
+        rowsBufferSize: null,
+        
+        /** @expose */
+        minColumnWidth: null,
+        
+        /** @expose */
+        resizeAreaWidth: null,
+        
+        /** @expose */
+        comparatorCallback: null,
+        
+        /** @expose */
+        resizerClassName: null,
+        
+        /** @expose */
+        tableClassName: null,
+        
+        /** @expose */
+        className: null,
+        
+        /** @expose */
+        tagName: null
     };
 
-    /**
-     * @typedef
-     * @param {DGTable.ColumnOptions[]} columns
-     * @param {int} height
-     * @param {boolean=true} virtualTable
-     * @param {boolean=true} resizableColumns
-     * @param {boolean=true} movableColumns
-     * @param {int=1} sortableColumns
-     * @param {String} cellClasses
-     * @param {String|String[]|DGTable_ColumnSortOptions|DGTable_ColumnSortOptions[]} sortColumn
-     * @param {Function(Object,string)?} formatter
-     * @param {int=10} rowsBufferSize
-     * @param {int=35} minColumnWidth
-     * @param {int=8} resizeAreaWidth
-     * @param {Function(string}boolean)} comparatorCallback
-     * @param {String?} resizerClassName
-     * @param {String?} tableClassName
-     * @param {String?} className
-     * @param {String?} tagName
-     * */
-    var DGTable_InitOptions = {
-        /** @expose */ columns: null,
-        /** @expose */ height: null,
-        /** @expose */ virtualTable: null,
-        /** @expose */ resizableColumns: null,
-        /** @expose */ movableColumns: null,
-        /** @expose */ sortableColumns: null,
-        /** @expose */ cellClasses: null,
-        /** @expose */ sortColumn: null,
-        /** @expose */ formatter: null,
-        /** @expose */ rowsBufferSize: null,
-        /** @expose */ minColumnWidth: null,
-        /** @expose */ resizeAreaWidth: null,
-        /** @expose */ comparatorCallback: null,
-        /** @expose */ resizerClassName: null,
-        /** @expose */ tableClassName: null,
-        /** @expose */ className: null,
-        /** @expose */ tagName: null
-    };
+    /** @expose */
+    global.DGTable = DGTable;
 
-    /** @expose */ window.DGTable = DGTable;
-
-})();
+})(this);

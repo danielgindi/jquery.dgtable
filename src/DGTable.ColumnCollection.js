@@ -21,8 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+/* global DGTable */
 DGTable.ColumnCollection = (function () {
-    "use strict";
+    'use strict';
 
     // Define class RowCollection
     var ColumnCollection = function() {
@@ -30,9 +31,9 @@ DGTable.ColumnCollection = (function () {
     };
 
     // Inherit Array
-    ColumnCollection.prototype = new Array();
+    ColumnCollection.prototype = [];
 
-    ColumnCollection.prototype.initialize = function(options) {
+    ColumnCollection.prototype.initialize = function() {
 
     };
 
@@ -43,7 +44,9 @@ DGTable.ColumnCollection = (function () {
      */
     ColumnCollection.prototype.get = function(column) {
         for (var i = 0, len = this.length; i < len; i++) {
-            if (this[i].name == column) return this[i];
+            if (this[i].name == column) {
+                return this[i];
+            }
         }
         return null;
     };
@@ -55,7 +58,9 @@ DGTable.ColumnCollection = (function () {
      */
     ColumnCollection.prototype.indexOf = function(column) {
         for (var i = 0, len = this.length; i < len; i++) {
-            if (this[i].name == column) return i;
+            if (this[i].name == column) {
+                return i;
+            }
         }
         return -1;
     };
@@ -67,7 +72,9 @@ DGTable.ColumnCollection = (function () {
      */
     ColumnCollection.prototype.getByOrder = function(order) {
         for (var i = 0, len = this.length; i < len; i++) {
-            if (this[i].order == order) return this[i];
+            if (this[i].order == order) {
+                return this[i];
+            }
         }
         return null;
     };
@@ -125,20 +132,21 @@ DGTable.ColumnCollection = (function () {
      * @returns {ColumnCollection} self
      */
     ColumnCollection.prototype.moveColumn = function (src, dest) {
-        if (!src || !dest) return this;
-        var srcOrder = src.order, destOrder = dest.order, i, col;
-        if (srcOrder < destOrder) {
-            for (i = srcOrder + 1; i <= destOrder; i++) {
-                col = this.getByOrder(i);
-                col.order--;
+        if (src && dest) {
+            var srcOrder = src.order, destOrder = dest.order, i, col;
+            if (srcOrder < destOrder) {
+                for (i = srcOrder + 1; i <= destOrder; i++) {
+                    col = this.getByOrder(i);
+                    col.order--;
+                }
+            } else {
+                for (i = srcOrder - 1; i >= destOrder; i--) {
+                    col = this.getByOrder(i);
+                    col.order++;
+                }
             }
-        } else {
-            for (i = srcOrder - 1; i >= destOrder; i--) {
-                col = this.getByOrder(i);
-                col.order++;
-            }
+            src.order = destOrder;
         }
-        src.order = destOrder;
         return this;
     };
 
