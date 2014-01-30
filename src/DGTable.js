@@ -1307,7 +1307,7 @@
                 var tbodyChildren = this._$tbody[0].childNodes;
                 for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                     tr = tbodyChildren[i];
-                    if (tr.nodeType == 1) continue;
+                    if (tr.nodeType !== 1) continue;
                     tr.childNodes[cellIndex].firstChild.style.width = width;
                 }
 
@@ -1548,7 +1548,7 @@
                         var tbodyChildren = this._$tbody[0].childNodes;
                         for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                             tr = tbodyChildren[i];
-                            if (tr.nodeType != 1) continue;
+                            if (tr.nodeType !== 1) continue;
                             tr.childNodes[lastColIndex].firstChild.style.width = lastColWidth;
                         }
                     }
