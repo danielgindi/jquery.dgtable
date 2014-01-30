@@ -6,14 +6,19 @@ This is a table View for Backbone + jQuery, which is meant to be high-performanc
 * Sorting by more than one column
 * Moving columns
 * Resizing columns
+
+Other features implemented are:
+* Mix absolute column widths with relative column widths
 * Virtual table mode (to supply high performance with hundreds of thousands of rows). This is the default.
 * Non-virtual table mode is fully supported, but for giant amounts of data it is not recommended.
+* Option to set a fixed width for the table so resizing (relative) columns will still make sure the table will not be less (and/or more) than the specified width.
 
 A few notes:
 * TODO: Handle row height correctly when rows have different height in virtual mode.
-* TODO: Support specifying column widths using percentages, and mixing percentages with fixed sizes (i.e. a checkbox column with a fixed width, the others relative to full width of the table).
-* TODO: Allow reading the current widths (fixed and percentages) of the columns.
-* THINKABOUT: Showing the full data of the cell when hovering (or touching), in case of the cell overflowing.
+* TODO: Take care of scrollbars when table is fixed width and columns overflow it
+* TODO: Show the full data of the cell when hovering (or touching), in case of the cell overflowing.
+* TODO: Take care of vertical scrollbar location bug in IE
+* TODO: When the width of a fixed column is increased for sort-arrow, re-calculate the relative sizes of the other columns
 
 ## Dev environment
 

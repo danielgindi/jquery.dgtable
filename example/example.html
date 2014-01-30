@@ -11,7 +11,7 @@
 <script type="text/javascript" src="../src/DGTable.js"></script>
 <script type="text/javascript" src="../src/DGTable.ColumnCollection.js"></script>
 <script type="text/javascript" src="../src/DGTable.RowCollection.js"></script>
-<!-- <script type="text/javascript" src="../compiled/DGTable.min.js"></script> -->
+<!-- <script type="text/javascript" src="../release/DGTable.min.js"></script> -->
 <script>
     var sampleData = [
         { first: 'Pearl', last: 'Button', address: '69 Hendford Hill', city: 'MOSS-SIDE' },
@@ -332,14 +332,14 @@
 
     <script>
         var table = new DGTable({
-            columns : [
-                {name : 'first', label: 'Locked column', movable: false},
-                {name : 'last', label: 'Test data'},
-                {name : 'address', label: 'More'},
-                {name : 'city', label: 'Example'}
+            columns: [
+                {name: 'first', label: 'Locked column', movable: false, resizable: false},
+                {name: 'last', label: 'Test data', width: '30%'},
+                {name: 'address', label: 'More', width: '30%'},
+                {name: 'city', label: 'Example', width: '40%'}
             ],
-            height : 500,
-            formatter : function (val, colName) {
+            height: 500,
+            formatter: function (val, colName) {
                 if (colName === 'address') {
                     return '<i>' + val + '</i>';
                 }
