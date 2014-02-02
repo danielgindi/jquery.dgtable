@@ -17,7 +17,6 @@ A few notes:
 * TODO: Handle row height correctly when rows have different height in virtual mode.
 * TODO: Take care of scrollbars when table is fixed width and columns overflow it
 * TODO: Show the full data of the cell when hovering (or touching), in case of the cell overflowing.
-* TODO: Take care of vertical scrollbar location bug in IE
 * TODO: When the width of a fixed column is increased for sort-arrow, re-calculate the relative sizes of the other columns
 
 ## Dev environment
