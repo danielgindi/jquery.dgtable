@@ -44,7 +44,7 @@
             tagName: 'div',
 			
 			/** @expose */
-            VERSION: '0.2.0',
+            VERSION: '0.2.2',
 
             /**
              * @constructs
@@ -1165,7 +1165,7 @@
              * @param {boolean?} forceUpdate
              */
             _onVirtualTableScrolled: function (forceUpdate) {
-                if (forceUpdate || this._prevScrollTop !== this._$tbody[0].scrollTop) {
+                if (forceUpdate === true || this._prevScrollTop !== this._$tbody[0].scrollTop) {
                     var firstVisibleRow = parseInt(this._$tbody[0].scrollTop / this._virtualRowHeight, 10);
                     var firstRenderedRow = firstVisibleRow - this._rowsBufferSize;
                     if (firstRenderedRow < 0) {
@@ -1837,7 +1837,7 @@
                     this._scrollbarWidth = scrollbarWidth;
                     if (this._scrollbarWidth > 0) {
                         var lastColIndex = this._visibleColumns.length - 1;
-                        var lastColWidth = (this._visibleColumns[lastColIndex].width - this._scrollbarWidth) + 'px';
+                        var lastColWidth = (this._visibleColumns[lastColIndex].actualWidth - this._scrollbarWidth) + 'px';
                         var tbodyChildren = this._$tbody[0].childNodes;
                         for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                             tr = tbodyChildren[i];
