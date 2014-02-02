@@ -153,7 +153,7 @@
 
                 // Prepare columns
                 var columns = new DGTable.ColumnCollection();
-                for (i = 0, column, columnData, order = 0; i < options.columns.length; i++) {
+                for (i = 0, order = 0; i < options.columns.length; i++) {
                     columnData = options.columns[i];
                     column = this._initColumnFromData(columnData);
                     if (columnData.order !== undefined) {
@@ -182,7 +182,7 @@
                         }
                     } else if (options.sortColumn instanceof Array) {
                         var cols = [];
-                        for (i = 0, len = options.sortColumn.length, col, column; i < len; i++) {
+                        for (i = 0, len = options.sortColumn.length, column; i < len; i++) {
                             col = options.sortColumn[i];
                             col = col.column !== undefined ? col : { column: col, descending: false };
                             column = this._columns.get(col.column);
@@ -1194,7 +1194,7 @@
 
                 var rtl = this._$table.css('direction') == 'rtl';
 
-                var $th = $(this._ieBugDragStart || e.target).closest('th'), th = $th[0];
+                var $th = $(e.target).closest('th'), th = $th[0];
 
                 var previousElementSibling = $th[0].previousSibling;
                 while (previousElementSibling && previousElementSibling.nodeType != 1) {
@@ -1271,9 +1271,8 @@
             _onStartDragColumnHeader: function (e) {
                 var col = this._getColumnByResizePosition(e), column;
                 if (col) {
-                    var column = this._columns.get(col);
+                    column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
-                        e.preventDefault();
                         return false;
                     }
 
@@ -1337,7 +1336,7 @@
                 } else if (this._movableColumns) {
 
                     var th = $(e.target).closest('th');
-                    var column = this._columns.get(th[0].columnName);
+                    column = this._columns.get(th[0].columnName);
                     if (column && column.movable) {
                         th[0].style.opacity = 0.35;
                         this._dragId = Math.random() * 0x9999999; // Recognize this ID on drop
@@ -1351,6 +1350,8 @@
                     e.preventDefault();
 
                 }
+
+                return undefined;
             },
 
             /**
@@ -1642,6 +1643,8 @@
 
                 self._unbindHeaderEvents();
 
+                var i, row, colIndex, column, colCount, rowCount, div, tr, th, td;
+
                 var headerRow = document.createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
                     ieDragDropHandler = function(evt) {
@@ -1650,7 +1653,7 @@
                         return false;
                     };
                 }
-                for (var i = 0, column, th, div; i < self._visibleColumns.length; i++) {
+                for (i = 0; i < self._visibleColumns.length; i++) {
                     column = self._visibleColumns[i];
                     if (column.visible) {
                         div = document.createElement('div');
@@ -1732,8 +1735,8 @@
                 }
 
                 if (self._virtualTable && !self._virtualRowHeight) {
-                    var tr = document.createElement('tr'),
-                        td = document.createElement('td');
+                    tr = document.createElement('tr');
+                    td = document.createElement('td');
                     td.innerHTML = '0';
                     tr.appendChild(td);
                     tr.style.visibility = 'hidden';
@@ -1759,8 +1762,7 @@
                     };
                 }
 
-                var bodyFragment = document.createDocumentFragment(),
-                    tr, td, div;
+                var bodyFragment = document.createDocumentFragment();
 
                 if (self._virtualTable) {
                     // Build first row (for virtual table top scroll offset)
@@ -1782,12 +1784,12 @@
                     lastDisplayedRow = rows.length;
                 }
 
-                for (var j = firstDisplayedRow, row, colIndex, column, colCount = self._visibleColumns.length, rowCount = rows.length;
-                     j < rowCount && displayCount < lastDisplayedRow;
-                     j++) {
-                    row = rows[j];
+                for (i = firstDisplayedRow, colCount = self._visibleColumns.length, rowCount = rows.length;
+                     i < rowCount && displayCount < lastDisplayedRow;
+                     i++) {
+                    row = rows[i];
                     tr = document.createElement('tr');
-                    if (self._virtualTable) tr.setAttribute('data-row', j);
+                    if (self._virtualTable) tr.setAttribute('data-row', i);
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = self._visibleColumns[colIndex];
                         div = document.createElement('div');
@@ -1947,7 +1949,7 @@
              * Add a new row to the DOM
              * @private
              * @param {int} index which row in the RowCollection to add to the DOM
-             * @param {HTMLRowElement} rowToInsertBefore DOM row that the new row will precede
+             * @param {HTMLElement} rowToInsertBefore DOM row that the new row will precede
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement('tr');
@@ -2050,7 +2052,7 @@
     // It's a shame the Google Closure Compiler does not support exposing a nested @param
 
     /**
-     * @typedef
+     * @typedef COLUMN_WIDTH_MODE
      * */
     var COLUMN_WIDTH_MODE = {
         /** 
@@ -2076,7 +2078,7 @@
     };
 
     /**
-     * @typedef
+     * @typedef COLUMN_SORT_OPTIONS
      * */
     var COLUMN_SORT_OPTIONS = {
         /**
@@ -2093,7 +2095,7 @@
     };
 
     /**
-     * @typedef
+     * @typedef COLUMN_OPTIONS
      * */
     var COLUMN_OPTIONS = {
         /**
@@ -2140,7 +2142,7 @@
     };
 
     /**
-     * @typedef
+     * @typedef INIT_OPTIONS
      * @param {COLUMN_OPTIONS[]} columns
      * @param {int} height
      * @param {boolean=true} virtualTable
@@ -2223,6 +2225,31 @@
         /** @expose */
         tagName: null
     };
+
+    /**
+     * @typedef {{
+     *  currentTarget: Element,
+     *  data: Object.<string, *>,
+     *  delegateTarget: Element,
+     *  isDefaultPrevented: boolean,
+     *  isImmediatePropagationStopped: boolean,
+     *  isPropagationStopped: boolean,
+     *  namespace: string,
+     *  originalEvent: Event,
+     *  pageX: Number,
+     *  pageY: Number,
+     *  preventDefault: Function,
+     *  props: Object.<string, *>,
+     *  relatedTarget: Element,
+     *  result: *,
+     *  stopImmediatePropagation: Function,
+     *  stopPropagation: Function,
+     *  target: Element,
+     *  timeStamp: Number,
+     *  type: string,
+     *  which: Number
+     * }} jQuery.Event
+     * */
 
     /** @expose */
     global.DGTable = DGTable;
