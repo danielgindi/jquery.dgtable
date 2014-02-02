@@ -40,19 +40,13 @@ DGTable.RowCollection = (function () {
 
         options = options || {};
 
-        /**
-         * @private
-         * @field {String} filterColumn */
+        /** @field {String} filterColumn */
         this.filterColumn = null;
 
-        /**
-         * @private
-         * @field {String} filterString */
+        /** @field {String} filterString */
         this.filterString = null;
 
-        /**
-         * @private
-         * @field {Boolean} filterCaseSensitive */
+        /** @field {Boolean} filterCaseSensitive */
         this.filterCaseSensitive = false;
 
         /** @field {string} sortColumn */
