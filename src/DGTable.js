@@ -1126,7 +1126,11 @@
                     var self = this;
                     var worker = new Worker(url);
                     var listener = function (evt) {
-                        self.addRows(evt.data.rows, evt.data.append);
+                        if (evt.data.append) {
+                            self.addRows(evt.data.rows);
+                        } else {
+                            self.setRows(evt.data.rows);
+                        }
                     };
                     worker.addEventListener('message', listener, false);
                     if (!this.workerListeners) {
