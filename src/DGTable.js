@@ -29,6 +29,7 @@
     var ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
     var hasIeTableDisplayBlockBug = ieVersion && ieVersion < 10;
     var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
+    var createElement = _.bind(document.createElement, document);
 
     /**
      * @class DGTable
@@ -59,6 +60,7 @@
 
                 this._onMouseMoveResizeAreaBound = _.bind(this._onMouseMoveResizeArea, this);
                 this._onEndDragColumnHeaderBound = _.bind(this._onEndDragColumnHeader, this);
+                this._onTableScrolledHorizontallyBound = _.bind(this._onTableScrolledHorizontally, this);
 
                 this.$el.on('dragend', this._onEndDragColumnHeaderBound);
 
@@ -109,6 +111,11 @@
 
                 /**
                  * @private
+                 * @field {boolean} _adjustColumnWidthForSortArrow */
+                this._adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
+
+                /**
+                 * @private
                  * @field {String} _cellClasses */
                 this._cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
@@ -129,17 +136,17 @@
 
                 /**
                  * @private
-                 * @field {Function(boolean)} _autoWidth */
-                this._autoWidth = options.autoWidth === undefined ? false : !!options.autoWidth;
+                 * @field {boolean} _width */
+                this._width = options.width === undefined ? DGTable.Width.NONE : options.width;
 
                 /**
                  * @private
-                 * @field {Function(boolean)} _relativeWidthGrowsToFillWidth */
+                 * @field {boolean} _relativeWidthGrowsToFillWidth */
                 this._relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
 
                 /**
                  * @private
-                 * @field {Function(boolean)} _relativeWidthShrinksToFillWidth */
+                 * @field {boolean} _relativeWidthShrinksToFillWidth */
                 this._relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
                 /**
@@ -319,7 +326,7 @@
                         this._prevScrollTop = this._$tbody[0].scrollTop;
                     }
                     
-                    if (this._autoWidth) {
+                    if (this._width == DGTable.Width.AUTO) {
                         // We need to do this to return to the specified widths instead. The arrows added to the column widths...
                         this._clearSortArrows();
                     }
@@ -336,14 +343,18 @@
 
                     if (this._virtualTable) {
                         this._$tbody.on('scroll', _.bind(this._onVirtualTableScrolled, this));
-                        this._onVirtualTableScrolled(true);
+                        this._onVirtualTableScrolled(null, true);
                     }
 
                     this._updateTableWidth();
 
+
                     // Show sort arrows
                     for (var i = 0; i < this._rows.sortColumn.length; i++) {
                         this._showSortArrow(this._rows.sortColumn[i].column, this._rows.sortColumn[i].descending);
+                    }
+                    if (this._adjustColumnWidthForSortArrow) {
+                        this.tableWidthChanged(true);
                     }
 
                     this._dataAppended = false;
@@ -513,8 +524,10 @@
                             fromPos = srcOrder;
                         th[0].parentNode.insertBefore(th[fromPos], th[beforePos]);
 
-                        var srcWidth = (this._visibleColumns[srcOrder].actualWidth - ((srcOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
-                        var destWidth = (this._visibleColumns[destOrder].actualWidth - ((destOrder == th.length - 1) ? this._scrollbarWidth : 0)) + 'px';
+                        var srcWidth = this._visibleColumns[srcOrder];
+                        srcWidth = (srcWidth.actualWidthConsideringScrollbarWidth || srcWidth.actualWidth) + 'px';
+                        var destWidth = this._visibleColumns[destOrder];
+                        destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
 
                         var tbodyChildren = this._$tbody[0].childNodes;
                         for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
@@ -581,6 +594,9 @@
                     this._clearSortArrows();
                     for (i = 0; i < currentSort.length; i++) {
                         this._showSortArrow(currentSort[i].column, currentSort[i].descending);
+                    }
+                    if (this._adjustColumnWidthForSortArrow) {
+                        this.tableWidthChanged(true);
                     }
 
                     if (!this._virtualTable) {
@@ -775,6 +791,7 @@
                     if (oldWidth != newWidth) {
                         this.tableWidthChanged(true); // Calculate actual sizes
                     }
+
                     this.trigger('setColumnWidth', col.name, oldWidth, newWidth);
                 }
                 return this;
@@ -867,6 +884,13 @@
                     var computed = el.currentStyle;
                     return computed ? computed[css] : null;
                 };
+                var realCssWidth = function (el) {
+                    var value = curCss(el, 'width');
+                    if (value === 'auto') { // old browsers like IE8
+                        return (parseFloat($(el).css('width')) || 0) + 1;
+                    }
+                    return parseFloat(value) || 0;
+                };
 
                 detectedWidth -= this._horizontalBorderWidth($table[0]);
                 var $ths = $thead.find('>tr>th'), leftBorderWidth;
@@ -880,7 +904,7 @@
                     thBorderBox = $th.css('boxSizing') === 'border-box';
                     detectedWidth -= leftBorderWidth + // TH's border-left-width
                                     ($div.outerWidth() - $div.width()) + // TH>DIV's extra size of padding+border
-                                    ((parseFloat(curCss($th[0], 'width')) || 0) + (thBorderBox ? 0 : this._horizontalPadding($th[0])) - $div.outerWidth()); // TH>DIV's margins + TH's padding
+                                    (realCssWidth($th[0]) + (thBorderBox ? 0 : this._horizontalPadding($th[0])) - $div.outerWidth()); // TH>DIV's margins + TH's padding
                 }
                 // Subtract right border of the last TH
                 detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-right-width')) || 0;
@@ -929,24 +953,34 @@
 
                         var width, changedColumnIndexes = [], i, col, totalRelativePercentage = 0;
 
+                        for (i = 0; i < this._columns.length; i++) {
+                            this._columns[i].actualWidthConsideringScrollbarWidth = null;
+                        }
+
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
                             if (col.widthMode == COLUMN_WIDTH_MODE.ABSOLUTE) {
                                 width = col.width;
+                                width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
                                     width = this._minColumnWidth;
                                 }
                                 sizeLeft -= width;
+
+                                // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
                                     changedColumnIndexes.push(i);
                                 }
                             } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
                                 width = _.bind(getTextWidth, this)(col.label) + 20;
+                                width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
                                     width = this._minColumnWidth;
                                 }
                                 sizeLeft -= width;
+
+                                // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
                                     changedColumnIndexes.push(i);
@@ -973,21 +1007,32 @@
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
                             if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
-                                width = Math.floor(detectedWidth * col.width);
+                                width = Math.round(detectedWidth * col.width);
                                 if (width < this._minColumnWidth) {
                                     width = this._minColumnWidth;
                                 }
                                 sizeLeft -= width;
                                 relatives--;
+
+                                // Take care of rounding errors
                                 if (relatives === 0 && sizeLeft === 1) { // Take care of rounding errors
                                     width++;
+                                    sizeLeft--;
                                 }
+                                if (sizeLeft === -1) {
+                                    width--;
+                                    sizeLeft++;
+                                }
+
+                                // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
                                     changedColumnIndexes.push(i);
                                 }
                             }
                         }
+
+                        this._visibleColumns[this._visibleColumns.length - 1].actualWidthConsideringScrollbarWidth = this._visibleColumns[this._visibleColumns.length - 1].actualWidth - (this._scrollbarWidth || 0);
 
                         if (renderColumns || renderColumns === undefined) {
                             for (i = 0; i < changedColumnIndexes.length; i++) {
@@ -1034,13 +1079,13 @@
                                  j < rowCount;
                                  j++) {
                                 row = data[j];
-                                tr = document.createElement('tr');
+                                tr = createElement('tr');
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
                                     column = this._visibleColumns[colIndex];
-                                    div = document.createElement('div');
-                                    div.style.width = column.actualWidth + 'px';
+                                    div = createElement('div');
+                                    div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
                                     div.innerHTML = this._formatter(row[column.name], column.name);
-                                    td = document.createElement('td');
+                                    td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
                                     }
@@ -1166,9 +1211,10 @@
             },
 
             /**
+             * @param {jQuery.Event} evt
              * @param {boolean?} forceUpdate
              */
-            _onVirtualTableScrolled: function (forceUpdate) {
+            _onVirtualTableScrolled: function (evt, forceUpdate) {
                 if (forceUpdate === true || this._prevScrollTop !== this._$tbody[0].scrollTop) {
                     var firstVisibleRow = parseInt(this._$tbody[0].scrollTop / this._virtualRowHeight, 10);
                     var firstRenderedRow = firstVisibleRow - this._rowsBufferSize;
@@ -1182,10 +1228,17 @@
                     var rows = this._filteredRows || this._rows;
                     if (this._virtualRowRange.last > rows.length) {
                         this._virtualRowRange.last = rows.length;
-                        this._virtualRowRange.first = Math.max(0, this._virtualRowRange.last - this._virtualVisibleRows - this._rowsBufferSize);
+                        this._virtualRowRange.first = Math.max(0, this._virtualRowRange.last - this._virtualVisibleRows - this._rowsBufferSize * 2);
                     }
                     this._renderVirtualRows(this._prevScrollTop, this._$tbody[0].scrollTop);
                 }
+            },
+
+            /**
+             * @param {jQuery.Event} evt
+             */
+            _onTableScrolledHorizontally: function (evt) {
+                this._$thead[0].scrollLeft = this._$tbody[0].scrollLeft;
             },
 
             /**previousElementSibling
@@ -1546,14 +1599,10 @@
                     _.forEach(arrows, _.bind(function(arrow){
                         var col = this._columns.get(arrow.parentNode.parentNode.columnName);
                         if (col) {
-                            if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE) {
-                                var arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
-                                col.actualWidth = Math.max(col.actualWidth - arrowProposedWidth, this._minColumnWidth);
-                                this._resizeColumnElements(arrow.parentNode.parentNode.cellIndex);
-                            }
-                            arrow.parentNode.removeChild(arrow);
+                            col.arrowProposedWidth = 0;
                         }
                     }, this));
+                    arrows.remove();
                     sortedColumns.removeClass('sorted').removeClass('desc');
                 }
                 return this;
@@ -1568,15 +1617,14 @@
             _showSortArrow: function (column, descending) {
 
                 var col = this._columns.get(column);
-                var arrow = document.createElement('span');
+                var arrow = createElement('span');
                 arrow.className = 'sort-arrow';
 
                 col.element.addClass(descending ? 'sorted desc' : 'sorted');
                 col.element[0].firstChild.insertBefore(arrow, col.element[0].firstChild.firstChild);
-                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE) {
-                    var arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
-                    col.actualWidth = Math.max(col.actualWidth + arrowProposedWidth, this._minColumnWidth);
-                    this._resizeColumnElements(col.element[0].cellIndex);
+
+                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE && this._adjustColumnWidthForSortArrow) {
+                    col.arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
                 }
 
                 return this;
@@ -1592,14 +1640,9 @@
                 var col = this._columns.get(headers[cellIndex].columnName);
 
                 if (col) {
-                    var width = col.actualWidth;
-                    headers[cellIndex].firstChild.style.width = width + 'px';
+                    headers[cellIndex].firstChild.style.width = col.actualWidth + 'px';
 
-                    if (cellIndex === headers.length - 1) {
-                        width -= this._scrollbarWidth;
-                    }
-                    width += 'px';
-
+                    var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
                     var tbodyChildren = this._$tbody[0].childNodes;
                     for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                         tr = tbodyChildren[i];
@@ -1649,7 +1692,7 @@
 
                 var i, row, colIndex, column, colCount, rowCount, div, tr, th, td;
 
-                var headerRow = document.createElement('tr'), ieDragDropHandler;
+                var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
                     ieDragDropHandler = function(evt) {
                         evt.preventDefault();
@@ -1660,10 +1703,10 @@
                 for (i = 0; i < self._visibleColumns.length; i++) {
                     column = self._visibleColumns[i];
                     if (column.visible) {
-                        div = document.createElement('div');
+                        div = createElement('div');
                         div.style.width = column.actualWidth + 'px';
                         div.innerHTML = column.label;
-                        th = document.createElement('th');
+                        th = createElement('th');
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
@@ -1700,11 +1743,11 @@
 
                 if (self._virtualTable || !self._$table) {
                     var fragment = document.createDocumentFragment();
-                    table = document.createElement('table');
+                    table = createElement('table');
                     table.className = self._tableClassName;
                     fragment.appendChild(table);
 
-                    thead = document.createElement('thead');
+                    thead = createElement('thead');
                     thead.style.display = 'block';
                     if (hasIeTableDisplayBlockBug) {
                         $(thead).css({
@@ -1714,7 +1757,7 @@
                     }
                     table.appendChild(thead);
 
-                    tbody = document.createElement('tbody');
+                    tbody = createElement('tbody');
                     tbody.style.maxHeight = self._height + 'px';
                     tbody.style.display = 'block';
                     tbody.style.overflowY = 'auto';
@@ -1724,6 +1767,10 @@
                             'float': self.$el.css('direction') == 'rtl' ? 'right' : 'left',
                             'clear': 'both'
                         });
+                    }
+                    if (self._width == DGTable.Width.SCROLL) {
+                        thead.style.overflowX = 'hidden';
+                        tbody.style.overflowX = 'auto';
                     }
                     table.appendChild(tbody);
 
@@ -1739,31 +1786,49 @@
                 }
 
                 if (self._virtualTable && !self._virtualRowHeight) {
-                    tr = document.createElement('tr');
-                    td = document.createElement('td');
-                    td.innerHTML = '0';
-                    tr.appendChild(td);
-                    tr.style.visibility = 'hidden';
-                    tr.style.position = 'absolute';
-                    tbody.appendChild(tr);
-                    self._virtualRowHeight = $(tr).outerHeight();
-                    tbody.removeChild(tr);
+                    var createDummyRow = function() {
+                        var tr = createElement('tr'),
+                            td = tr.appendChild(createElement('td')),
+                            div = td.appendChild(createElement('div'));
+                        div.innerHTML = '0';
+                        tr.style.visibility = 'hidden';
+                        tr.style.position = 'absolute';
+                        return tr;
+                    };
+
+                    var tr1 = tbody.appendChild(createDummyRow()),
+                        tr2 = tbody.appendChild(createDummyRow()),
+                        tr3 = tbody.appendChild(createDummyRow());
+
+                    self._virtualRowHeight = $(tr2).outerHeight();
+                    tbody.removeChild(tr1);
+                    tbody.removeChild(tr2);
+                    tbody.removeChild(tr3);
                     self._virtualVisibleRows = parseInt(self._height / self._virtualRowHeight, 10);
                 }
 
                 var rows = self._filteredRows || self._rows;
 
                 if (self._virtualTable) {
-                    var last = self._virtualVisibleRows + self._rowsBufferSize;
-                    if (last > rows.length) {
-                        last = rows.length;
+                    if (self._virtualRowRange && self._virtualRowRange.last - self._virtualRowRange.first >= self._virtualVisibleRows) {
+                        self._virtualRowRange.prevFirst = self._virtualRowRange.prevFirst != self._virtualRowRange.first ? self._virtualRowRange.prevFirst : self._virtualRowRange.first;
+                        self._virtualRowRange.prevLast = self._virtualRowRange.prevLast != self._virtualRowRange.last ? self._virtualRowRange.prevLast : self._virtualRowRange.last;
+                        if (self._virtualRowRange.last > rows.length) {
+                            self._virtualRowRange.last = rows.length;
+                            self._virtualRowRange.first = Math.max(0, self._virtualRowRange.last - self._virtualVisibleRows - self._rowsBufferSize * 2);
+                        }
+                    } else {
+                        var last = self._virtualVisibleRows + self._rowsBufferSize;
+                        if (last > rows.length) {
+                            last = rows.length;
+                        }
+                        self._virtualRowRange = {
+                            first: 0,
+                            last: last,
+                            prevFirst: 0,
+                            prevLast: last
+                        };
                     }
-                    self._virtualRowRange = {
-                        first: 0,
-                        last: last,
-                        prevFirst: 0,
-                        prevLast: last
-                    };
                 }
 
                 var bodyFragment = document.createDocumentFragment();
@@ -1789,7 +1854,7 @@
                 }
 
                 for (i = firstDisplayedRow, colCount = self._visibleColumns.length, rowCount = rows.length;
-                     i < rowCount && displayCount < lastDisplayedRow;
+                     i < rowCount && i < lastDisplayedRow;
                      i++) {
                     row = rows[i];
                     tr = document.createElement('tr');
@@ -1805,7 +1870,6 @@
                         tr.appendChild(td);
                     }
                     bodyFragment.appendChild(tr);
-                    displayCount++;
                 }
 
                 if (self._virtualTable) {
@@ -1841,9 +1905,14 @@
                 var scrollbarWidth = this._$tbody[0].offsetWidth - this._$tbody[0].clientWidth;
                 if (scrollbarWidth != this._scrollbarWidth || force) {
                     this._scrollbarWidth = scrollbarWidth;
+                    for (var i = 0; i < this._columns.length; i++) {
+                        this._columns[i].actualWidthConsideringScrollbarWidth = null;
+                    }
+
                     if (this._scrollbarWidth > 0) {
                         var lastColIndex = this._visibleColumns.length - 1;
-                        var lastColWidth = (this._visibleColumns[lastColIndex].actualWidth - this._scrollbarWidth) + 'px';
+                        this._visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = this._visibleColumns[lastColIndex].actualWidth - this._scrollbarWidth;
+                        var lastColWidth = this._visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px';
                         var tbodyChildren = this._$tbody[0].childNodes;
                         for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
                             tr = tbodyChildren[i];
@@ -1872,6 +1941,8 @@
                         first = this._virtualRowRange.first;
                         last = this._virtualRowRange.last;
                     }
+                    this._virtualRowRange.prevFirst = this._virtualRowRange.first;
+                    this._virtualRowRange.prevLast = this._virtualRowRange.last;
                     this._removeVirtualRows(last - first - addedRows, false);
                     this._addVirtualRows(first, last, true);
                     this._adjustVirtualTableScrollHeight();
@@ -1883,6 +1954,8 @@
                         first = this._virtualRowRange.first;
                         last = this._virtualRowRange.last;
                     }
+                    this._virtualRowRange.prevFirst = this._virtualRowRange.first;
+                    this._virtualRowRange.prevLast = this._virtualRowRange.last;
                     this._removeVirtualRows(last - first - addedRows, true);
                     this._addVirtualRows(first, last, false);
                     this._adjustVirtualTableScrollHeight();
@@ -1962,7 +2035,7 @@
                 for (var i = 0, col, div, td; i < this._visibleColumns.length; i++) {
                     col = this._visibleColumns[i];
                     div = document.createElement('div');
-                    div.style.width = col.actualWidth + 'px';
+                    div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
                     div.innerHTML = this._formatter(rows[index][col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
@@ -2027,7 +2100,7 @@
              * @returns {DGTable} self
              */
             _updateTableWidth: function () {
-                if (this._autoWidth) {
+                if (this._width == DGTable.Width.AUTO) {
                     var cols = this._$table.find('>thead>tr>th');
                     var newWidth = 0;
                     for (var i = 0; i < cols.length; i++) {
@@ -2035,6 +2108,23 @@
                     }
                     this._$table.width(newWidth);
                     this.$el.width(newWidth);
+                } else if (this._width == DGTable.Width.SCROLL) {
+                    var elWidth = this.$el.innerWidth(),
+                        tableWidth = this._$table.width(),
+                        theadWidth = this._$thead[0].scrollWidth;
+
+                    this._$tbody.off('scroll', this._onTableScrolledHorizontallyBound);
+
+                    if (theadWidth > tableWidth || theadWidth > elWidth) {
+                        this._$thead.width(elWidth);
+                        this._$tbody.width(elWidth);
+                        this._$tbody.on('scroll', this._onTableScrolledHorizontallyBound);
+                    } else {
+                        try { this._$thead[0].style.width = ''; }
+                        catch (err) { }
+                        try { this._$tbody[0].style.width = ''; }
+                        catch (err) { }
+                    }
                 }
                 return this;
             },
@@ -2079,6 +2169,33 @@
          * @type {int}
          * */
         RELATIVE: 2
+    };
+
+    /**
+     * @typedef DGTable.Width
+     * @expose
+     * */
+    DGTable.Width = {
+        /**
+         * @expose
+         * @const
+         * @type {String}
+         * */
+        NONE: 'none',
+
+        /**
+         * @expose
+         * @const
+         * @type {String}
+         * */
+        AUTO: 'auto',
+
+        /**
+         * @expose
+         * @const
+         * @type {String}
+         * */
+        SCROLL: 'SCROLL'
     };
 
     /**
@@ -2149,10 +2266,12 @@
      * @typedef INIT_OPTIONS
      * @param {COLUMN_OPTIONS[]} columns
      * @param {int} height
+     * @param {DGTable.Width} width
      * @param {boolean=true} virtualTable
      * @param {boolean=true} resizableColumns
      * @param {boolean=true} movableColumns
      * @param {int=1} sortableColumns
+     * @param {boolean=true} adjustColumnWidthForSortArrow
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
      * @param {Function?} formatter
@@ -2160,7 +2279,6 @@
      * @param {int=35} minColumnWidth
      * @param {int=8} resizeAreaWidth
      * @param {Function(string}boolean)} comparatorCallback
-     * @param {boolean=false} autoWidth
      * @param {boolean=true} relativeWidthGrowsToFillWidth
      * @param {boolean=false} relativeWidthShrinksToFillWidth
      * @param {String?} resizerClassName
@@ -2169,11 +2287,20 @@
      * @param {String?} tagName
      * */
     var INIT_OPTIONS = {
-        /** @expose */
+        /**
+         * @expose
+         * @type {COLUMN_OPTIONS[]}
+         * */
         columns: null,
 
         /** @expose */
         height: null,
+
+        /**
+         * @expose
+         * @type {DGTable.Width}
+         * */
+        width: null,
 
         /** @expose */
         virtualTable: null,
@@ -2186,6 +2313,12 @@
 
         /** @expose */
         sortableColumns: null,
+
+        /**
+         * @expose
+         * @type {boolean=true}
+         * */
+        adjustColumnWidthForSortArrow: null,
 
         /** @expose */
         cellClasses: null,
@@ -2207,9 +2340,6 @@
 
         /** @expose */
         comparatorCallback: null,
-
-        /** @expose */
-        autoWidth: null,
 
         /** @expose */
         relativeWidthGrowsToFillWidth: null,
