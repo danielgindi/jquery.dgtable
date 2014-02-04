@@ -12,12 +12,12 @@ Other features implemented are:
 * Virtual table mode (to supply high performance with hundreds of thousands of rows). This is the default.
 * Non-virtual table mode is fully supported, but for giant amounts of data it is not recommended.
 * Option to set a fixed width for the table so resizing (relative) columns will still make sure the table will not be less (and/or more) than the specified width.
+* Option to have both scrollbars inside the table. (set `width: DGTable.Width.SCROLL`)
 
 A few notes:
-* TODO: Handle row height correctly when rows have different height in virtual mode.
-* TODO: Take care of scrollbars when table is fixed width and columns overflow it
 * TODO: Show the full data of the cell when hovering (or touching), in case of the cell overflowing.
-* TODO: When the width of a fixed column is increased for sort-arrow, re-calculate the relative sizes of the other columns
+* TODO: Have a simple and accurate API documentation here in the readme
+* Currently in virtual table mode - I cannot handle variable height rows.
 
 ## Dev environment
 
