@@ -818,10 +818,10 @@
              */
             getColumnWidths: function () {
                 var widths = {};
-                for (var i = 0; i < this._columns; i++) {
+                for (var i = 0; i < this._columns.length; i++) {
                     widths[this._columns[i].name] = this._serializeColumnWidth(this._columns[i]);
                 }
-                return widths;
+                return JSON.stringify(widths);
             },
 
             /**
