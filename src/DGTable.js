@@ -296,13 +296,11 @@
                     this._$resizer.remove();
                     this._$resizer = null;
                 }
-                this._virtualScrollTopRow = null;
-                this._virtualScrollBottomRow = null;
-                this._unbindHeaderEvents();
-                this._onMouseMoveResizeAreaBound = this._onEndDragColumnHeaderBound = null;
-                this._$tbody.off('scroll');
-                this.$el.off('dragend');
                 this.remove();
+                this._unbindHeaderEvents();
+                this._$table.unbind();
+                this._$tbody.unbind();
+                this.$el.unbind();
                 this.unbind();
                 if (this.workerListeners) {
                     for (var j = 0, worker; j < this.workerListeners.length; j++) {
@@ -310,6 +308,12 @@
                         worker.worker.removeEventListener('message', worker.listener, false);
                     }
                     this.workerListeners.length = 0;
+                }
+                this._rows.length = this._columns.length = 0;
+                for (var prop in this) {
+                    if (this.hasOwnProperty(prop)) {
+                        this[prop] = null;
+                    }
                 }
             },
 
