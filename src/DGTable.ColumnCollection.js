@@ -21,13 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-/* global DGTable */
+/* global DGTable, _ */
 DGTable.ColumnCollection = (function () {
     'use strict';
 
     // Define class RowCollection
     var ColumnCollection = function() {
-        this.initialize.apply(this, arguments);
+
+        // Instantiate an Array. Seems like the `.length = ` of an inherited Array does not work well.
+        // I will not use the IFRAME solution either in fear of memory leaks, and we're supporting large datasets...
+        var collection = [];
+
+        // Synthetically set the 'prototype'
+        _.extend(collection, ColumnCollection.prototype);
+
+        // Call initializer
+        collection.initialize.apply(collection, arguments);
+
+        return collection;
     };
 
     // Inherit Array

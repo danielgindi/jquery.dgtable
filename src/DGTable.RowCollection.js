@@ -27,7 +27,18 @@ DGTable.RowCollection = (function () {
 
     // Define class RowCollection
     var RowCollection = function() {
-        this.initialize.apply(this, arguments);
+
+        // Instantiate an Array. Seems like the `.length = ` of an inherited Array does not work well.
+        // I will not use the IFRAME solution either in fear of memory leaks, and we're supporting large datasets...
+        var collection = [];
+
+        // Synthetically set the 'prototype'
+        _.extend(collection, RowCollection.prototype);
+
+        // Call initializer
+        collection.initialize.apply(collection, arguments);
+
+        return collection;
     };
 
     // Inherit Array
