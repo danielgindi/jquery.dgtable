@@ -131,6 +131,26 @@
 
                 /**
                  * @private
+                 * @field {Boolean} _allowCellPreview */
+                this._allowCellPreview = options.allowCellPreview === undefined ? true : options.allowCellPreview;
+
+                /**
+                 * @private
+                 * @field {String} _cellPreviewClassName */
+                this._cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
+
+                /**
+                 * @private
+                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewCreateCallback */
+                this._cellPreviewCreateCallback = options.cellPreviewCreateCallback === undefined ? null : options.cellPreviewCreateCallback;
+
+                /**
+                 * @private
+                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewDestroyCallback */
+                this._cellPreviewDestroyCallback = options.cellPreviewDestroyCallback === undefined ? null : options.cellPreviewDestroyCallback;
+
+                /**
+                 * @private
                  * @field {Function(string,boolean)} _comparatorCallback */
                 this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
@@ -226,6 +246,137 @@
 
                 this._height = options.height;
                 this._prevScrollTop = 0;
+
+                /*
+                    Setup hover mechanism.
+                    We need this to be high performance, as there may be MANY cells to call this on, on creation and destruction.
+                    Using native events to spare the overhead of jQuery's event binding, and even just the creation of the jQuery collection object.
+                 */
+
+                var self = this;
+
+                /**
+                 * @param {Event} evt
+                 * @this {HTMLElement}
+                 * */
+                var hoverMouseOverHandler = function(evt) {
+                    evt = evt || event;
+                    var relatedTarget = evt.fromElement || evt.relatedTarget;
+                    if (relatedTarget == this || jQuery.contains(this, relatedTarget)) return;
+                    if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || jQuery.contains(this['__previewEl'], relatedTarget))) return;
+                    self._cellMouseOverEvent.call(self, this);
+                };
+
+                /**
+                 * @param {Event} evt
+                 * @this {HTMLElement}
+                 * */
+                var hoverMouseOutHandler = function(evt) {
+                    evt = evt || event;
+                    var relatedTarget = evt.toElement || evt.relatedTarget;
+                    if (relatedTarget == this || jQuery.contains(this, relatedTarget)) return;
+                    if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || jQuery.contains(this['__previewEl'], relatedTarget))) return;
+                    self._cellMouseOutEvent.call(self, this);
+                };
+
+                if ('addEventListener' in window) {
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._hookCellHoverIn = function (el) {
+                        if (!el['__hoverIn']) {
+                            el.addEventListener('mouseover', el['__hoverIn'] = _.bind(hoverMouseOverHandler, el));
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._unhookCellHoverIn = function (el) {
+                        if (el['__hoverIn']) {
+                            el.removeEventListener('mouseover', el['__hoverIn']);
+                            el['__hoverIn'] = null;
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._hookCellHoverOut = function (el) {
+                        if (!el['__hoverOut']) {
+                            el.addEventListener('mouseout', el['__hoverOut'] = _.bind(hoverMouseOutHandler, el['__cell'] || el));
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._unhookCellHoverOut = function (el) {
+                        if (el['__hoverOut']) {
+                            el.removeEventListener('mouseout', el['__hoverOut']);
+                            el['__hoverOut'] = null;
+                        }
+                        return this;
+                    };
+
+                } else {
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._hookCellHoverIn = function (el) {
+                        if (!el['__hoverIn']) {
+                            el.attachEvent('mouseover', el['__hoverIn'] = _.bind(hoverMouseOverHandler, el));
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._unhookCellHoverIn = function (el) {
+                        if (el['__hoverIn']) {
+                            el.detachEvent('mouseover', el['__hoverIn']);
+                            el['__hoverIn'] = null;
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._hookCellHoverOut = function (el) {
+                        if (!el['__hoverOut']) {
+                            el.attachEvent('mouseout', el['__hoverOut'] = _.bind(hoverMouseOutHandler, el['__cell'] || el));
+                        }
+                        return this;
+                    };
+
+                    /**
+                     * @param {HTMLElement} el TD or TH
+                     * @returns {DGTable} self
+                     * */
+                    this._unhookCellHoverOut = function (el) {
+                        if (el['__hoverOut']) {
+                            el.detachEvent('mouseout', el['__hoverOut']);
+                            el['__hoverOut'] = null;
+                        }
+                        return this;
+                    };
+
+                }
+
             },
             
             /**
@@ -297,7 +448,7 @@
                     this._$resizer = null;
                 }
                 this.remove();
-                this._unbindHeaderEvents();
+                this._unbindHeaderEvents()._unhookCellEventsForTable();
                 this._$table.unbind();
                 this._$tbody.unbind();
                 this.$el.unbind();
@@ -315,6 +466,42 @@
                         this[prop] = null;
                     }
                 }
+            },
+
+            /**
+             * @private
+             * @returns {DGTable} self
+             */
+            _unhookCellEventsForTable: function() {
+                if (this._$thead) {
+                    for (var i = 0, rows = this._$thead[0].childNodes, rowCount = rows.length, rowToClean; i < rowCount; i++) {
+                        rowToClean = rows[i];
+                        for (var j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
+                            this._unhookCellHoverIn(cells[j]);
+                        }
+                    }
+                }
+                if (this._$tbody) {
+                    for (var i = 0, rows = this._$tbody[0].childNodes, rowCount = rows.length, rowToClean; i < rowCount; i++) {
+                        rowToClean = rows[i];
+                        for (var j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
+                            this._unhookCellHoverIn(cells[j]);
+                        }
+                    }
+                }
+                return this;
+            },
+
+            /**
+             * @private
+             * @param {HTMLElement} rowToClean
+             * @returns {DGTable} self
+             */
+            _unhookCellEventsForRow: function(rowToClean) {
+                for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
+                    this._unhookCellHoverIn(cells[i]);
+                }
+                return this;
             },
 
             /**
@@ -838,6 +1025,20 @@
             },
 
             /**
+             * @public
+             * @expose
+             * @param {Number} row index of the row
+             * @param {String} column name of the column
+             * @returns {String} HTML string for the specified cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+             */
+            getHtmlForCell: function (row, column) {
+                if (row < 0 || row > this._rows.length - 1) return null;
+                if (!this._columns.get(column)) return null;
+
+                return this._formatter(this._rows[row][column], column);
+            },
+
+            /**
              * @private
              * @param {Element} el
              * @returns {Number} width
@@ -917,6 +1118,8 @@
                     $tempTable.remove();
                 }
 
+                $table = $thead = $tempTable = $tempThead = null; // Release memory
+
                 return detectedWidth;
             },
 
@@ -935,6 +1138,7 @@
                     table.appendTo(document.body);
                     var width = th.width();
                     table.remove();
+                    table = null; // Release memory
                     return width;
                 };
                 
@@ -1076,14 +1280,15 @@
                                 this._tableSkeletonNeedsRendering = true;
                                 this.render();
                             }
-                        } else {
-                            var tr, div, td, bodyFragment;
+                        } else if (this._$tbody) {
+                            var tr, div, td, bodyFragment, cellPreview = this._allowCellPreview;
                             bodyFragment = document.createDocumentFragment();
-                            for (var j = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
-                                 j < rowCount;
-                                 j++) {
-                                row = data[j];
+                            for (var i = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
+                                 i < rowCount;
+                                 i++) {
+                                row = data[i];
                                 tr = createElement('tr');
+                                tr.setAttribute('data-row', i);
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
                                     column = this._visibleColumns[colIndex];
                                     div = createElement('div');
@@ -1092,6 +1297,9 @@
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
+                                    }
+                                    if (cellPreview) {
+                                        this._hookCellHoverIn(td);
                                     }
                                     td.appendChild(div);
                                     tr.appendChild(td);
@@ -1253,7 +1461,7 @@
              */
             _getColumnByResizePosition: function (e) {
 
-                var rtl = this._$table.css('direction') == 'rtl';
+                var rtl = this._isTableRtl();
 
                 var $th = $(e.target).closest('th'), th = $th[0];
 
@@ -1288,8 +1496,6 @@
              */
             _onMouseMoveColumnHeader: function (e) {
                 if (this._resizableColumns) {
-                    //var rtl = this._$table.css('direction') == 'rtl';
-
                     var col = this._getColumnByResizePosition(e);
                     var th = $(e.target).closest('th')[0];
                     if (!col || !this._columns.get(col).resizable) {
@@ -1337,7 +1543,7 @@
                         return false;
                     }
 
-                    var rtl = this._$table.css('direction') == 'rtl';
+                    var rtl = this._isTableRtl();
 
                     if (this._$resizer) {
                         $(this._$resizer).remove();
@@ -1421,7 +1627,7 @@
              */
             _onMouseMoveResizeArea: function (e) {
                 var column = this._columns.get(this._$resizer[0].columnName);
-                var rtl = this._$table.css('direction') == 'rtl';
+                var rtl = this._isTableRtl();
 
                 var selectedTh = column.element,
                     commonAncestor = this._$resizer.parent();
@@ -1466,7 +1672,7 @@
                     $(document).off('mouseup', this._onEndDragColumnHeaderBound);
 
                     var column = this._columns.get(this._$resizer[0].columnName);
-                    var rtl = this._$table.css('direction') == 'rtl';
+                    var rtl = this._isTableRtl();
 
                     var selectedTh = column.element,
                         commonAncestor = this._$resizer.parent();
@@ -1692,9 +1898,9 @@
                     topRowHeight = parseFloat(self._virtualScrollTopRow.style.height);
                 }
 
-                self._unbindHeaderEvents();
+                self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, row, colIndex, column, colCount, rowCount, div, tr, th, td;
+                var i, row, colIndex, column, colCount, rowCount, div, tr, th, td, cellPreview = this._allowCellPreview;
 
                 var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
@@ -1714,6 +1920,9 @@
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
+                        if (cellPreview) {
+                            this._hookCellHoverIn(th);
+                        }
                         th.appendChild(div);
                         headerRow.appendChild(th);
 
@@ -1743,7 +1952,7 @@
                     self.$el.css('position', 'relative');
                 }
 
-                var table, thead, tbody;
+                var table, thead, tbody, cellPreview = this._allowCellPreview;
 
                 if (self._virtualTable || !self._$table) {
                     var fragment = document.createDocumentFragment();
@@ -1845,8 +2054,7 @@
                 }
 
                 // Build visible rows
-                var displayCount = 0,
-                    firstDisplayedRow,
+                var firstDisplayedRow,
                     lastDisplayedRow;
 
                 if (self._virtualTable) {
@@ -1862,7 +2070,7 @@
                      i++) {
                     row = rows[i];
                     tr = document.createElement('tr');
-                    if (self._virtualTable) tr.setAttribute('data-row', i);
+                    tr.setAttribute('data-row', i);
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = self._visibleColumns[colIndex];
                         div = document.createElement('div');
@@ -1870,6 +2078,9 @@
                         div.innerHTML = self._formatter(row[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
+                        if (cellPreview) {
+                            this._hookCellHoverIn(td);
+                        }
                         td.appendChild(div);
                         tr.appendChild(td);
                     }
@@ -2036,6 +2247,7 @@
                 var tr = document.createElement('tr');
                 tr.setAttribute('data-row', index);
                 var rows = this._filteredRows || this._rows;
+                var cellPreview = this._allowCellPreview;
                 for (var i = 0, col, div, td; i < this._visibleColumns.length; i++) {
                     col = this._visibleColumns[i];
                     div = document.createElement('div');
@@ -2043,6 +2255,9 @@
                     div.innerHTML = this._formatter(rows[index][col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
+                    if (cellPreview) {
+                        this._hookCellHoverIn(td);
+                    }
                     td.appendChild(div);
                     tr.appendChild(td);
                 }
@@ -2073,6 +2288,7 @@
                     end = count + 1;
                 }
                 for (var i = start; i < end; end--) {
+                    this._unhookCellEventsForRow(trs[start]);
                     tbody.removeChild(trs[start]);
                 }
             },
@@ -2135,6 +2351,14 @@
 
             /**
              * @private
+             * @returns {Boolean}
+             */
+            _isTableRtl: function() {
+                return this._$table.css('direction') == 'rtl';
+            },
+
+            /**
+             * @private
              * @param {Object} column column object
              * @returns {String}
              */
@@ -2142,8 +2366,139 @@
                 return column.widthMode == COLUMN_WIDTH_MODE.AUTO ? 'auto' :
                         column.widthMode == COLUMN_WIDTH_MODE.RELATIVE ? column.width * 100 + '%' :
                         column.width;
-            }
+            },
 
+            /**
+             * @private
+             * @param {HTMLElement} el
+             */
+            _cellMouseOverEvent: function(el) {
+                if (el.firstChild.scrollWidth > el.firstChild.clientWidth) {
+
+                    this._hideCellPreview();
+
+                    var $el = $(el), $elInner = $(el.firstChild);
+                    var div = createElement('div'), $div = $(div);
+                    div.className = this._cellPreviewClassName;
+                    var paddingL = parseFloat($el.css('padding-left')) || 0,
+                        paddingR = parseFloat($el.css('padding-right')) || 0,
+                        paddingT = parseFloat($el.css('padding-top')) || 0,
+                        paddingB = parseFloat($el.css('padding-bottom')) || 0;
+                    var requiredWidth = el.firstChild.scrollWidth + el.clientWidth - el.firstChild.offsetWidth,
+                        requiredHeight = el.firstChild.scrollHeight + el.clientHeight - el.firstChild.offsetHeight;
+
+                    var borderBox = $el.css('boxSizing') === 'border-box';
+                    if (borderBox) {
+                        requiredWidth -= parseFloat($(el).css('border-left-width')) || 0;
+                        requiredWidth -= parseFloat($(el).css('border-right-width')) || 0;
+                        requiredHeight -= parseFloat($(el).css('border-top-width')) || 0;
+                        requiredHeight -= parseFloat($(el).css('border-bottom-width')) || 0;
+                        $div.css('box-sizing', 'border-box');
+                    } else {
+                        requiredWidth -= paddingL + paddingR;
+                        requiredHeight -= paddingT + paddingB;
+                        $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
+                    }
+
+                    if (!this._transparentBgColor1) {
+                        // Detect browser's transparent spec
+                        var tempDiv = document.createElement('div');
+                        tempDiv.style.backgroundColor = 'transparent';
+                        this._transparentBgColor1 = $(tempDiv).css('background-color');
+                        tempDiv.style.backgroundColor = 'rgba(0,0,0,0)';
+                        this._transparentBgColor2 = $(tempDiv).css('background-color');
+                    }
+
+                    var bgColor = $(el).css('background-color');
+                    if (bgColor == this._transparentBgColor1 || bgColor == this._transparentBgColor2) {
+                        bgColor = '#fff';
+                    }
+
+                    $div.css({
+                        width: requiredWidth + 'px',
+                        height: requiredHeight + 'px',
+                        'padding-left': paddingL,
+                        'padding-right': paddingR,
+                        'padding-top': paddingT,
+                        'padding-bottom': paddingB,
+                        overflow: 'hidden',
+                        position: 'absolute',
+                        zIndex: '-1',
+                        left: '0',
+                        top: '0',
+                        'background-color': bgColor,
+                        cursor: 'default'
+                    });
+                    div.innerHTML = el.innerHTML;
+                    document.body.appendChild(div);
+                    div.firstChild.style.width = (div.clientWidth - el.clientWidth + parseFloat(el.firstChild.style.width)) + 'px';
+                    div.firstChild.style.direction = $elInner.css('direction');
+                    div.firstChild.style.whiteSpace = $elInner.css('white-space');
+
+                    div['__row'] = el.parentNode.getAttribute('data-row');
+                    div['__column'] = this._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
+                    if (this._cellPreviewCreateCallback) {
+                        if (this._cellPreviewCreateCallback(div.firstChild, div['__row'], div['__column']) === false) {
+                            return;
+                        }
+                    }
+
+                    var offset = $el.offset();
+
+                    if (this._isTableRtl()) {
+                        var w = $div.outerWidth();
+                        var elW = $el.outerWidth();
+                        offset.left -= w - elW;
+                    } else {
+                        offset.left += parseFloat($(el).css('border-left-width')) || 0;
+                    }
+                    offset.top += parseFloat($(el).css('border-top-width')) || parseFloat($(el).css('border-bottom-width')) || 0;
+
+                    $div.css({
+                        left: offset.left,
+                        top: offset.top,
+                        'z-index': 9999,
+                        zIndex: 9999
+                    });
+
+                    div['__cell'] = el;
+                    this._$cellPreviewEl = $div;
+                    el['__previewEl'] = div;
+
+                    this._hookCellHoverOut(el);
+                    this._hookCellHoverOut(div);
+                }
+            },
+
+            /**
+             * @private
+             * @param {HTMLElement} el
+             */
+            _cellMouseOutEvent: function(el) {
+                this._hideCellPreview();
+            },
+
+            /**
+             * @private
+             * @returns {DGTable} self
+             */
+            _hideCellPreview: function() {
+                if (this._$cellPreviewEl) {
+                    var div = this._$cellPreviewEl[0];
+                    this._$cellPreviewEl.remove();
+                    this._unhookCellHoverOut(div['__cell']);
+                    this._unhookCellHoverOut(div);
+                    div['__cell']['__previewEl'] = null;
+                    div['__cell'] = null;
+
+                    if (this._cellPreviewDestroyCallback) {
+                        this._cellPreviewDestroyCallback(div.firstChild, div['__row'], div['__column'] );
+                    }
+
+                    this._$cellPreviewEl = null;
+                }
+                return this;
+            }
         }
     );
 
@@ -2287,6 +2642,10 @@
      * @param {boolean=false} relativeWidthShrinksToFillWidth
      * @param {String?} resizerClassName
      * @param {String?} tableClassName
+     * @param {Boolean?} allowCellPreview
+     * @param {String?} cellPreviewClassName
+     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewCreateCallback
+     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewDestroyCallback
      * @param {String?} className
      * @param {String?} tagName
      * */
@@ -2354,8 +2713,35 @@
         /** @expose */
         resizerClassName: null,
 
-        /** @expose */
+        /**
+         * @expose
+         * @type {String}
+         * */
         tableClassName: null,
+
+        /**
+         * @expose
+         * @type {Boolean}
+         * */
+        allowCellPreview: null,
+
+        /**
+         * @expose
+         * @type {String}
+         * */
+        cellPreviewClassName: null,
+
+        /**
+         * @expose
+         * @type {Function(HTMLElement,number,string}boolean)}
+         * */
+        cellPreviewCreateCallback: null,
+
+        /**
+         * @expose
+         * @type {Function(HTMLElement,number,string}boolean)}
+         * */
+        cellPreviewDestroyCallback: null,
 
         /** @expose */
         className: null,

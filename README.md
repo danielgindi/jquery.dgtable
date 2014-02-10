@@ -6,6 +6,8 @@ This is a table View for Backbone + jQuery, which is meant to be high-performanc
 * Sorting by more than one column
 * Moving columns
 * Resizing columns
+* Full cell preview when hovering
+* Native RTL support
 
 Other features implemented are:
 * Mix absolute column widths with relative column widths
@@ -15,7 +17,6 @@ Other features implemented are:
 * Option to have both scrollbars inside the table. (set `width: DGTable.Width.SCROLL`)
 
 A few notes:
-* TODO: Show the full data of the cell when hovering (or touching), in case of the cell overflowing.
 * TODO: Have a simple and accurate API documentation here in the readme
 * Currently in virtual table mode - I cannot handle variable height rows.
 
