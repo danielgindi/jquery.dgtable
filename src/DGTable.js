@@ -22,6 +22,7 @@
  SOFTWARE.
  */
 /* global jQuery, _, Backbone */
+/*jshint -W018 */
 (function (global, $) {
     'use strict';
 
@@ -810,41 +811,37 @@
             },
 
             /**
-             * Show a column which is currently invisible
+             * Show or hide a column
              * @public
              * @expose
              * @param {String} column unique column name
+             * @param {Boolean} visible new visibility mode for the column
              * @returns {DGTable} self
              */
-            showColumn: function (column) {
+            setColumnVisible: function (column, visible) {
                 var col = this._columns.get(column);
-                if (col && !col.visible) {
-                    col.visible = true;
+                if (col && !!col.visible != !!visible) {
+                    col.visible = !!visible;
                     this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.render();
-                    this.trigger('showColumn', column);
+                    this.trigger(visible ? 'showColumn' : 'hideColumn', column);
                 }
                 return this;
             },
 
             /**
-             * Hide a column which is currently visible
+             * Get the visibility mode of a column
              * @public
              * @expose
-             * @param {String} column column name
-             * @returns {DGTable} self
+             * @returns {Boolean} true if visible
              */
-            hideColumn: function (column) {
+            isColumnVisible: function (column) {
                 var col = this._columns.get(column);
-                if (col && col.visible) {
-                    col.visible = false;
-                    this._tableSkeletonNeedsRendering = true;
-                    this._visibleColumns = this._columns.getVisibleColumns();
-                    this.render();
-                    this.trigger('hideColumn', column);
+                if (col) {
+                    return col.visible;
                 }
-                return this;
+                return false;
             },
 
             /**
@@ -1005,31 +1002,56 @@
             /**
              * @public
              * @expose
-             * @returns {String} the serialized widths of all columns
+             * @returns {SERIALIZED_COLUMN} configuration for all columns
              */
-            getColumnWidths: function () {
-                var widths = {};
-                for (var i = 0; i < this._columns.length; i++) {
-                    widths[this._columns[i].name] = this._serializeColumnWidth(this._columns[i]);
+            getColumnConfig: function (column) {
+                var col = this._columns.get(column);
+                if (col) {
+                    return {
+                        order: col.order,
+                        width: this._serializeColumnWidth(col),
+                        visible: col.visible
+                    };
                 }
-                return JSON.stringify(widths);
+                return null;
             },
 
             /**
+             * Returns a config object for the columns, to allow saving configurations for next time...
              * @public
              * @expose
-             * @returns {Function(string,boolean)} a callback function that returns the comparator for a specific column
+             * @returns {Object} configuration for all columns
              */
-            getComparatorCallback: function () {
-                return this._comparatorCallback;
+            getColumnsConfig: function () {
+                var config = {};
+                for (var i = 0; i < this._columns.length; i++) {
+                    config[this._columns[i].name] = this.getColumnConfig(this._columns[i]);
+                }
+                return config;
             },
 
             /**
+             * Returns an array of the currently sorted columns
+             * @public
+             * @expose
+             * @returns {Array.<SERIALIZED_COLUMN_SORT>} configuration for all columns
+             */
+            getSortedColumns: function () {
+                var sorted = [];
+                for (var i = 0, sort; i < this._rows.sortColumn.length; i++) {
+                    sort = this._rows.sortColumn[i];
+                    sorted.push({column: sort.column, descending: sort.descending});
+                }
+                return sorted;
+            },
+
+            /**
+             * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
              * @public
              * @expose
              * @param {Number} row index of the row
              * @param {String} column name of the column
-             * @returns {String} HTML string for the specified cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+             * @returns {String} HTML string for the specified cell
              */
             getHtmlForCell: function (row, column) {
                 if (row < 0 || row > this._rows.length - 1) return null;
@@ -2503,6 +2525,51 @@
     );
 
     // It's a shame the Google Closure Compiler does not support exposing a nested @param
+
+    /**
+     * @typedef SERIALIZED_COLUMN
+     * */
+    var SERIALIZED_COLUMN = {
+        /**
+         * @expose
+         * @const
+         * @type {int}
+         * */
+        order: 0,
+
+        /**
+         * @expose
+         * @const
+         * @type {String}
+         * */
+        width: 'auto',
+
+        /**
+         * @expose
+         * @const
+         * @type {Boolean}
+         * */
+        visible: true
+    };
+
+    /**
+     * @typedef SERIALIZED_COLUMN_SORT
+     * */
+    var SERIALIZED_COLUMN_SORT = {
+        /**
+         * @expose
+         * @const
+         * @type {String}
+         * */
+        column: '',
+
+        /**
+         * @expose
+         * @const
+         * @type {Boolean}
+         * */
+        descending: false
+    };
 
     /**
      * @typedef COLUMN_WIDTH_MODE
