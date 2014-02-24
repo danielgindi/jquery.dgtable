@@ -1308,11 +1308,13 @@
                         } else if (this._$tbody) {
                             var tr, div, td, bodyFragment,
                                 allowCellPreview = this._allowCellPreview,
-                                visibleColumns = this._visibleColumns, 
+                                visibleColumns = this._visibleColumns,
                                 cellFormatter = this._cellFormatter;
                                 
                             bodyFragment = document.createDocumentFragment();
-                            
+
+                            var oldTrCount = this._$tbody[0].childNodes.length;
+
                             for (var i = 0, rowData, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
                                  i < rowCount;
                                  i++) {
@@ -1336,7 +1338,7 @@
                                     tr.appendChild(td);
                                 }
 
-                                this.trigger('rowCreate', i, tr);
+                                this.trigger('rowCreate', oldTrCount + i, oldRowCount + i, tr);
 
                                 bodyFragment.appendChild(tr);
                             }
@@ -1945,7 +1947,7 @@
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, len, row, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview;
+                var i, len, rowData, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview;
 
                 var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
@@ -2071,7 +2073,7 @@
                     self._virtualVisibleRows = parseInt(self._height / self._virtualRowHeight, 10);
                 }
 
-                var rows = self._filteredRows || self._rows;
+                var rows = self._filteredRows || self._rows, isDataFiltered = !!self._filteredRows;
 
                 if (self._virtualTable) {
                     if (self._virtualRowRange && self._virtualRowRange.last - self._virtualRowRange.first >= self._virtualVisibleRows) {
@@ -2122,14 +2124,14 @@
                 for (i = firstDisplayedRow, colCount = visibleColumns.length, rowCount = rows.length;
                      i < rowCount && i < lastDisplayedRow;
                      i++) {
-                    row = rows[i];
+                    rowData = rows[i];
                     tr = document.createElement('tr');
                     tr.rowIndex = i;
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = cellFormatter(row[column.name], column.name);
+                        div.innerHTML = cellFormatter(rowData[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
                         if (allowCellPreview) {
@@ -2141,7 +2143,7 @@
 
                     bodyFragment.appendChild(tr);
 
-                    this.trigger('rowCreate', i, tr);
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
                 }
 
                 if (self._virtualTable) {
@@ -2304,6 +2306,7 @@
                 var tr = document.createElement('tr');
                 tr.rowIndex = index;
                 var rowData = (this._filteredRows || this._rows)[index],
+                    isDataFiltered = !!this._filteredRows,
                     allowCellPreview = this._allowCellPreview,
                     visibleColumns = this._visibleColumns,
                     cellFormatter = this._cellFormatter;
@@ -2324,7 +2327,7 @@
                 
                 this._$tbody[0].insertBefore(tr, rowToInsertBefore);
 
-                this.trigger('rowCreate', index, tr);
+                this.trigger('rowCreate', index, isDataFiltered ? rowData['__i'] : index, tr);
             },
 
             /**
@@ -2365,13 +2368,14 @@
             _refreshVirtualRows: function (firstRow) {
                 var trs = this._$tbody[0].getElementsByTagName('tr'),
                     rows = this._filteredRows || this._rows,
+                    isDataFiltered = !!this._filteredRows,
                     rowIndex,
                     rowData,
                     visibleColumns = this._visibleColumns,
                     cellFormatter = this._cellFormatter;
                     
-                for (var i = 1, tr, tdList, j, div, col, colName, max = trs.length - 1; 
-                     i < max; 
+                for (var i = 1, tr, tdList, j, div, col, colName, max = trs.length - 1;
+                     i < max;
                      i++) {
                     tr = trs[i];
 
@@ -2388,7 +2392,7 @@
                         div.innerHTML = cellFormatter(rowData[colName], colName);
                     }
 
-                    this.trigger('rowCreate', tr);
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
                 }
             },
 
