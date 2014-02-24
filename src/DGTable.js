@@ -172,8 +172,15 @@
 
                 /**
                  * @private
-                 * @field {Function} _formatter */
-                this._formatter = options.formatter || function (val) {
+                 * @field {Function} _cellFormatter */
+                this._cellFormatter = options.cellFormatter || function (val) {
+                    return val;
+                };
+                
+                /**
+                 * @private
+                 * @field {Function} _headerCellFormatter */
+                this._headerCellFormatter = options.headerCellFormatter || function (val) {
                     return val;
                 };
                 
@@ -1057,7 +1064,7 @@
                 if (row < 0 || row > this._rows.length - 1) return null;
                 if (!this._columns.get(column)) return null;
 
-                return this._formatter(this._rows[row][column], column);
+                return this._cellFormatter(this._rows[row][column], column);
             },
 
             /**
@@ -1315,7 +1322,7 @@
                                     column = this._visibleColumns[colIndex];
                                     div = createElement('div');
                                     div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = this._formatter(row[column.name], column.name);
+                                    div.innerHTML = this._cellFormatter(row[column.name], column.name);
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
@@ -1937,7 +1944,7 @@
                     if (column.visible) {
                         div = createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = column.label;
+                        div.innerHTML = this._headerCellFormatter(column.label, column.name);
                         th = createElement('th');
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
@@ -2097,7 +2104,7 @@
                         column = self._visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = self._formatter(row[column.name], column.name);
+                        div.innerHTML = self._cellFormatter(row[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
                         if (cellPreview) {
@@ -2274,7 +2281,7 @@
                     col = this._visibleColumns[i];
                     div = document.createElement('div');
                     div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = this._formatter(rows[index][col.name], col.name);
+                    div.innerHTML = this._cellFormatter(rows[index][col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
                     if (cellPreview) {
@@ -2331,7 +2338,7 @@
                         div = tdList[j];
                         col = this._visibleColumns[j];
                         colName = col.name;
-                        div.innerHTML = this._formatter(rows[firstRow + i - 1][colName], colName);
+                        div.innerHTML = this._cellFormatter(rows[firstRow + i - 1][colName], colName);
                     }
                 }
             },
@@ -2700,7 +2707,8 @@
      * @param {boolean=true} adjustColumnWidthForSortArrow
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
-     * @param {Function?} formatter
+     * @param {Function?} cellFormatter
+     * @param {Function?} headerCellFormatter
      * @param {int=10} rowsBufferSize
      * @param {int=35} minColumnWidth
      * @param {int=8} resizeAreaWidth
@@ -2757,7 +2765,10 @@
         sortColumn: null,
 
         /** @expose */
-        formatter: null,
+        cellFormatter: null,
+
+        /** @expose */
+        headerCellFormatter: null,
 
         /** @expose */
         rowsBufferSize: null,

@@ -340,7 +340,7 @@
             ],
             height: 500,
             width: DGTable.Width.SCROLL,
-            formatter: function (val, colName) {
+            cellFormatter: function (val, colName) {
                 if (colName === 'address') {
                     return '<i>' + val + '</i>';
                 }
