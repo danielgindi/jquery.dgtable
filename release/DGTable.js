@@ -46,7 +46,7 @@
             tagName: 'div',
 			
 			/** @expose */
-            VERSION: '0.2.6',
+            VERSION: '0.2.7',
 
             /**
              * @constructs
@@ -114,6 +114,11 @@
                  * @private
                  * @field {boolean} _adjustColumnWidthForSortArrow */
                 this._adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
+
+                /**
+                 * @private
+                 * @field {boolean} _convertColumnWidthsToRelative */
+                this._convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
 
                 /**
                  * @private
@@ -542,7 +547,6 @@
                     }
 
                     this._updateTableWidth();
-
 
                     // Show sort arrows
                     for (var i = 0; i < this._rows.sortColumn.length; i++) {
@@ -1064,6 +1068,30 @@
             },
 
             /**
+             * Returns the row data for a specific row
+             * @public
+             * @expose
+             * @param {Number} row index of the row
+             * @returns {Object} Row data
+             */
+            getDataForRow: function (row) {
+                if (row < 0 || row > this._rows.length - 1) return null;
+                return this._rows[row];
+            },
+
+            /**
+             * Returns the row data for a specific row
+             * @public
+             * @expose
+             * @param {Number} row index of the filtered row
+             * @returns {Object} Row data
+             */
+            getDataForFilteredRow: function (row) {
+                if (row < 0 || row > (this._filteredRows || this._rows).length - 1) return null;
+                return (this._filteredRows || this._rows)[row];
+            },
+
+            /**
              * @private
              * @param {Element} el
              * @returns {Number} width
@@ -1151,6 +1179,7 @@
             /**
              * Notify the table that its width has changed
              * @public
+             * @expose
              * @returns {DGTable} self
              */
             tableWidthChanged: (function () {
@@ -1184,7 +1213,7 @@
                     if (sizeLeft != lastDetectedWidth || forceUpdate) {
                         lastDetectedWidth = detectedWidth;
 
-                        var width, changedColumnIndexes = [], i, col, totalRelativePercentage = 0;
+                        var width, absWidthTotal = 0, changedColumnIndexes = [], i, col, totalRelativePercentage = 0;
 
                         for (i = 0; i < this._columns.length; i++) {
                             this._columns[i].actualWidthConsideringScrollbarWidth = null;
@@ -1199,11 +1228,14 @@
                                     width = this._minColumnWidth;
                                 }
                                 sizeLeft -= width;
+                                absWidthTotal += width;
 
                                 // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
-                                    changedColumnIndexes.push(i);
+                                    if (!this._convertColumnWidthsToRelative) {
+                                        changedColumnIndexes.push(i);
+                                    }
                                 }
                             } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
                                 width = _.bind(getTextWidth, this)(col.label) + 20;
@@ -1212,15 +1244,32 @@
                                     width = this._minColumnWidth;
                                 }
                                 sizeLeft -= width;
+                                absWidthTotal += width;
 
                                 // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
-                                    changedColumnIndexes.push(i);
+                                    if (!this._convertColumnWidthsToRelative) {
+                                        changedColumnIndexes.push(i);
+                                    }
                                 }
                             } else if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
                                 totalRelativePercentage += col.width;
                                 relatives++;
+                            }
+                        }
+
+                        // Normalize relative sizes if needed
+                        if (this._convertColumnWidthsToRelative) {
+                            for (i = 0; i < this._visibleColumns.length; i++) {
+                                col = this._visibleColumns[i];
+                                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE) {
+                                    col.widthMode = COLUMN_WIDTH_MODE.RELATIVE;
+                                    sizeLeft += col.actualWidth;
+                                    col.width = col.actualWidth / absWidthTotal;
+                                    totalRelativePercentage += col.width;
+                                    relatives++;
+                                }
                             }
                         }
 
@@ -1279,6 +1328,28 @@
             })(),
 
             /**
+             * Notify the table that its height has changed
+             * @public
+             * @expose
+             * @returns {DGTable} self
+             */
+            tableHeightChanged: function () {
+                var self = this,
+                    height = this.$el.innerHeight() - (parseFloat(this._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
+                if (height != self._height) {
+                    self._height = height;
+                    if (self._$tbody) {
+                        self._$tbody[0].style.height = self._height - self._$thead.outerHeight() + 'px';
+                    }
+                    if (self._virtualTable) {
+                        self._tableSkeletonNeedsRendering = true;
+                        self.render();
+                    }
+                }
+                return self;
+            },
+
+            /**
              * Add rows to the table
              * @public
              * @expose
@@ -1320,7 +1391,7 @@
                                  i++) {
                                 rowData = data[i];
                                 tr = createElement('tr');
-                                tr.rowIndex = i;
+                                tr['_rowIndex'] = i;
                                 
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
                                     column = visibleColumns[colIndex];
@@ -1338,7 +1409,7 @@
                                     tr.appendChild(td);
                                 }
 
-                                this.trigger('rowCreate', oldTrCount + i, oldRowCount + i, tr);
+                                this.trigger('rowCreate', oldTrCount + i, oldRowCount + i, tr, rowData);
 
                                 bodyFragment.appendChild(tr);
                             }
@@ -1347,6 +1418,40 @@
                         }
                     }
                     this.trigger('addRows', data.length, false);
+                }
+                return this;
+            },
+
+            /**
+             * Removes a row from the table
+             * @public
+             * @expose
+             * @param {Number} row index
+             * @param {Boolean=true} render
+             * @returns {DGTable} self
+             */
+            removeRow: function(row, render) {
+                if (row < 0 || row > this._rows.length - 1) return null;
+                this._rows.splice(row, 1);
+                render = (render === undefined) ? true : !!render;
+                if (this._filteredRows) {
+                    this._filteredRows = this._refilter();
+                    this._tableSkeletonNeedsRendering = true;
+                    if (render) {
+                        this.render();
+                    }
+                }
+                if (render) {
+                    if (this._virtualTable) {
+                        this.render();
+                    } else {
+                        if (this._$tbody) {
+                            this._$tbody[0].childNodes.removeChild(this._$tbody[0].childNodes[row]);
+                            this._updateLastCellWidthFromScrollbar();
+                            this._updateTableWidth();
+                        }
+                        this.trigger('render');
+                    }
                 }
                 return this;
             },
@@ -2008,6 +2113,7 @@
                 var table, thead, tbody;
 
                 if (self._virtualTable || !self._$table) {
+
                     var fragment = document.createDocumentFragment();
                     table = createElement('table');
                     table.className = self._tableClassName;
@@ -2023,8 +2129,12 @@
                     }
                     table.appendChild(thead);
 
+                    if (!this._height) {
+                        this._height = this.$el.innerHeight() - (parseFloat($(table).css('border-top-width')) || 0) - (parseFloat($(table).css('border-bottom-width')) || 0);
+                    }
+
                     tbody = createElement('tbody');
-                    tbody.style.maxHeight = self._height + 'px';
+                    tbody.style.height = self._height - $(thead).outerHeight() + 'px';
                     tbody.style.display = 'block';
                     tbody.style.overflowY = 'auto';
                     tbody.style.overflowX = 'hidden';
@@ -2070,7 +2180,7 @@
                     tbody.removeChild(tr1);
                     tbody.removeChild(tr2);
                     tbody.removeChild(tr3);
-                    self._virtualVisibleRows = parseInt(self._height / self._virtualRowHeight, 10);
+                    self._virtualVisibleRows = parseInt(self._height - $(thead).outerHeight() / self._virtualRowHeight, 10);
                 }
 
                 var rows = self._filteredRows || self._rows, isDataFiltered = !!self._filteredRows;
@@ -2126,7 +2236,7 @@
                      i++) {
                     rowData = rows[i];
                     tr = document.createElement('tr');
-                    tr.rowIndex = i;
+                    tr['_rowIndex'] = i;
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = visibleColumns[colIndex];
                         div = document.createElement('div');
@@ -2143,7 +2253,7 @@
 
                     bodyFragment.appendChild(tr);
 
-                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr, rowData);
                 }
 
                 if (self._virtualTable) {
@@ -2156,6 +2266,10 @@
                 // Populate THEAD
                 try { thead.innerHTML = ''; } catch (e) { /* IE8 */ thead.textContent = ''; }
                 thead.appendChild(headerRow);
+
+                if (self._virtualTable) {
+                    tbody.style.height = self._height - $(thead).outerHeight() + 'px';
+                }
 
                 // Populate TBODY
                 try { tbody.innerHTML = ''; } catch (e) { /* IE8 */ tbody.textContent = ''; }
@@ -2304,7 +2418,7 @@
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement('tr');
-                tr.rowIndex = index;
+                tr['_rowIndex'] = index;
                 var rowData = (this._filteredRows || this._rows)[index],
                     isDataFiltered = !!this._filteredRows,
                     allowCellPreview = this._allowCellPreview,
@@ -2327,7 +2441,7 @@
                 
                 this._$tbody[0].insertBefore(tr, rowToInsertBefore);
 
-                this.trigger('rowCreate', index, isDataFiltered ? rowData['__i'] : index, tr);
+                this.trigger('rowCreate', index, isDataFiltered ? rowData['__i'] : index, tr, rowData);
             },
 
             /**
@@ -2381,7 +2495,7 @@
 
                     this.trigger('rowDestroy', tr);
 
-                    tr.rowIndex = rowIndex = firstRow + i - 1;
+                    tr['_rowIndex'] = rowIndex = firstRow + i - 1;
                     rowData = rows[rowIndex];
 
                     tdList = $('td>div', tr);
@@ -2392,7 +2506,7 @@
                         div.innerHTML = cellFormatter(rowData[colName], colName);
                     }
 
-                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr, rowData);
                 }
             },
 
@@ -2463,6 +2577,9 @@
                     var $el = $(el), $elInner = $(el.firstChild);
                     var div = createElement('div'), $div = $(div);
                     div.className = this._cellPreviewClassName;
+                    if (el.tagName == 'TH') {
+                        div.className += ' header';
+                    }
                     var paddingL = parseFloat($el.css('padding-left')) || 0,
                         paddingR = parseFloat($el.css('padding-right')) || 0,
                         paddingT = parseFloat($el.css('padding-top')) || 0,
@@ -2494,6 +2611,9 @@
 
                     var bgColor = $(el).css('background-color');
                     if (bgColor == this._transparentBgColor1 || bgColor == this._transparentBgColor2) {
+                        bgColor = $(el.parentNode).css('background-color');
+                    }
+                    if (bgColor == this._transparentBgColor1 || bgColor == this._transparentBgColor2) {
                         bgColor = '#fff';
                     }
 
@@ -2518,10 +2638,10 @@
                     div.firstChild.style.direction = $elInner.css('direction');
                     div.firstChild.style.whiteSpace = $elInner.css('white-space');
 
-                    div['__row'] = el.parentNode.getAttribute('data-row');
+                    var rowIndex = div['__row'] = el.parentNode['_rowIndex'];
                     div['__column'] = this._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
-                    this.trigger('cellPreview', div.firstChild, div['__row'], div['__column']);
+                    this.trigger('cellPreview', div.firstChild, rowIndex == null ? null : rowIndex, div['__column'], rowIndex == null ? null : (this._filteredRows || this._rows)[rowIndex]);
                     if (this._abortCellPreview) return;
 
                     var offset = $el.offset();
@@ -2757,6 +2877,7 @@
      * @param {boolean=true} adjustColumnWidthForSortArrow
      * @param {boolean=true} relativeWidthGrowsToFillWidth
      * @param {boolean=false} relativeWidthShrinksToFillWidth
+     * @param {boolean=false} convertColumnWidthsToRelative
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
      * @param {Function?} cellFormatter
@@ -2830,13 +2951,28 @@
         /** @expose */
         comparatorCallback: null,
 
-        /** @expose */
+        /**
+         * @expose
+         * @type {Boolean=true}
+         * */
         relativeWidthGrowsToFillWidth: null,
 
-        /** @expose */
+        /**
+         * @expose
+         * @type {Boolean=false}
+         * */
         relativeWidthShrinksToFillWidth: null,
 
-        /** @expose */
+        /**
+         * @expose
+         * @type {Boolean=false}
+         * */
+        convertColumnWidthsToRelative: null,
+
+        /**
+         * @expose
+         * @type {String}
+         * */
         resizerClassName: null,
 
         /**

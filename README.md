@@ -63,7 +63,8 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **sortableColumns**: `Number=1` How many columns can you sort by, one after another?
 * **adjustColumnWidthForSortArrow**: `Boolean=true` When set, the columns will automatically grow to accommodate for the sort arrow.
 * **relativeWidthGrowsToFillWidth**: `Boolean=true` When set, relative width columns automatically grow to fill the table's width.
-* **relativeWidthShrinksToFillWidth**: `Boolean=true` When set, relative width columns automatically shrink to fill the table's width.
+* **relativeWidthShrinksToFillWidth**: `Boolean=false` When set, relative width columns automatically shrink to fill the table's width.
+* **convertColumnWidthsToRelative**: `Boolean=false` When set, non-relative column widths are automatically converted to relatives.
 * **cellClasses**: `String` Classes to add to the TD of all cells
 * **sortColumn**: `String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
   * Can be a column or an array of columns.
@@ -89,8 +90,9 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `render`: The table has finished rendering (after adding rows etc.).
 * `cellPreview`: We are about to show a cell preview.
   * 1st argument: Preview's DOM element
-  * 2nd argument: Row's index
+  * 2nd argument: Row's index - or null for header
   * 3rd argument: Column's name
+  * 4th argument: Row's data - if applicable
   * At this stage you can prevent showing the preview, by calling `table.abortCellPreview`
 * `cellPreviewDestroy`: Cell preview element is about to be destroyed after hiding
   * 1st argument: Preview's DOM element
@@ -101,6 +103,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 1st argument: Row's index in the currently filtered data set
   * 2st argument: Row's index in the data set
   * 3nd argument: Row's DOM TR element
+  * 4th argument: Row's data
 * `rowDestroy`: Called just before removing a physical row element (TR) from the table
   * 1st argument: Row's DOM TR element
 * `addRows`: Data rows have been added to the table
