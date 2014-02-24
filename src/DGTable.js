@@ -142,16 +142,6 @@
 
                 /**
                  * @private
-                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewCreateCallback */
-                this._cellPreviewCreateCallback = options.cellPreviewCreateCallback === undefined ? null : options.cellPreviewCreateCallback;
-
-                /**
-                 * @private
-                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewDestroyCallback */
-                this._cellPreviewDestroyCallback = options.cellPreviewDestroyCallback === undefined ? null : options.cellPreviewDestroyCallback;
-
-                /**
-                 * @private
                  * @field {Function(string,boolean)} _comparatorCallback */
                 this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
@@ -1459,6 +1449,17 @@
             },
 
             /**
+             * Abort cell preview (called from within a cellPreview event)
+             * @expose
+             * @public
+             * @returns {DGTable} self
+             */
+            abortCellPreview: function() {
+                this._abortCellPreview = true;
+                return this;
+            },
+
+            /**
              * @param {jQuery.Event} evt
              * @param {boolean?} forceUpdate
              */
@@ -2421,6 +2422,7 @@
              * @param {HTMLElement} el
              */
             _cellMouseOverEvent: function(el) {
+                this._abortCellPreview = false;
                 if (el.firstChild.scrollWidth > el.firstChild.clientWidth) {
 
                     this._hideCellPreview();
@@ -2485,11 +2487,9 @@
 
                     div['__row'] = el.parentNode.getAttribute('data-row');
                     div['__column'] = this._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
-                    if (this._cellPreviewCreateCallback) {
-                        if (this._cellPreviewCreateCallback(div.firstChild, div['__row'], div['__column']) === false) {
-                            return;
-                        }
-                    }
+
+                    this.trigger('cellPreview', div.firstChild, div['__row'], div['__column']);
+                    if (this._abortCellPreview) return;
 
                     var offset = $el.offset();
 
@@ -2539,9 +2539,7 @@
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
 
-                    if (this._cellPreviewDestroyCallback) {
-                        this._cellPreviewDestroyCallback(div.firstChild, div['__row'], div['__column'] );
-                    }
+                    this.trigger('cellPreviewDestroy', div.firstChild, div['__row'], div['__column']);
 
                     this._$cellPreviewEl = null;
                 }
@@ -2738,8 +2736,6 @@
      * @param {String?} tableClassName
      * @param {Boolean?} allowCellPreview
      * @param {String?} cellPreviewClassName
-     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewCreateCallback
-     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewDestroyCallback
      * @param {String?} className
      * @param {String?} tagName
      * */
@@ -2827,18 +2823,6 @@
          * @type {String}
          * */
         cellPreviewClassName: null,
-
-        /**
-         * @expose
-         * @type {Function(HTMLElement,number,string}boolean)}
-         * */
-        cellPreviewCreateCallback: null,
-
-        /**
-         * @expose
-         * @type {Function(HTMLElement,number,string}boolean)}
-         * */
-        cellPreviewDestroyCallback: null,
 
         /** @expose */
         className: null,
