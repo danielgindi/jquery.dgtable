@@ -46,7 +46,7 @@
             tagName: 'div',
 			
 			/** @expose */
-            VERSION: '0.2.5',
+            VERSION: '0.2.6',
 
             /**
              * @constructs
@@ -142,17 +142,7 @@
 
                 /**
                  * @private
-                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewCreateCallback */
-                this._cellPreviewCreateCallback = options.cellPreviewCreateCallback === undefined ? null : options.cellPreviewCreateCallback;
-
-                /**
-                 * @private
-                 * @field {Function(HTMLElement,number,string}boolean)} _cellPreviewDestroyCallback */
-                this._cellPreviewDestroyCallback = options.cellPreviewDestroyCallback === undefined ? null : options.cellPreviewDestroyCallback;
-
-                /**
-                 * @private
-                 * @field {Function(string,boolean)} _comparatorCallback */
+                 * @field {Function(String,Boolean)Function(a,b)boolean} _comparatorCallback */
                 this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
                 /**
@@ -172,8 +162,15 @@
 
                 /**
                  * @private
-                 * @field {Function} _formatter */
-                this._formatter = options.formatter || function (val) {
+                 * @field {Function} _cellFormatter */
+                this._cellFormatter = options.cellFormatter || function (val) {
+                    return val;
+                };
+                
+                /**
+                 * @private
+                 * @field {Function} _headerCellFormatter */
+                this._headerCellFormatter = options.headerCellFormatter || function (val) {
                     return val;
                 };
                 
@@ -447,6 +444,12 @@
                 if (this._$resizer) {
                     this._$resizer.remove();
                     this._$resizer = null;
+                }
+                if (this._$tbody) {
+                    var trs = this._$tbody[0].childNodes;
+                    for (var i = 0, len = trs.length; i < len; i++) {
+                        this.trigger('rowDestroy', trs[i]);
+                    }
                 }
                 this.remove();
                 this._unbindHeaderEvents()._unhookCellEventsForTable();
@@ -945,7 +948,7 @@
             /**
              * @public
              * @expose
-             * @param {Function(string,boolean)} comparatorCallback a callback function that returns the comparator for a specific column
+             * @param {Function(String,Boolean)Function(a,b)boolean} comparatorCallback a callback function that returns the comparator for a specific column
              * @returns {DGTable} self
              */
             setComparatorCallback: function (comparatorCallback) {
@@ -1057,7 +1060,7 @@
                 if (row < 0 || row > this._rows.length - 1) return null;
                 if (!this._columns.get(column)) return null;
 
-                return this._formatter(this._rows[row][column], column);
+                return this._cellFormatter(this._rows[row][column], column);
             },
 
             /**
@@ -1303,29 +1306,40 @@
                                 this.render();
                             }
                         } else if (this._$tbody) {
-                            var tr, div, td, bodyFragment, cellPreview = this._allowCellPreview;
+                            var tr, div, td, bodyFragment,
+                                allowCellPreview = this._allowCellPreview,
+                                visibleColumns = this._visibleColumns,
+                                cellFormatter = this._cellFormatter;
+                                
                             bodyFragment = document.createDocumentFragment();
-                            for (var i = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
+
+                            var oldTrCount = this._$tbody[0].childNodes.length;
+
+                            for (var i = 0, rowData, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
                                  i < rowCount;
                                  i++) {
-                                row = data[i];
+                                rowData = data[i];
                                 tr = createElement('tr');
-                                tr.setAttribute('data-row', i);
+                                tr.rowIndex = i;
+                                
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
-                                    column = this._visibleColumns[colIndex];
+                                    column = visibleColumns[colIndex];
                                     div = createElement('div');
                                     div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = this._formatter(row[column.name], column.name);
+                                    div.innerHTML = cellFormatter(rowData[column.name], column.name);
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
                                     }
-                                    if (cellPreview) {
+                                    if (allowCellPreview) {
                                         this._hookCellHoverIn(td);
                                     }
                                     td.appendChild(div);
                                     tr.appendChild(td);
                                 }
+
+                                this.trigger('rowCreate', oldTrCount + i, oldRowCount + i, tr);
+
                                 bodyFragment.appendChild(tr);
                             }
                             this._$tbody[0].appendChild(bodyFragment);
@@ -1441,6 +1455,17 @@
                         }
                     }
                 }
+                return this;
+            },
+
+            /**
+             * Abort cell preview (called from within a cellPreview event)
+             * @expose
+             * @public
+             * @returns {DGTable} self
+             */
+            abortCellPreview: function() {
+                this._abortCellPreview = true;
                 return this;
             },
 
@@ -1922,7 +1947,7 @@
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, row, colIndex, column, colCount, rowCount, div, tr, th, td, cellPreview = this._allowCellPreview;
+                var i, len, rowData, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview;
 
                 var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
@@ -1937,12 +1962,12 @@
                     if (column.visible) {
                         div = createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = column.label;
+                        div.innerHTML = this._headerCellFormatter(column.label, column.name);
                         th = createElement('th');
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
-                        if (cellPreview) {
+                        if (allowCellPreview) {
                             this._hookCellHoverIn(th);
                         }
                         th.appendChild(div);
@@ -1968,13 +1993,19 @@
                 if (self._$table && self._virtualTable) {
                     self._$tbody.off('scroll');
                     self._$table.remove();
+                    if (self._$tbody) {
+                        var trs = self._$tbody[0].childNodes;
+                        for (i = 0, len = trs.length; i < len; i++) {
+                            this.trigger('rowDestroy', trs[i]);
+                        }
+                    }
                 }
 
                 if (self.$el.css('position') == 'static') {
                     self.$el.css('position', 'relative');
                 }
 
-                var table, thead, tbody, cellPreview = this._allowCellPreview;
+                var table, thead, tbody;
 
                 if (self._virtualTable || !self._$table) {
                     var fragment = document.createDocumentFragment();
@@ -2042,7 +2073,7 @@
                     self._virtualVisibleRows = parseInt(self._height / self._virtualRowHeight, 10);
                 }
 
-                var rows = self._filteredRows || self._rows;
+                var rows = self._filteredRows || self._rows, isDataFiltered = !!self._filteredRows;
 
                 if (self._virtualTable) {
                     if (self._virtualRowRange && self._virtualRowRange.last - self._virtualRowRange.first >= self._virtualVisibleRows) {
@@ -2087,26 +2118,32 @@
                     lastDisplayedRow = rows.length;
                 }
 
-                for (i = firstDisplayedRow, colCount = self._visibleColumns.length, rowCount = rows.length;
+                var visibleColumns = self._visibleColumns,
+                    cellFormatter = self._cellFormatter;
+                
+                for (i = firstDisplayedRow, colCount = visibleColumns.length, rowCount = rows.length;
                      i < rowCount && i < lastDisplayedRow;
                      i++) {
-                    row = rows[i];
+                    rowData = rows[i];
                     tr = document.createElement('tr');
-                    tr.setAttribute('data-row', i);
+                    tr.rowIndex = i;
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
-                        column = self._visibleColumns[colIndex];
+                        column = visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = self._formatter(row[column.name], column.name);
+                        div.innerHTML = cellFormatter(rowData[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
-                        if (cellPreview) {
+                        if (allowCellPreview) {
                             this._hookCellHoverIn(td);
                         }
                         td.appendChild(div);
                         tr.appendChild(td);
                     }
+
                     bodyFragment.appendChild(tr);
+
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
                 }
 
                 if (self._virtualTable) {
@@ -2267,23 +2304,30 @@
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement('tr');
-                tr.setAttribute('data-row', index);
-                var rows = this._filteredRows || this._rows;
-                var cellPreview = this._allowCellPreview;
-                for (var i = 0, col, div, td; i < this._visibleColumns.length; i++) {
-                    col = this._visibleColumns[i];
+                tr.rowIndex = index;
+                var rowData = (this._filteredRows || this._rows)[index],
+                    isDataFiltered = !!this._filteredRows,
+                    allowCellPreview = this._allowCellPreview,
+                    visibleColumns = this._visibleColumns,
+                    cellFormatter = this._cellFormatter;
+                    
+                for (var i = 0, col, div, td, length = visibleColumns.length; i < length; i++) {
+                    col = visibleColumns[i];
                     div = document.createElement('div');
                     div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = this._formatter(rows[index][col.name], col.name);
+                    div.innerHTML = cellFormatter(rowData[col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
-                    if (cellPreview) {
+                    if (allowCellPreview) {
                         this._hookCellHoverIn(td);
                     }
                     td.appendChild(div);
                     tr.appendChild(td);
                 }
+                
                 this._$tbody[0].insertBefore(tr, rowToInsertBefore);
+
+                this.trigger('rowCreate', index, isDataFiltered ? rowData['__i'] : index, tr);
             },
 
             /**
@@ -2311,6 +2355,7 @@
                 }
                 for (var i = start; i < end; end--) {
                     this._unhookCellEventsForRow(trs[start]);
+                    this.trigger('rowDestroy', trs[start]);
                     tbody.removeChild(trs[start]);
                 }
             },
@@ -2321,18 +2366,33 @@
              * @param {int} firstRow index of the first row rendered
              */
             _refreshVirtualRows: function (firstRow) {
-                var trs = this._$tbody[0].getElementsByTagName('tr');
-                var rows = this._filteredRows || this._rows;
-                for (var i = 1, tr, tdList, j, div, col, colName; i < trs.length - 1; i++) {
+                var trs = this._$tbody[0].getElementsByTagName('tr'),
+                    rows = this._filteredRows || this._rows,
+                    isDataFiltered = !!this._filteredRows,
+                    rowIndex,
+                    rowData,
+                    visibleColumns = this._visibleColumns,
+                    cellFormatter = this._cellFormatter;
+                    
+                for (var i = 1, tr, tdList, j, div, col, colName, max = trs.length - 1;
+                     i < max;
+                     i++) {
                     tr = trs[i];
-                    tr.setAttribute('data-row', firstRow + i - 1);
+
+                    this.trigger('rowDestroy', tr);
+
+                    tr.rowIndex = rowIndex = firstRow + i - 1;
+                    rowData = rows[rowIndex];
+
                     tdList = $('td>div', tr);
                     for (j = 0; j < tdList.length; j++) {
                         div = tdList[j];
-                        col = this._visibleColumns[j];
+                        col = visibleColumns[j];
                         colName = col.name;
-                        div.innerHTML = this._formatter(rows[firstRow + i - 1][colName], colName);
+                        div.innerHTML = cellFormatter(rowData[colName], colName);
                     }
+
+                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr);
                 }
             },
 
@@ -2395,6 +2455,7 @@
              * @param {HTMLElement} el
              */
             _cellMouseOverEvent: function(el) {
+                this._abortCellPreview = false;
                 if (el.firstChild.scrollWidth > el.firstChild.clientWidth) {
 
                     this._hideCellPreview();
@@ -2459,11 +2520,9 @@
 
                     div['__row'] = el.parentNode.getAttribute('data-row');
                     div['__column'] = this._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
-                    if (this._cellPreviewCreateCallback) {
-                        if (this._cellPreviewCreateCallback(div.firstChild, div['__row'], div['__column']) === false) {
-                            return;
-                        }
-                    }
+
+                    this.trigger('cellPreview', div.firstChild, div['__row'], div['__column']);
+                    if (this._abortCellPreview) return;
 
                     var offset = $el.offset();
 
@@ -2513,9 +2572,7 @@
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
 
-                    if (this._cellPreviewDestroyCallback) {
-                        this._cellPreviewDestroyCallback(div.firstChild, div['__row'], div['__column'] );
-                    }
+                    this.trigger('cellPreviewDestroy', div.firstChild, div['__row'], div['__column']);
 
                     this._$cellPreviewEl = null;
                 }
@@ -2698,21 +2755,20 @@
      * @param {boolean=true} movableColumns
      * @param {int=1} sortableColumns
      * @param {boolean=true} adjustColumnWidthForSortArrow
+     * @param {boolean=true} relativeWidthGrowsToFillWidth
+     * @param {boolean=false} relativeWidthShrinksToFillWidth
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
-     * @param {Function?} formatter
+     * @param {Function?} cellFormatter
+     * @param {Function?} headerCellFormatter
      * @param {int=10} rowsBufferSize
      * @param {int=35} minColumnWidth
      * @param {int=8} resizeAreaWidth
-     * @param {Function(string}boolean)} comparatorCallback
-     * @param {boolean=true} relativeWidthGrowsToFillWidth
-     * @param {boolean=false} relativeWidthShrinksToFillWidth
+     * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback
      * @param {String?} resizerClassName
      * @param {String?} tableClassName
-     * @param {Boolean?} allowCellPreview
+     * @param {Boolean=true} allowCellPreview
      * @param {String?} cellPreviewClassName
-     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewCreateCallback
-     * @param {Function(HTMLElement,number,string}boolean)} cellPreviewDestroyCallback
      * @param {String?} className
      * @param {String?} tagName
      * */
@@ -2757,7 +2813,10 @@
         sortColumn: null,
 
         /** @expose */
-        formatter: null,
+        cellFormatter: null,
+
+        /** @expose */
+        headerCellFormatter: null,
 
         /** @expose */
         rowsBufferSize: null,
@@ -2797,18 +2856,6 @@
          * @type {String}
          * */
         cellPreviewClassName: null,
-
-        /**
-         * @expose
-         * @type {Function(HTMLElement,number,string}boolean)}
-         * */
-        cellPreviewCreateCallback: null,
-
-        /**
-         * @expose
-         * @type {Function(HTMLElement,number,string}boolean)}
-         * */
-        cellPreviewDestroyCallback: null,
 
         /** @expose */
         className: null,
@@ -3126,9 +3173,11 @@ DGTable.RowCollection = (function () {
             this.filterColumn = columnName;
             this.filterString = filter;
             this.filterCaseSensitive = caseSensitive;
+            var originalRowIndex = 0;
             for (var i = 0, len = this.length, row; i < len; i++) {
                 row = this[i];
                 if (this.shouldBeVisible(row)) {
+                    row['__i'] = originalRowIndex++;
                     rows.push(row);
                 }
             }
