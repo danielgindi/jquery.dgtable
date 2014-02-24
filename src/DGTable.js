@@ -142,7 +142,7 @@
 
                 /**
                  * @private
-                 * @field {Function(string,boolean)} _comparatorCallback */
+                 * @field {Function(String,Boolean)Function(a,b)boolean} _comparatorCallback */
                 this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
                 /**
@@ -444,6 +444,12 @@
                 if (this._$resizer) {
                     this._$resizer.remove();
                     this._$resizer = null;
+                }
+                if (this._$tbody) {
+                    var trs = this._$tbody[0].childNodes;
+                    for (var i = 0, len = trs.length; i < len; i++) {
+                        this.trigger('rowDestroy', trs[i]);
+                    }
                 }
                 this.remove();
                 this._unbindHeaderEvents()._unhookCellEventsForTable();
@@ -942,7 +948,7 @@
             /**
              * @public
              * @expose
-             * @param {Function(string,boolean)} comparatorCallback a callback function that returns the comparator for a specific column
+             * @param {Function(String,Boolean)Function(a,b)boolean} comparatorCallback a callback function that returns the comparator for a specific column
              * @returns {DGTable} self
              */
             setComparatorCallback: function (comparatorCallback) {
@@ -1300,36 +1306,38 @@
                                 this.render();
                             }
                         } else if (this._$tbody) {
-                            var tr, div, td, bodyFragment, 
-                                cellPreview = this._allowCellPreview,
+                            var tr, div, td, bodyFragment,
+                                allowCellPreview = this._allowCellPreview,
                                 visibleColumns = this._visibleColumns, 
                                 cellFormatter = this._cellFormatter;
                                 
                             bodyFragment = document.createDocumentFragment();
                             
-                            for (var i = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
+                            for (var i = 0, rowData, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
                                  i < rowCount;
                                  i++) {
-                                row = data[i];
+                                rowData = data[i];
                                 tr = createElement('tr');
-                                tr.setAttribute('data-row', i);
+                                tr.rowIndex = i;
                                 
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
                                     column = visibleColumns[colIndex];
                                     div = createElement('div');
                                     div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = cellFormatter(row[column.name], column.name);
+                                    div.innerHTML = cellFormatter(rowData[column.name], column.name);
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
                                     }
-                                    if (cellPreview) {
+                                    if (allowCellPreview) {
                                         this._hookCellHoverIn(td);
                                     }
                                     td.appendChild(div);
                                     tr.appendChild(td);
                                 }
-                                
+
+                                this.trigger('rowCreate', i, tr);
+
                                 bodyFragment.appendChild(tr);
                             }
                             this._$tbody[0].appendChild(bodyFragment);
@@ -1937,7 +1945,7 @@
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, row, colIndex, column, colCount, rowCount, div, tr, th, td, cellPreview = this._allowCellPreview;
+                var i, len, row, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview;
 
                 var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
@@ -1957,7 +1965,7 @@
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
-                        if (cellPreview) {
+                        if (allowCellPreview) {
                             this._hookCellHoverIn(th);
                         }
                         th.appendChild(div);
@@ -1983,13 +1991,19 @@
                 if (self._$table && self._virtualTable) {
                     self._$tbody.off('scroll');
                     self._$table.remove();
+                    if (self._$tbody) {
+                        var trs = self._$tbody[0].childNodes;
+                        for (i = 0, len = trs.length; i < len; i++) {
+                            this.trigger('rowDestroy', trs[i]);
+                        }
+                    }
                 }
 
                 if (self.$el.css('position') == 'static') {
                     self.$el.css('position', 'relative');
                 }
 
-                var table, thead, tbody, cellPreview = this._allowCellPreview;
+                var table, thead, tbody;
 
                 if (self._virtualTable || !self._$table) {
                     var fragment = document.createDocumentFragment();
@@ -2110,7 +2124,7 @@
                      i++) {
                     row = rows[i];
                     tr = document.createElement('tr');
-                    tr.setAttribute('data-row', i);
+                    tr.rowIndex = i;
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = visibleColumns[colIndex];
                         div = document.createElement('div');
@@ -2118,13 +2132,16 @@
                         div.innerHTML = cellFormatter(row[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
-                        if (cellPreview) {
+                        if (allowCellPreview) {
                             this._hookCellHoverIn(td);
                         }
                         td.appendChild(div);
                         tr.appendChild(td);
                     }
+
                     bodyFragment.appendChild(tr);
+
+                    this.trigger('rowCreate', i, tr);
                 }
 
                 if (self._virtualTable) {
@@ -2285,9 +2302,9 @@
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement('tr');
-                tr.setAttribute('data-row', index);
-                var rows = this._filteredRows || this._rows,
-                    cellPreview = this._allowCellPreview,
+                tr.rowIndex = index;
+                var rowData = (this._filteredRows || this._rows)[index],
+                    allowCellPreview = this._allowCellPreview,
                     visibleColumns = this._visibleColumns,
                     cellFormatter = this._cellFormatter;
                     
@@ -2295,10 +2312,10 @@
                     col = visibleColumns[i];
                     div = document.createElement('div');
                     div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = cellFormatter(rows[index][col.name], col.name);
+                    div.innerHTML = cellFormatter(rowData[col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
-                    if (cellPreview) {
+                    if (allowCellPreview) {
                         this._hookCellHoverIn(td);
                     }
                     td.appendChild(div);
@@ -2306,6 +2323,8 @@
                 }
                 
                 this._$tbody[0].insertBefore(tr, rowToInsertBefore);
+
+                this.trigger('rowCreate', index, tr);
             },
 
             /**
@@ -2333,6 +2352,7 @@
                 }
                 for (var i = start; i < end; end--) {
                     this._unhookCellEventsForRow(trs[start]);
+                    this.trigger('rowDestroy', trs[start]);
                     tbody.removeChild(trs[start]);
                 }
             },
@@ -2345,6 +2365,8 @@
             _refreshVirtualRows: function (firstRow) {
                 var trs = this._$tbody[0].getElementsByTagName('tr'),
                     rows = this._filteredRows || this._rows,
+                    rowIndex,
+                    rowData,
                     visibleColumns = this._visibleColumns,
                     cellFormatter = this._cellFormatter;
                     
@@ -2352,14 +2374,21 @@
                      i < max; 
                      i++) {
                     tr = trs[i];
-                    tr.setAttribute('data-row', firstRow + i - 1);
+
+                    this.trigger('rowDestroy', tr);
+
+                    tr.rowIndex = rowIndex = firstRow + i - 1;
+                    rowData = rows[rowIndex];
+
                     tdList = $('td>div', tr);
                     for (j = 0; j < tdList.length; j++) {
                         div = tdList[j];
                         col = visibleColumns[j];
                         colName = col.name;
-                        div.innerHTML = cellFormatter(rows[firstRow + i - 1][colName], colName);
+                        div.innerHTML = cellFormatter(rowData[colName], colName);
                     }
+
+                    this.trigger('rowCreate', tr);
                 }
             },
 
@@ -2722,6 +2751,8 @@
      * @param {boolean=true} movableColumns
      * @param {int=1} sortableColumns
      * @param {boolean=true} adjustColumnWidthForSortArrow
+     * @param {boolean=true} relativeWidthGrowsToFillWidth
+     * @param {boolean=false} relativeWidthShrinksToFillWidth
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
      * @param {Function?} cellFormatter
@@ -2729,12 +2760,10 @@
      * @param {int=10} rowsBufferSize
      * @param {int=35} minColumnWidth
      * @param {int=8} resizeAreaWidth
-     * @param {Function(string}boolean)} comparatorCallback
-     * @param {boolean=true} relativeWidthGrowsToFillWidth
-     * @param {boolean=false} relativeWidthShrinksToFillWidth
+     * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback
      * @param {String?} resizerClassName
      * @param {String?} tableClassName
-     * @param {Boolean?} allowCellPreview
+     * @param {Boolean=true} allowCellPreview
      * @param {String?} cellPreviewClassName
      * @param {String?} className
      * @param {String?} tagName
