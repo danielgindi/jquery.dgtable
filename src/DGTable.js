@@ -1310,19 +1310,25 @@
                                 this.render();
                             }
                         } else if (this._$tbody) {
-                            var tr, div, td, bodyFragment, cellPreview = this._allowCellPreview;
+                            var tr, div, td, bodyFragment, 
+                                cellPreview = this._allowCellPreview,
+                                visibleColumns = this._visibleColumns, 
+                                cellFormatter = this._cellFormatter;
+                                
                             bodyFragment = document.createDocumentFragment();
+                            
                             for (var i = 0, row, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
                                  i < rowCount;
                                  i++) {
                                 row = data[i];
                                 tr = createElement('tr');
                                 tr.setAttribute('data-row', i);
+                                
                                 for (colIndex = 0; colIndex < colCount; colIndex++) {
-                                    column = this._visibleColumns[colIndex];
+                                    column = visibleColumns[colIndex];
                                     div = createElement('div');
                                     div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = this._cellFormatter(row[column.name], column.name);
+                                    div.innerHTML = cellFormatter(row[column.name], column.name);
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
@@ -1333,6 +1339,7 @@
                                     td.appendChild(div);
                                     tr.appendChild(td);
                                 }
+                                
                                 bodyFragment.appendChild(tr);
                             }
                             this._$tbody[0].appendChild(bodyFragment);
@@ -2094,17 +2101,20 @@
                     lastDisplayedRow = rows.length;
                 }
 
-                for (i = firstDisplayedRow, colCount = self._visibleColumns.length, rowCount = rows.length;
+                var visibleColumns = self._visibleColumns,
+                    cellFormatter = self._cellFormatter;
+                
+                for (i = firstDisplayedRow, colCount = visibleColumns.length, rowCount = rows.length;
                      i < rowCount && i < lastDisplayedRow;
                      i++) {
                     row = rows[i];
                     tr = document.createElement('tr');
                     tr.setAttribute('data-row', i);
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
-                        column = self._visibleColumns[colIndex];
+                        column = visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = self._cellFormatter(row[column.name], column.name);
+                        div.innerHTML = cellFormatter(row[column.name], column.name);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
                         if (cellPreview) {
@@ -2275,13 +2285,16 @@
             _addVirtualRow: function (index, rowToInsertBefore) {
                 var tr = document.createElement('tr');
                 tr.setAttribute('data-row', index);
-                var rows = this._filteredRows || this._rows;
-                var cellPreview = this._allowCellPreview;
-                for (var i = 0, col, div, td; i < this._visibleColumns.length; i++) {
-                    col = this._visibleColumns[i];
+                var rows = this._filteredRows || this._rows,
+                    cellPreview = this._allowCellPreview,
+                    visibleColumns = this._visibleColumns,
+                    cellFormatter = this._cellFormatter;
+                    
+                for (var i = 0, col, div, td, length = visibleColumns.length; i < length; i++) {
+                    col = visibleColumns[i];
                     div = document.createElement('div');
                     div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = this._cellFormatter(rows[index][col.name], col.name);
+                    div.innerHTML = cellFormatter(rows[index][col.name], col.name);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
                     if (cellPreview) {
@@ -2290,6 +2303,7 @@
                     td.appendChild(div);
                     tr.appendChild(td);
                 }
+                
                 this._$tbody[0].insertBefore(tr, rowToInsertBefore);
             },
 
@@ -2328,17 +2342,22 @@
              * @param {int} firstRow index of the first row rendered
              */
             _refreshVirtualRows: function (firstRow) {
-                var trs = this._$tbody[0].getElementsByTagName('tr');
-                var rows = this._filteredRows || this._rows;
-                for (var i = 1, tr, tdList, j, div, col, colName; i < trs.length - 1; i++) {
+                var trs = this._$tbody[0].getElementsByTagName('tr'),
+                    rows = this._filteredRows || this._rows,
+                    visibleColumns = this._visibleColumns,
+                    cellFormatter = this._cellFormatter;
+                    
+                for (var i = 1, tr, tdList, j, div, col, colName, max = trs.length - 1; 
+                     i < max; 
+                     i++) {
                     tr = trs[i];
                     tr.setAttribute('data-row', firstRow + i - 1);
                     tdList = $('td>div', tr);
                     for (j = 0; j < tdList.length; j++) {
                         div = tdList[j];
-                        col = this._visibleColumns[j];
+                        col = visibleColumns[j];
                         colName = col.name;
-                        div.innerHTML = this._cellFormatter(rows[firstRow + i - 1][colName], colName);
+                        div.innerHTML = cellFormatter(rows[firstRow + i - 1][colName], colName);
                     }
                 }
             },
