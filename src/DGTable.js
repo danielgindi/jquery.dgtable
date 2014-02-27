@@ -142,6 +142,11 @@
 
                 /**
                  * @private
+                 * @field {Boolean} _allowHeaderCellPreview */
+                this._allowHeaderCellPreview = options.allowHeaderCellPreview === undefined ? true : options.allowHeaderCellPreview;
+
+                /**
+                 * @private
                  * @field {String} _cellPreviewClassName */
                 this._cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
 
@@ -2068,7 +2073,7 @@
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, len, rowData, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview;
+                var i, len, rowData, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview, allowHeaderCellPreview = this._allowHeaderCellPreview;
 
                 var headerRow = createElement('tr'), ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
@@ -2088,7 +2093,7 @@
                         th.draggable = true;
                         if (self._sortableColumns && column.sortable) th.className = 'sortable';
                         th.columnName = column.name;
-                        if (allowCellPreview) {
+                        if (allowCellPreview && allowHeaderCellPreview) {
                             this._hookCellHoverIn(th);
                         }
                         th.appendChild(div);
@@ -3020,6 +3025,12 @@
          * @type {Boolean}
          * */
         allowCellPreview: null,
+
+        /**
+         * @expose
+         * @type {Boolean}
+         * */
+        allowHeaderCellPreview: null,
 
         /**
          * @expose

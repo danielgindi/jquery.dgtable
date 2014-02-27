@@ -80,6 +80,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **resizerClassName**: `String='dgtable-resize'` Class name for the dragged resizing element (showing when resizing a column)
 * **tableClassName**: `String='dgtable'` Class name for the table
 * **allowCellPreview**: `Boolean=true` When set, hovering on truncated cells will show a preview of the full content.
+* **allowHeaderCellPreview**: `Boolean=true` Allow for toggling off **allowCellPreview** for headers specifically.
 * **cellPreviewClassName**: `String='dgtable-cell-preview'` Class name for the cell preview element
 * **className**: `String='dgtable-wrapper'` Backbone's wrapper element class name.
 * **tagName**: `String='div'` Backbone's wrapper element tag name.
