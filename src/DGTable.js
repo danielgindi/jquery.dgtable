@@ -2525,6 +2525,13 @@
                     this._$table.width(newWidth);
                     this.$el.width(newWidth);
                 } else if (this._width == DGTable.Width.SCROLL) {
+
+                    // BUGFIX: WebKit has a bug where it does not relayout so scrollbars are still calculated even though they are not there yet. This is the last resort.
+                    var oldDisplay = this.el.style.display;
+                    this.el.style.display = 'none';
+                    this.el.offsetHeight; // No need to store this anywhere, the reference is enough
+                    this.el.style.display = oldDisplay;
+
                     var elWidth = this.$el.innerWidth(),
                         tableWidth = this._$table.width(),
                         theadWidth = this._$thead[0].scrollWidth;
