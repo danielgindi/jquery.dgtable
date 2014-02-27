@@ -2214,7 +2214,7 @@
                     tbody.removeChild(tr1);
                     tbody.removeChild(tr2);
                     tbody.removeChild(tr3);
-                    self._virtualVisibleRows = parseInt(self._height - $(thead).outerHeight() / self._virtualRowHeight, 10);
+                    self._virtualVisibleRows = parseInt((self._height - $(thead).outerHeight()) / self._virtualRowHeight, 10);
                 }
 
                 var rows = self._filteredRows || self._rows, isDataFiltered = !!self._filteredRows;
