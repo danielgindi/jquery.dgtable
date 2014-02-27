@@ -67,57 +67,57 @@
 
                 /**
                  * @private
-                 * @field {boolean} _tableSkeletonNeedsRendering */
+                 * @field {Boolean} _tableSkeletonNeedsRendering */
                 this._tableSkeletonNeedsRendering = true;
 
                 /**
                  * @private
-                 * @field {boolean} _dataAppended */
+                 * @field {Boolean} _dataAppended */
                 this._dataAppended = false;
 
                 /**
                  * @private
-                 * @field {boolean} _virtualTable */
+                 * @field {Boolean} _virtualTable */
                 this._virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
 
                 /**
                  * @private
-                 * @field {int} _rowsBufferSize */
+                 * @field {Number} _rowsBufferSize */
                 this._rowsBufferSize = options.rowsBufferSize || 10;
 
                 /**
                  * @private
-                 * @field {int} _minColumnWidth */
+                 * @field {Number} _minColumnWidth */
                 this._minColumnWidth = Math.max(options.minColumnWidth || 35, 0);
 
                 /**
                  * @private
-                 * @field {int} _resizeAreaWidth */
+                 * @field {Number} _resizeAreaWidth */
                 this._resizeAreaWidth = options.resizeAreaWidth || 8;
 
                 /**
                  * @private
-                 * @field {boolean} _resizableColumns */
+                 * @field {Boolean} _resizableColumns */
                 this._resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
 
                 /**
                  * @private
-                 * @field {boolean} _movableColumns */
+                 * @field {Boolean} _movableColumns */
                 this._movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
 
                 /**
                  * @private
-                 * @field {int} _sortableColumns */
+                 * @field {Number} _sortableColumns */
                 this._sortableColumns = options.sortableColumns === undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
 
                 /**
                  * @private
-                 * @field {boolean} _adjustColumnWidthForSortArrow */
+                 * @field {Boolean} _adjustColumnWidthForSortArrow */
                 this._adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
 
                 /**
                  * @private
-                 * @field {boolean} _convertColumnWidthsToRelative */
+                 * @field {Boolean} _convertColumnWidthsToRelative */
                 this._convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
 
                 /**
@@ -152,22 +152,22 @@
 
                 /**
                  * @private
-                 * @field {Function(String,Boolean)Function(a,b)boolean} _comparatorCallback */
+                 * @field {Function(String,Boolean)Function(a,b)Boolean} _comparatorCallback */
                 this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
                 /**
                  * @private
-                 * @field {boolean} _width */
+                 * @field {Boolean} _width */
                 this._width = options.width === undefined ? DGTable.Width.NONE : options.width;
 
                 /**
                  * @private
-                 * @field {boolean} _relativeWidthGrowsToFillWidth */
+                 * @field {Boolean} _relativeWidthGrowsToFillWidth */
                 this._relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
 
                 /**
                  * @private
-                 * @field {boolean} _relativeWidthShrinksToFillWidth */
+                 * @field {Boolean} _relativeWidthShrinksToFillWidth */
                 this._relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
                 /**
@@ -576,7 +576,7 @@
              * @public
              * @expose
              * @param {COLUMN_OPTIONS} columnData column properties
-             * @param {String|int} [before=-1] column name or order to be inserted before
+             * @param {String|Number} [before=-1] column name or order to be inserted before
              * @returns {DGTable} self
              */
             addColumn: function (columnData, before) {
@@ -633,9 +633,9 @@
             /**
              * @public
              * @expose
-             * @param {String} column name of the column to filter on
-             * @param {String} filter check specified column for existence of this string
-             * @param {boolean=false} caseSensitive use caseSensitive filtering
+             * @param {String} column Name of the column to filter on
+             * @param {String} filter Check specified column for existence of this string
+             * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
              * @returns {DGTable} self
              */
             filter: function (column, filter, caseSensitive) {
@@ -671,8 +671,8 @@
              * Set a new label to a column
              * @public
              * @expose
-             * @param {String} column name of the column
-             * @param {String} label new label for the column
+             * @param {String} column Name of the column
+             * @param {String} label New label for the column
              * @returns {DGTable} self
              */
             setColumnLabel: function (column, label) {
@@ -697,8 +697,8 @@
              * Move a column to a new position
              * @public
              * @expose
-             * @param {String|int} src name or position of the column to be moved
-             * @param {String|int} dest name of the column currently in the desired position, or the position itself
+             * @param {String|Number} src Name or position of the column to be moved
+             * @param {String|Number} dest Name of the column currently in the desired position, or the position itself
              * @returns {DGTable} self
              */
             moveColumn: function (src, dest) {
@@ -752,9 +752,9 @@
              * Re-sort the table
              * @public
              * @expose
-             * @param {String} column name of the column to sort on
-             * @param {boolean=} descending sort in descending order
-             * @param {boolean=false} add should this sort be on top of the existing sort?
+             * @param {String} column Name of the column to sort on
+             * @param {Boolean=} descending Sort in descending order
+             * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
              * @returns {DGTable} self
              */
             sort: function (column, descending, add) {
@@ -826,8 +826,8 @@
              * Show or hide a column
              * @public
              * @expose
-             * @param {String} column unique column name
-             * @param {Boolean} visible new visibility mode for the column
+             * @param {String} column Unique column name
+             * @param {Boolean} visible New visibility mode for the column
              * @returns {DGTable} self
              */
             setColumnVisible: function (column, visible) {
@@ -857,9 +857,10 @@
             },
 
             /**
+             * Globally set the minimum column width
              * @public
              * @expose
-             * @param {int} minColumnWidth minimum column width
+             * @param {Number} minColumnWidth Minimum column width
              * @returns {DGTable} self
              */
             setMinColumnWidth: function (minColumnWidth) {
@@ -872,18 +873,20 @@
             },
 
             /**
+             * Get the current minimum column width
              * @public
              * @expose
-             * @returns {int} minimum column width
+             * @returns {Number} Minimum column width
              */
             getMinColumnWidth: function () {
                 return this._minColumnWidth;
             },
 
             /**
+             * Set the limit on concurrent columns sorted
              * @public
              * @expose
-             * @param {int} sortableColumns how many sortable columns to allow?
+             * @param {Number} sortableColumns How many sortable columns to allow?
              * @returns {DGTable} self
              */
             setSortableColumns: function (sortableColumns) {
@@ -900,9 +903,10 @@
             },
 
             /**
+             * Get the limit on concurrent columns sorted
              * @public
              * @expose
-             * @returns {int} how many sortable columns to allow?
+             * @returns {Number} How many sortable columns are allowed?
              */
             getSortableColumns: function () {
                 return this._sortableColumns;
@@ -911,7 +915,7 @@
             /**
              * @public
              * @expose
-             * @param {boolean} movableColumns are the columns movable?
+             * @param {Boolean} movableColumns are the columns movable?
              * @returns {DGTable} self
              */
             setMovableColumns: function (movableColumns) {
@@ -925,7 +929,7 @@
             /**
              * @public
              * @expose
-             * @returns {boolean} are the columns movable?
+             * @returns {Boolean} are the columns movable?
              */
             getMovableColumns: function () {
                 return this._movableColumns;
@@ -934,7 +938,7 @@
             /**
              * @public
              * @expose
-             * @param {boolean} resizableColumns are the columns resizable?
+             * @param {Boolean} resizableColumns are the columns resizable?
              * @returns {DGTable} self
              */
             setResizableColumns: function (resizableColumns) {
@@ -948,7 +952,7 @@
             /**
              * @public
              * @expose
-             * @returns {boolean} are the columns resizable?
+             * @returns {Boolean} are the columns resizable?
              */
             getResizableColumns: function () {
                 return this._resizableColumns;
@@ -957,7 +961,7 @@
             /**
              * @public
              * @expose
-             * @param {Function(String,Boolean)Function(a,b)boolean} comparatorCallback a callback function that returns the comparator for a specific column
+             * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback a callback function that returns the comparator for a specific column
              * @returns {DGTable} self
              */
             setComparatorCallback: function (comparatorCallback) {
@@ -1221,8 +1225,8 @@
                 
                 /**
                  * @public
-                 * @param {boolean=false) forceUpdate
-                 * @param {boolean=true) renderColumns
+                 * @param {Boolean} [forceUpdate=false]
+                 * @param {Boolean} [renderColumns=true]
                  * @returns {DGTable} self
                  */
                 return function(forceUpdate, renderColumns) {
@@ -1526,7 +1530,7 @@
             /**
              * @public
              * @expose
-             * @returns {boolean} A value indicating whether Web Workers are supported
+             * @returns {Boolean} A value indicating whether Web Workers are supported
              */
             isWorkerSupported: function() {
                 return global['Worker'] instanceof Function;
@@ -1538,7 +1542,7 @@
              * @expose
              * @param {string} url Url to the script for the Web Worker
              * @returns {Worker?} the Web Worker, or null if not supported
-             * @param {boolean=true} start if true, starts the Worker immediately
+             * @param {Boolean=true} start if true, starts the Worker immediately
              */
             createWebWorker: function (url, start) {
                 if (this.isWorkerSupported()) {
@@ -1597,7 +1601,7 @@
 
             /**
              * @param {jQuery.Event} evt
-             * @param {boolean?} forceUpdate
+             * @param {Boolean?} forceUpdate
              */
             _onVirtualTableScrolled: function (evt, forceUpdate) {
                 if (forceUpdate === true || this._prevScrollTop !== this._$tbody[0].scrollTop) {
@@ -1994,7 +1998,7 @@
             /**
              * @private
              * @param {String} column the name of the sort column
-             * @param {boolean} descending table is sorted descending
+             * @param {Boolean} descending table is sorted descending
              * @returns {DGTable} self
              */
             _showSortArrow: function (column, descending) {
@@ -2015,7 +2019,7 @@
 
             /**
              * @private
-             * @param {int} cellIndex index of the column in the DOM
+             * @param {Number} cellIndex index of the column in the DOM
              * @returns {DGTable} self
              */
             _resizeColumnElements: function (cellIndex) {
@@ -2336,8 +2340,8 @@
             /**
              * Add/remove rows from the DOM, or replace data in the current rows
              * @private
-             * @param {int} prevScrollTop previous scrollTop value in pixels
-             * @param {int} scrollTop current scrollTop value in pixels
+             * @param {Number} prevScrollTop previous scrollTop value in pixels
+             * @param {Number} scrollTop current scrollTop value in pixels
              */
             _renderVirtualRows: function (prevScrollTop, scrollTop) {
                 var first, last;
@@ -2411,9 +2415,9 @@
             /**
              * Append or prepend table rows to the DOM
              * @private
-             * @param {int} start index in the row data collection of the first row to add
-             * @param {int} end index in the row data collection of the last row to add
-             * @param {boolean} prepend add rows to the beginning of the table
+             * @param {Number} start index in the row data collection of the first row to add
+             * @param {Number} end index in the row data collection of the last row to add
+             * @param {Boolean} prepend add rows to the beginning of the table
              */
             _addVirtualRows: function (start, end, prepend) {
                 var rowToInsertBefore;
@@ -2434,7 +2438,7 @@
             /**
              * Add a new row to the DOM
              * @private
-             * @param {int} index which row in the RowCollection to add to the DOM
+             * @param {Number} index which row in the RowCollection to add to the DOM
              * @param {HTMLElement} rowToInsertBefore DOM row that the new row will precede
              */
             _addVirtualRow: function (index, rowToInsertBefore) {
@@ -2468,8 +2472,8 @@
             /**
              * Remove table rows from the DOM
              * @private
-             * @param {int} numRows number of rows to remove
-             * @param {boolean} removeFromBeginning remove rows from the beginning of the table
+             * @param {Number} numRows number of rows to remove
+             * @param {Boolean} removeFromBeginning remove rows from the beginning of the table
              */
             _removeVirtualRows: function (numRows, removeFromBeginning) {
                 var start, end;
@@ -2498,7 +2502,7 @@
             /**
              * Refresh the data in the rendered table rows with what is currently in the row data collection
              * @private
-             * @param {int} firstRow index of the first row rendered
+             * @param {Number} firstRow index of the first row rendered
              */
             _refreshVirtualRows: function (firstRow) {
                 var trs = this._$tbody[0].getElementsByTagName('tr'),
@@ -2749,7 +2753,7 @@
         /**
          * @expose
          * @const
-         * @type {int}
+         * @type {Number}
          * */
         order: 0,
 
@@ -2794,21 +2798,21 @@
         /** 
          * @expose
          * @const
-         * @type {int}
+         * @type {Number}
          * */
         AUTO: 0,
         
         /** 
          * @expose
          * @const
-         * @type {int}
+         * @type {Number}
          * */
         ABSOLUTE: 1,
         
         /** 
          * @expose
          * @const
-         * @type {int}
+         * @type {Number}
          * */
         RELATIVE: 2
     };
@@ -2852,7 +2856,7 @@
         
         /**
          * @expose
-         * @type {boolean=false}
+         * @type {Boolean=false}
          * */
         descending: null
     };
@@ -2881,19 +2885,19 @@
         
         /**
          * @expose
-         * @type {boolean=true}
+         * @type {Boolean=true}
          * */
         resizable: null,
         
         /**
          * @expose
-         * @type {boolean=true}
+         * @type {Boolean=true}
          * */
         sortable: null,
         
         /**
          * @expose
-         * @type {boolean=true}
+         * @type {Boolean=true}
          * */
         visible: null,
         
@@ -2907,23 +2911,23 @@
     /**
      * @typedef INIT_OPTIONS
      * @param {COLUMN_OPTIONS[]} columns
-     * @param {int} height
+     * @param {Number} height
      * @param {DGTable.Width} width
-     * @param {boolean=true} virtualTable
-     * @param {boolean=true} resizableColumns
-     * @param {boolean=true} movableColumns
-     * @param {int=1} sortableColumns
-     * @param {boolean=true} adjustColumnWidthForSortArrow
-     * @param {boolean=true} relativeWidthGrowsToFillWidth
-     * @param {boolean=false} relativeWidthShrinksToFillWidth
-     * @param {boolean=false} convertColumnWidthsToRelative
+     * @param {Boolean=true} virtualTable
+     * @param {Boolean=true} resizableColumns
+     * @param {Boolean=true} movableColumns
+     * @param {Number=1} sortableColumns
+     * @param {Boolean=true} adjustColumnWidthForSortArrow
+     * @param {Boolean=true} relativeWidthGrowsToFillWidth
+     * @param {Boolean=false} relativeWidthShrinksToFillWidth
+     * @param {Boolean=false} convertColumnWidthsToRelative
      * @param {String} cellClasses
      * @param {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} sortColumn
      * @param {Function?} cellFormatter
      * @param {Function?} headerCellFormatter
-     * @param {int=10} rowsBufferSize
-     * @param {int=35} minColumnWidth
-     * @param {int=8} resizeAreaWidth
+     * @param {Number=10} rowsBufferSize
+     * @param {Number=35} minColumnWidth
+     * @param {Number=8} resizeAreaWidth
      * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback
      * @param {String?} resizerClassName
      * @param {String?} tableClassName
@@ -2962,7 +2966,7 @@
 
         /**
          * @expose
-         * @type {boolean=true}
+         * @type {Boolean=true}
          * */
         adjustColumnWidthForSortArrow: null,
 
@@ -3050,9 +3054,9 @@
      *  currentTarget: Element,
      *  data: Object.<string, *>,
      *  delegateTarget: Element,
-     *  isDefaultPrevented: boolean,
-     *  isImmediatePropagationStopped: boolean,
-     *  isPropagationStopped: boolean,
+     *  isDefaultPrevented: Boolean,
+     *  isImmediatePropagationStopped: Boolean,
+     *  isPropagationStopped: Boolean,
      *  namespace: string,
      *  originalEvent: Event,
      *  pageX: Number,

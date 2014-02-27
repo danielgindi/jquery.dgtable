@@ -113,6 +113,71 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 
 - Member functions:
 * TODO:
+* `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1) {DGTable}`: Add a column to the table
+  * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
+  * **before**: Column name or order to be inserted before.
+  * *returns* Self, to allow for call chaining.
+* `removeColumn({String} column) {DGTable}`: Remove a column from the table
+  * **column**: Column name
+  * *returns* Self, to allow for call chaining.
+* `filter({String} column, {String} filter, {Boolean} caseSensitive=false) {DGTable}`: Remove a column from the table
+  * **column**: Name of the column to filter on
+  * **filter**: Check specified column for existence of this string
+  * **caseSensitive**: Use caseSensitive filtering
+  * *returns* Self, to allow for call chaining.
+* `setColumnLabel({String} column, {String} label) {DGTable}`: Set a new label to a column
+  * **column**: Name of the column
+  * **label**: New label for the column
+  * *returns* Self, to allow for call chaining.
+* `moveColumn({String|Number} src, {String|Number} dest) {DGTable}`: Move a column to a new position
+  * **src**: Name or position of the column to be moved
+  * **dest**: Name of the column currently in the desired position, or the position itself
+  * *returns* Self, to allow for call chaining.
+* `sort({String} column, {Boolean=} descending, {Boolean=false} add) {DGTable}`: Re-sort the table
+  * **src**: Name of the column to sort on
+  * **descending**: Sort in descending order (if not specified, defaults to false or reverses current descending mode if sorting by same column)
+  * **add**: Should this sort be on top of the existing sort? (For multiple column sort)
+  * *returns* Self, to allow for call chaining.
+* `setColumnVisible({String} column, {Boolean} visible) {DGTable}`: Show or hide a column
+  * **column**: Unique column name
+  * **visible**: New visibility mode for the column
+  * *returns* Self, to allow for call chaining.
+* `isColumnVisible({String} column, {Boolean} visible) {Boolean}`: Get the visibility mode of a column
+  * *returns* True if visible
+* `setMinColumnWidth({Number} minColumnWidth) {DGTable}`: Globally set the minimum column width
+  * **minColumnWidth**: Minimum column width
+  * *returns* Self, to allow for call chaining.
+* `getMinColumnWidth() {Number}`: Get the current minimum column width
+  * *returns* Minimum column width
+* `setSortableColumns({Number} sortableColumns) {DGTable}`: Set the limit on concurrent columns sortedh
+  * **sortableColumns**: Minimum column width
+  * *returns* Self, to allow for call chaining.
+* `getSortableColumns() {Number}`: Get the limit on concurrent columns sorted
+  * *returns* How many sortable columns are allowed?
+* setMovableColumns
+* getMovableColumns
+* setResizableColumns
+* getResizableColumns
+* setComparatorCallback
+* setColumnWidth
+* getColumnWidth
+* getColumnConfig
+* getColumnsConfig
+* getSortedColumns
+* getHtmlForCell
+* getDataForRow
+* getDataForFilteredRow
+* tableWidthChanged
+* tableHeightChanged
+* addRows
+* removeRow
+* setRows
+* getUrlForElementContent
+* isWorkerSupported
+* createWebWorker
+* unbindWebWorker
+* abortCellPreview
+* `close()`: Destroy the table and free all of its memory.
 
 ## License
 
