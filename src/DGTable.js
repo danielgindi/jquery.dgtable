@@ -552,7 +552,7 @@
                     for (var i = 0; i < this._rows.sortColumn.length; i++) {
                         this._showSortArrow(this._rows.sortColumn[i].column, this._rows.sortColumn[i].descending);
                     }
-                    if (this._adjustColumnWidthForSortArrow) {
+                    if (this._adjustColumnWidthForSortArrow && this._rows.sortColumn.length) {
                         this.tableWidthChanged(true);
                     }
 
