@@ -2641,6 +2641,7 @@
                     }
 
                     $div.css({
+                        'box-sizing': 'content-box',
                         width: requiredWidth + 'px',
                         height: requiredHeight + 'px',
                         'padding-left': paddingL,
@@ -2655,11 +2656,22 @@
                         'background-color': bgColor,
                         cursor: 'default'
                     });
+
                     div.innerHTML = el.innerHTML;
                     document.body.appendChild(div);
-                    div.firstChild.style.width = (div.clientWidth - el.clientWidth + parseFloat(el.firstChild.style.width)) + 'px';
-                    div.firstChild.style.direction = $elInner.css('direction');
-                    div.firstChild.style.whiteSpace = $elInner.css('white-space');
+
+                    $(div.firstChild).css({
+                        'width': (div.clientWidth - el.clientWidth + parseFloat(el.firstChild.style.width)) + 'px',
+                        'direction': $elInner.css('direction'),
+                        'white-space': $elInner.css('white-space'),
+
+                        // This is for vertical-centering, same way as TH/TD do.
+                        // But we do it on the inner wrapper,
+                        // because the outer is absolute positioned and cannot really be a table-cell
+                        'height': requiredHeight, // Sorry, but 100% does not work on a table-cell
+                        'display': 'table-cell',
+                        'vertical-align': $(el).css('vertical-align')
+                    });
 
                     var rowIndex = div['__row'] = el.parentNode['_rowIndex'];
                     div['__column'] = this._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
