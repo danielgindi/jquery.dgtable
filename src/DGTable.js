@@ -1134,6 +1134,8 @@
                     $thead = this._$thead;
                 }
 
+                var isRtl = $table.css('direction') == 'rtl';
+
                 // We need this, because jQuery figures out "CSS" width using offsetWidth, which produces wrong results for TH elements
                 var curCss = window.getComputedStyle ? function(el, css) {
                     var computed = window.getComputedStyle(el, null);
@@ -1157,15 +1159,25 @@
                     $th = $($ths[i]);
 
                     // Borders are collapsed...
-                    leftBorderWidth = Math.max(parseFloat($th.css('border-left-width')) || 0, i > 0 ? (parseFloat($($ths[i - 1]).css('border-right-width')) || 0) : 0);
+                    if (isRtl) {
+                        leftBorderWidth = Math.max(parseFloat($th.css('border-right-width')) || 0, i > 0 ? (parseFloat($($ths[i - 1]).css('border-left-width')) || 0) : 0);
+                    } else {
+                        leftBorderWidth = Math.max(parseFloat($th.css('border-left-width')) || 0, i > 0 ? (parseFloat($($ths[i - 1]).css('border-right-width')) || 0) : 0);
+                    }
 
                     thBorderBox = $th.css('boxSizing') === 'border-box';
                     detectedWidth -= leftBorderWidth + // TH's border-left-width
                                     ($div.outerWidth() - $div.width()) + // TH>DIV's extra size of padding+border
                                     (realCssWidth($th[0]) + (thBorderBox ? 0 : this._horizontalPadding($th[0])) - $div.outerWidth()); // TH>DIV's margins + TH's padding
                 }
-                // Subtract right border of the last TH
-                detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-right-width')) || 0;
+
+                if (isRtl) {
+                    // Subtract left border of the last TH
+                    detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-left-width')) || 0;
+                } else {
+                    // Subtract right border of the last TH
+                    detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-right-width')) || 0;
+                }
 
                 if ($tempTable) {
                     $tempTable.remove();
