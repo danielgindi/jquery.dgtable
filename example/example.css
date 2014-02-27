@@ -23,3 +23,8 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
 .dgtable-wrapper.rtl .dgtable th:last-child { border-right-width: 1px; border-left-width: 0; }
 .dgtable tr:last-child td { border-bottom: none; }
 .dgtable .sortArrow { float: right; margin-left: 5px; }
+
+/* Making the cell preview show correct styling when previewing header cells */
+.dgtable-cell-preview.header{
+    background: #ddd; font-size: 13px; font-weight: bold; text-align: center;
+}
