@@ -35,6 +35,17 @@ A few notes:
 * danielgindi@gmail.com is my email address.
 * That's all you need to know.
 
+## Help
+
+I have invested, and investing, a lot of time in this project.
+If you want to help, you could:
+* Actually code, and issue pull requests
+* Test the library under different conditions and browsers
+* Create more demo pages
+* Spread the word
+* 
+[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G22LPLJ79NBYQ)
+
 ## API
 
 To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
