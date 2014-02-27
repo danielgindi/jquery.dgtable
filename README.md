@@ -112,7 +112,6 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Is this a replace? In other word, were the old rows removed?
 
 - Member functions:
-* TODO:
 * `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1) {DGTable}`: Add a column to the table
   * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
   * **before**: Column name or order to be inserted before.
@@ -154,6 +153,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * *returns* Self, to allow for call chaining.
 * `getSortableColumns() {Number}`: Get the limit on concurrent columns sorted
   * *returns* How many sortable columns are allowed?
+* TODO:
 * setMovableColumns
 * getMovableColumns
 * setResizableColumns
