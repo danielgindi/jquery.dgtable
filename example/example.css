@@ -28,3 +28,6 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
 .dgtable-cell-preview.header{
     background: #ddd; font-size: 13px; font-weight: bold; text-align: center;
 }
+.dgtable-cell-preview.header>div{ border: 1px dashed transparent; }
+.dgtable-cell-preview.header.sortable{ cursor: pointer; }
+.dgtable-cell-preview.header.drag-over>div { border-color: #666; background: #bbb; }
