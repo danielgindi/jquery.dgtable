@@ -1116,7 +1116,11 @@
              * @returns {Number} width
              */
             _calculateWidthAvailableForColumns: function() {
+                // Changing display mode briefly, to prevent taking in account the  parent's scrollbar width when we are the cause for it
+                var oldDisplay = this.el.style.display;
+                this.el.style.display = 'none';
                 var detectedWidth = this.$el.width();
+                this.el.style.display = oldDisplay;
 
                 var $table, $thead, $tempTable, $tempThead;
 
