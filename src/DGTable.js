@@ -2693,8 +2693,7 @@
                     $div.css({
                         left: offset.left,
                         top: offset.top,
-                        'z-index': 9999,
-                        zIndex: 9999
+                        'z-index': 9999
                     });
 
                     div['__cell'] = el;
