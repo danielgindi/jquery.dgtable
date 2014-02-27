@@ -2699,6 +2699,9 @@
                     }
                     offset.top += parseFloat($(el).css('border-top-width')) || parseFloat($(el).css('border-bottom-width')) || 0;
 
+                    var minLeft = 0, maxLeft = $(window).width() - $div.outerWidth();
+                    offset.left = offset.left < minLeft ? minLeft : offset.left > maxLeft ? maxLeft : offset.left;
+
                     $div.css({
                         left: offset.left,
                         top: offset.top,
