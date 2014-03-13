@@ -75,7 +75,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **adjustColumnWidthForSortArrow**: `Boolean=true` When set, the columns will automatically grow to accommodate for the sort arrow.
 * **relativeWidthGrowsToFillWidth**: `Boolean=true` When set, relative width columns automatically grow to fill the table's width.
 * **relativeWidthShrinksToFillWidth**: `Boolean=false` When set, relative width columns automatically shrink to fill the table's width.
-* **convertColumnWidthsToRelative**: `Boolean=false` When set, non-relative column widths are automatically converted to relatives.
+* **convertColumnWidthsToRelative**: `Boolean=false` When set, auto-width columns are automatically converted to relatives.
 * **cellClasses**: `String` Classes to add to the TD of all cells
 * **sortColumn**: `String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
   * Can be a column or an array of columns.

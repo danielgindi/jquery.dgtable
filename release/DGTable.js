@@ -1263,9 +1263,7 @@
                                 // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
-                                    if (!this._convertColumnWidthsToRelative) {
-                                        changedColumnIndexes.push(i);
-                                    }
+                                    changedColumnIndexes.push(i);
                                 }
                             } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
                                 width = _.bind(getTextWidth, this)(col.label) + 20;
@@ -1293,7 +1291,7 @@
                         if (this._convertColumnWidthsToRelative) {
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
-                                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE) {
+                                if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
                                     col.widthMode = COLUMN_WIDTH_MODE.RELATIVE;
                                     sizeLeft += col.actualWidth;
                                     col.width = col.actualWidth / absWidthTotal;
@@ -1308,7 +1306,7 @@
                                         (totalRelativePercentage > 1 && this._relativeWidthShrinksToFillWidth))) {
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
-                                if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
+                                if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                     col.width /= totalRelativePercentage;
                                 }
                             }
@@ -1318,7 +1316,7 @@
 
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
-                            if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
+                            if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                 width = Math.round(detectedWidth * col.width);
                                 if (width < this._minColumnWidth) {
                                     width = this._minColumnWidth;
@@ -1898,7 +1896,7 @@
 
                     var sizeToSet = width;
 
-                    if (column.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
+                    if (column.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                         var detectedWidth = this._calculateWidthAvailableForColumns(),
                             sizeLeft = detectedWidth;
 
@@ -2140,7 +2138,7 @@
                     }
                 }
 
-                if (self.$el.css('position') == 'static') {
+                if (self.$el.css('position') === 'static') {
                     self.$el.css('position', 'relative');
                 }
 
@@ -2157,7 +2155,7 @@
                     thead.style.display = 'block';
                     if (hasIeTableDisplayBlockBug) {
                         $(thead).css({
-                            'float': self.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'float': self.$el.css('direction') === 'rtl' ? 'right' : 'left',
                             'clear': 'both'
                         });
                     }
@@ -2174,7 +2172,7 @@
                     tbody.style.overflowX = 'hidden';
                     if (hasIeTableDisplayBlockBug) {
                         $(tbody).css({
-                            'float': self.$el.css('direction') == 'rtl' ? 'right' : 'left',
+                            'float': self.$el.css('direction') === 'rtl' ? 'right' : 'left',
                             'clear': 'both'
                         });
                     }
@@ -2600,7 +2598,7 @@
              * @returns {Boolean}
              */
             _isTableRtl: function() {
-                return this._$table.css('direction') == 'rtl';
+                return this._$table.css('direction') === 'rtl';
             },
 
             /**
@@ -2609,8 +2607,8 @@
              * @returns {String}
              */
             _serializeColumnWidth: function(column) {
-                return column.widthMode == COLUMN_WIDTH_MODE.AUTO ? 'auto' :
-                        column.widthMode == COLUMN_WIDTH_MODE.RELATIVE ? column.width * 100 + '%' :
+                return column.widthMode === COLUMN_WIDTH_MODE.AUTO ? 'auto' :
+                        column.widthMode === COLUMN_WIDTH_MODE.RELATIVE ? column.width * 100 + '%' :
                         column.width;
             },
 
@@ -2631,7 +2629,7 @@
                     div.innerHTML = el.innerHTML;
                     div.className = self._cellPreviewClassName;
 
-                    if (el.tagName == 'TH') {
+                    if (el.tagName === 'TH') {
                         div.className += ' header';
                         if ($el.hasClass('sortable')) {
                             div.className += ' sortable';
@@ -2688,10 +2686,10 @@
                     }
 
                     var bgColor = $(el).css('background-color');
-                    if (bgColor == self._transparentBgColor1 || bgColor == self._transparentBgColor2) {
+                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
                         bgColor = $(el.parentNode).css('background-color');
                     }
-                    if (bgColor == self._transparentBgColor1 || bgColor == self._transparentBgColor2) {
+                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
                         bgColor = '#fff';
                     }
 
