@@ -32,6 +32,16 @@
     var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
     var createElement = _.bind(document.createElement, document);
 
+    function webkitRenderBugfix(el) {
+        // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars 
+        //   are still calculated even though they are not there yet. This is the last resort.
+        var oldDisplay = el.style.display;
+        el.style.display = 'none';
+        el.offsetHeight; // No need to store this anywhere, the reference is enough
+        el.style.display = oldDisplay;
+        return el;
+    }
+    
     /**
      * @class DGTable
      * @extends Backbone.View
@@ -2126,6 +2136,12 @@
                         }
                     }
                 }
+                
+                if (self._virtualTable && self._width == DGTable.Width.SCROLL) {
+                    this.el.style.overflow = 'hidden';
+                } else {
+                    this.el.style.overflow = '';
+                }
 
                 if (self._$table && self._virtualTable) {
                     self._$tbody.off('scroll');
@@ -2566,11 +2582,8 @@
                 } else if (this._width == DGTable.Width.SCROLL) {
 
                     if (parentSizeMayHaveChanged) {
-                        // BUGFIX: WebKit has a bug where it does not relayout so scrollbars are still calculated even though they are not there yet. This is the last resort.
-                        var oldDisplay = this.el.style.display;
-                        this.el.style.display = 'none';
-                        this.el.offsetHeight; // No need to store this anywhere, the reference is enough
-                        this.el.style.display = oldDisplay;
+                        // BUGFIX: Relayout before recording the widths
+                        webkitRenderBugfix(this.el);
                     }
 
                     var elWidth = this.$el.innerWidth(),
@@ -2583,6 +2596,11 @@
                         this._$thead.width(elWidth);
                         this._$tbody.width(elWidth);
                         this._$tbody.on('scroll', this._onTableScrolledHorizontallyBound);
+
+                        if (parentSizeMayHaveChanged) {
+                            // BUGFIX: Relayout after updating widths, so scrollbars are placed correctly
+                            webkitRenderBugfix(this.el);
+                        }
                     } else {
                         try { this._$thead[0].style.width = ''; }
                         catch (err) { }
