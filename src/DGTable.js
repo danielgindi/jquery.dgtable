@@ -193,6 +193,10 @@
                 this._headerCellFormatter = options.headerCellFormatter || function (val) {
                     return val;
                 };
+
+                if (this._virtualTable) {
+                    this._tableClassName += ' virtual';
+                }
                 
                 var i, len, col, column, columnData, order;
 

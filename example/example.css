@@ -6,6 +6,8 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
 .dgtable th>div { border: 1px dashed transparent; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis; }
 .dgtable th.drag-over>div { border-color: #666; background: #bbb; }
 .dgtable td>div { overflow: hidden; white-space: nowrap; }
+.dgtable.virtual td>div,
+.dgtable.vritual td>div { height: 18px }
 .dgtable td, th { border: solid 1px #ccc; border-top: none; padding: 5px; }
 .dgtable th { background: #ddd; font-size: 13px; cursor: default; padding: 4px; }
 .dgtable th.sortable { cursor: pointer; }
