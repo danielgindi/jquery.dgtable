@@ -82,7 +82,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * Each column is a `String` or a `COLUMN_SORT_OPTIONS`:
   * **column**: `String` Column name
   * **descending**: `Boolean=false` Is this column sorted in descending order?
-* **cellFormatter**: `Function(String value, String columnName)String` *(optional)* A formatter function which will return the HTML for the cell. By default the formatter is a plain HTML formatter.
+* **cellFormatter**: `Function(String value, String columnName, Object rowData)String` *(optional)* A formatter function which will return the HTML for the cell. By default the formatter is a plain HTML formatter.
 * **headerCellFormatter**: `Function(String value, String columnName)String` *(optional)* A formatter function which will return the HTML for the cell's header. By default the formatter is a plain HTML formatter.
 * **rowsBufferSize**: `Number=10` The size of the rows buffer, for virtual table
 * **minColumnWidth**: `Number=35` In pixels, the minimum width for a column

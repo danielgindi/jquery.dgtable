@@ -1086,8 +1086,8 @@
             getHtmlForCell: function (row, column) {
                 if (row < 0 || row > this._rows.length - 1) return null;
                 if (!this._columns.get(column)) return null;
-
-                return this._cellFormatter(this._rows[row][column], column);
+                var rowData = this._rows[row];
+                return this._cellFormatter(rowData[column], column, rowData);
             },
 
             /**
@@ -1439,7 +1439,7 @@
                                     column = visibleColumns[colIndex];
                                     div = createElement('div');
                                     div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = cellFormatter(rowData[column.name], column.name);
+                                    div.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
                                     td = createElement('td');
                                     if (column.cellClasses) {
                                         td.className = column.cellClasses;
@@ -2293,7 +2293,7 @@
                         column = visibleColumns[colIndex];
                         div = document.createElement('div');
                         div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = cellFormatter(rowData[column.name], column.name);
+                        div.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
                         td = document.createElement('td');
                         if (column.cellClasses) td.className = column.cellClasses;
                         if (allowCellPreview) {
@@ -2485,7 +2485,7 @@
                     col = visibleColumns[i];
                     div = document.createElement('div');
                     div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = cellFormatter(rowData[col.name], col.name);
+                    div.innerHTML = cellFormatter(rowData[col.name], col.name, rowData);
                     td = document.createElement('td');
                     if (col.cellClasses) td.className = col.cellClasses;
                     if (allowCellPreview) {
@@ -2561,7 +2561,7 @@
                         div = tdList[j];
                         col = visibleColumns[j];
                         colName = col.name;
-                        div.innerHTML = cellFormatter(rowData[colName], colName);
+                        div.innerHTML = cellFormatter(rowData[colName], colName, rowData);
                     }
 
                     this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr, rowData);
