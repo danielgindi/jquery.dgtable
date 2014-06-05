@@ -2745,7 +2745,7 @@
                         'height': requiredHeight, // Sorry, but 100% does not work on a table-cell
                         'display': 'table-cell',
                         'vertical-align': $(el).css('vertical-align')
-                    });
+                    }).data('row-el', $el.closest('tr'));
 
                     var rowIndex = div['__row'] = el.parentNode['_rowIndex'];
                     div['__column'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
