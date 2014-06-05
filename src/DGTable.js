@@ -2797,17 +2797,7 @@
             _hideCellPreview: function() {
                 if (this._$cellPreviewEl) {
                     var div = this._$cellPreviewEl[0];
-                    this._$cellPreviewEl.remove()
-                        .off('mousemove')
-                        .off('mouseleave')
-                        .off('dragstart')
-                        .off('selectstart')
-                        .off('click')
-                        .find('>div')
-                        .off('dragenter')
-                        .off('dragover')
-                        .off('dragleave')
-                        .off('drop');
+                    this._$cellPreviewEl.remove();
                     this._unhookCellHoverOut(div['__cell']);
                     this._unhookCellHoverOut(div);
 
