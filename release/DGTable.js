@@ -62,7 +62,7 @@
             tagName: 'div',
 			
 			/** @expose */
-            VERSION: '0.3.0',
+            VERSION: '0.3.1',
 
             /**
              * @constructs
@@ -630,6 +630,17 @@
             },
 
             /**
+             * Forces a full render of the table
+             * @public
+             * @expose
+             * @returns {DGTable} self
+             */
+            clearAndRender: function () {
+                this._tableSkeletonNeedsRendering = true;
+                return this.render();
+            },
+
+            /**
              * Render rows
              * @private
              * @param {Number} first first row to render
@@ -650,7 +661,8 @@
                     isVirtual = self._virtualTable,
                     virtualRowHeightFirst = this._virtualRowHeightFirst,
                     virtualRowHeight = this._virtualRowHeight,
-                    top;
+                    top,
+                    physicalRowIndex;
 
                 var colCount = visibleColumns.length;
                 for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
@@ -666,10 +678,15 @@
                 for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
                      i < rowCount && i <= last;
                      i++) {
+
                     rowData = rows[i];
+                    physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
+
                     row = createElement('div');
                     row.className = rowClassName;
                     row['rowIndex'] = i;
+                    row['physicalRowIndex'] = physicalRowIndex;
+
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = visibleColumns[colIndex];
                         cell = createElement('div');
@@ -694,7 +711,7 @@
 
                     bodyFragment.appendChild(row);
 
-                    self.trigger('rowcreate', i, isDataFiltered ? rowData['__i'] : i, row, rowData);
+                    self.trigger('rowcreate', i, physicalRowIndex, row, rowData);
                 }
 
                 return bodyFragment;
@@ -817,9 +834,8 @@
                     this._columns.splice(colIdx, 1);
                     this._columns.normalizeOrder();
 
-                    this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
-                    this.render();
+                    this.clearAndRender();
 
                     this.trigger('removeColumn', column);
                 }
@@ -919,8 +935,7 @@
                     this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
 
                     if (this._virtualTable) {
-                        this._tableSkeletonNeedsRendering = true;
-                        this.render()
+                        this.clearAndRender()
                             ._updateLastCellWidthFromScrollbar(true);
                     } else {
                         var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
@@ -1040,9 +1055,8 @@
                 var col = this._columns.get(column);
                 if (col && !!col.visible != !!visible) {
                     col.visible = !!visible;
-                    this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
-                    this.render();
+                    this.clearAndRender();
                     this.trigger(visible ? 'showColumn' : 'hideColumn', column);
                 }
                 return this;
@@ -1574,8 +1588,7 @@
                         self._$tbody[0].style.height = self._height - self._$thead.outerHeight() + 'px';
                     }
                     if (self._virtualTable) {
-                        self._tableSkeletonNeedsRendering = true;
-                        self.render();
+                        self.clearAndRender();
                     }
                 }
                 return self;
@@ -1612,8 +1625,7 @@
                             var filteredCount = this._filteredRows.length;
                             this._refilter();
                             if (!this._filteredRows || this._filteredRows.length != filteredCount) {
-                                this._tableSkeletonNeedsRendering = true;
-                                this.render();
+                                this.clearAndRender();
                             }
                         } else if (this._$tbody) {
                             var firstRow = self._rows.length - data.length,
@@ -1634,16 +1646,17 @@
              * Removes a row from the table
              * @public
              * @expose
-             * @param {Number} row index
+             * @param {Number} physicalRowIndex index
              * @param {Boolean=true} render
              * @returns {DGTable} self
              */
-            removeRow: function(row, render) {
-                if (row < 0 || row > this._rows.length - 1) return null;
-                this._rows.splice(row, 1);
+            removeRow: function(physicalRowIndex, render) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
+
+                this._rows.splice(physicalRowIndex, 1);
                 render = (render === undefined) ? true : !!render;
                 if (this._filteredRows) {
-                    this._filteredRows = this._refilter();
+                    this._refilter();
                     this._tableSkeletonNeedsRendering = true;
                     if (render) {
                         // Render the skeleton with all rows from scratch
@@ -1651,27 +1664,79 @@
                     }
                 } else if (render) {
                     var childNodes = this._tbody.childNodes;
-                    for (var i = 0; i < childNodes.length; i++) {
-                        if (childNodes[i]['rowIndex'] === row) {
-                            this.trigger('rowdestroy', childNodes[i]);
-                            this._tbody.removeChild(childNodes[i]);
-                            if (!this._virtualTable) break;
-                            // If this is a virtual table - keep on destroying all rows further, and later render them all back.
-                            // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
-                        }
-                        i--;
-                    }
                     if (this._virtualTable) {
+                        for (var i = 0; i < childNodes.length; i++) {
+                            if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
+                                this.trigger('rowdestroy', childNodes[i]);
+                                this._tbody.removeChild(childNodes[i]);
+
+                                // Keep on destroying all rows further, and later render them all back.
+                                // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
+                                i--;
+                            }
+                        }
                         this._calculateVirtualHeight()
                             ._updateLastCellWidthFromScrollbar()
                             .render()
                             ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
                     } else {
+                        for (var i = 0; i < childNodes.length; i++) {
+                            if (childNodes[i]['rowIndex'] === physicalRowIndex) {
+                                this.trigger('rowdestroy', childNodes[i]);
+                                this._tbody.removeChild(childNodes[i]);
+                                break;
+                            }
+                        }
                         this.render()
                             ._updateLastCellWidthFromScrollbar()
                             ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
                     }
                 }
+                return this;
+            },
+
+            /**
+             * Refreshes the row specified
+             * @public
+             * @expose
+             * @param {Number} physicalRowIndex index
+             * @returns {DGTable} self
+             */
+            refreshRow: function(physicalRowIndex) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
+
+                // Find out if the row is in the rendered dataset
+                var rowIndex = -1;
+                if (this._filteredRows && (rowIndex = _.indexOf(this._filteredRows, this._rows[physicalRowIndex])) === -1) return this;
+
+                if (rowIndex === -1) {
+                    rowIndex = physicalRowIndex;
+                }
+
+                var childNodes = this._tbody.childNodes;
+
+                if (this._virtualTable) {
+                    // Now make sure that the row actually rendered, as this is a virtual table
+                    var isRowVisible = false;
+                    for (var i = 0; i < childNodes.length; i++) {
+                        if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                            isRowVisible = true;
+                            this.trigger('rowdestroy', childNodes[i]);
+                            this._tbody.removeChild(childNodes[i]);
+                            break;
+                        }
+                    }
+                    if (isRowVisible) {
+                        var renderedRow = this.renderRows(rowIndex, rowIndex);
+                        this._tbody.insertBefore(renderedRow, childNodes[i] || null);
+                    }
+                } else {
+                    this.trigger('rowdestroy', childNodes[rowIndex]);
+                    this._tbody.removeChild(childNodes[rowIndex]);
+                    var renderedRow = this.renderRows(rowIndex, rowIndex);
+                    this._tbody.insertBefore(renderedRow, childNodes[rowIndex] || null);
+                }
+
                 return this;
             },
 
@@ -2635,10 +2700,11 @@
                         'white-space': $elInner.css('white-space')
                     }).data('row-el', $el.closest('tr'));
 
-                    var rowIndex = div['row'] = el.parentNode['rowIndex'];
+                    div['rowIndex'] = el.parentNode['rowIndex'];
+                    var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
                     div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
-                    self.trigger('cellpreview', div.firstChild, rowIndex == null ? null : rowIndex, div['__column'], rowIndex == null ? null : (self._filteredRows || self._rows)[rowIndex]);
+                    self.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : self._rows[physicalRowIndex]);
                     if (self._abortCellPreview) return;
 
                     var offset = $el.offset();
@@ -2692,7 +2758,7 @@
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
 
-                    this.trigger('cellpreviewdestroy', div.firstChild, div['row'], div['columnName']);
+                    this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
 
                     this._$cellPreviewEl = null;
                 }
@@ -3315,11 +3381,10 @@ DGTable.RowCollection = (function () {
             this.filterColumn = columnName;
             this.filterString = filter;
             this.filterCaseSensitive = caseSensitive;
-            var originalRowIndex = 0;
             for (var i = 0, len = this.length, row; i < len; i++) {
                 row = this[i];
                 if (this.shouldBeVisible(row)) {
-                    row['__i'] = originalRowIndex++;
+                    row['__i'] = i;
                     rows.push(row);
                 }
             }
