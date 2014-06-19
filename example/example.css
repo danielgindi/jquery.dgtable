@@ -3,7 +3,7 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
 .dgtable-wrapper { border: solid 1px #ccc; }
 .dgtable-wrapper.rtl { direction:rtl; }
 .dgtable { border-top: solid 1px #ccc; max-width: 100%; background-color: transparent; }
-.dgtable-header{ overflow: hidden; background: #eee; }
+.dgtable-header{ max-width: 100%; overflow: hidden; background: #eee; }
 .dgtable-header-row{ height: 26px; }
 .dgtable-header-cell{
     float:left; padding: 4px; height: 18px; border-left: solid 1px #ccc;
