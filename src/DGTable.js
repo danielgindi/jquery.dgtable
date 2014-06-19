@@ -650,7 +650,8 @@
                     isVirtual = self._virtualTable,
                     virtualRowHeightFirst = this._virtualRowHeightFirst,
                     virtualRowHeight = this._virtualRowHeight,
-                    top;
+                    top,
+                    physicalRowIndex;
 
                 var colCount = visibleColumns.length;
                 for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
@@ -666,10 +667,15 @@
                 for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
                      i < rowCount && i <= last;
                      i++) {
+
                     rowData = rows[i];
+                    physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
+
                     row = createElement('div');
                     row.className = rowClassName;
                     row['rowIndex'] = i;
+                    row['physicalRowIndex'] = physicalRowIndex;
+
                     for (colIndex = 0; colIndex < colCount; colIndex++) {
                         column = visibleColumns[colIndex];
                         cell = createElement('div');
@@ -694,7 +700,7 @@
 
                     bodyFragment.appendChild(row);
 
-                    self.trigger('rowcreate', i, isDataFiltered ? rowData['__i'] : i, row, rowData);
+                    self.trigger('rowcreate', i, physicalRowIndex, row, rowData);
                 }
 
                 return bodyFragment;
@@ -1651,22 +1657,29 @@
                     }
                 } else if (render) {
                     var childNodes = this._tbody.childNodes;
-                    for (var i = 0; i < childNodes.length; i++) {
-                        if (childNodes[i]['rowIndex'] === row) {
-                            this.trigger('rowdestroy', childNodes[i]);
-                            this._tbody.removeChild(childNodes[i]);
-                            if (!this._virtualTable) break;
-                            // If this is a virtual table - keep on destroying all rows further, and later render them all back.
-                            // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
-                        }
-                        i--;
-                    }
                     if (this._virtualTable) {
+                        for (var i = 0; i < childNodes.length; i++) {
+                            if (childNodes[i]['rowIndex'] >= row) {
+                                this.trigger('rowdestroy', childNodes[i]);
+                                this._tbody.removeChild(childNodes[i]);
+
+                                // Keep on destroying all rows further, and later render them all back.
+                                // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
+                                i--;
+                            }
+                        }
                         this._calculateVirtualHeight()
                             ._updateLastCellWidthFromScrollbar()
                             .render()
                             ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
                     } else {
+                        for (var i = 0; i < childNodes.length; i++) {
+                            if (childNodes[i]['rowIndex'] === row) {
+                                this.trigger('rowdestroy', childNodes[i]);
+                                this._tbody.removeChild(childNodes[i]);
+                                break;
+                            }
+                        }
                         this.render()
                             ._updateLastCellWidthFromScrollbar()
                             ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
@@ -2635,10 +2648,11 @@
                         'white-space': $elInner.css('white-space')
                     }).data('row-el', $el.closest('tr'));
 
-                    var rowIndex = div['row'] = el.parentNode['rowIndex'];
+                    div['rowIndex'] = el.parentNode['rowIndex'];
+                    var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
                     div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
-                    self.trigger('cellpreview', div.firstChild, rowIndex == null ? null : rowIndex, div['__column'], rowIndex == null ? null : (self._filteredRows || self._rows)[rowIndex]);
+                    self.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : self._rows[physicalRowIndex]);
                     if (self._abortCellPreview) return;
 
                     var offset = $el.offset();
@@ -2692,7 +2706,7 @@
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
 
-                    this.trigger('cellpreviewdestroy', div.firstChild, div['row'], div['columnName']);
+                    this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
 
                     this._$cellPreviewEl = null;
                 }
