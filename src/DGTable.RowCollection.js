@@ -112,11 +112,10 @@ DGTable.RowCollection = (function () {
             this.filterColumn = columnName;
             this.filterString = filter;
             this.filterCaseSensitive = caseSensitive;
-            var originalRowIndex = 0;
             for (var i = 0, len = this.length, row; i < len; i++) {
                 row = this[i];
                 if (this.shouldBeVisible(row)) {
-                    row['__i'] = originalRowIndex++;
+                    row['__i'] = i;
                     rows.push(row);
                 }
             }
