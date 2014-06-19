@@ -62,7 +62,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **resizable**: `Boolean=true` Is this column resizable?
   * **sortable**: `Boolean=true` Is this column sortable?
   * **visible**: `Boolean=true` Is this column visible?
-  * **cellClasses**: `String` Classes to add to the TD of this cell
+  * **cellClasses**: `String` Classes to add to the DOM element of this cell
 * **height**: `Number` Suggested height for the table
 * **width**: `DGTable.Width=DGTable.Width.NONE` The way that the width of the table will be handled
   * `DGTable.Width.NONE`: No special handling
@@ -76,7 +76,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **relativeWidthGrowsToFillWidth**: `Boolean=true` When set, relative width columns automatically grow to fill the table's width.
 * **relativeWidthShrinksToFillWidth**: `Boolean=false` When set, relative width columns automatically shrink to fill the table's width.
 * **convertColumnWidthsToRelative**: `Boolean=false` When set, auto-width columns are automatically converted to relatives.
-* **cellClasses**: `String` Classes to add to the TD of all cells
+* **cellClasses**: `String` Classes to add to the DOM element of all cells
 * **sortColumn**: `String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
   * Can be a column or an array of columns.
   * Each column is a `String` or a `COLUMN_SORT_OPTIONS`:
@@ -114,10 +114,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `rowcreate`: A row has just been created
   * 1st argument: Row's index in the currently filtered data set
   * 2st argument: Row's index in the data set
-  * 3nd argument: Row's DOM TR element
+  * 3nd argument: Row's DOM element
   * 4th argument: Row's data
-* `rowdestroy`: Called just before removing a physical row element (TR) from the table
-  * 1st argument: Row's DOM TR element
+* `rowdestroy`: Called just before removing a physical row element from the table
+  * 1st argument: Row's DOM element
 * `addrows`: Data rows have been added to the table
   * 1st argument: How many rows
   * 2nd argument: Is this a replace? In other word, were the old rows removed?
