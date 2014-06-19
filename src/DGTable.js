@@ -1649,7 +1649,7 @@
                 this._rows.splice(row, 1);
                 render = (render === undefined) ? true : !!render;
                 if (this._filteredRows) {
-                    this._filteredRows = this._refilter();
+                    this._refilter();
                     this._tableSkeletonNeedsRendering = true;
                     if (render) {
                         // Render the skeleton with all rows from scratch
