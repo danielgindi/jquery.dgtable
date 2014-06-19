@@ -630,6 +630,17 @@
             },
 
             /**
+             * Forces a full render of the table
+             * @public
+             * @expose
+             * @returns {DGTable} self
+             */
+            clearAndRender: function () {
+                this._tableSkeletonNeedsRendering = true;
+                return this.render();
+            },
+
+            /**
              * Render rows
              * @private
              * @param {Number} first first row to render
@@ -823,9 +834,8 @@
                     this._columns.splice(colIdx, 1);
                     this._columns.normalizeOrder();
 
-                    this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
-                    this.render();
+                    this.clearAndRender();
 
                     this.trigger('removeColumn', column);
                 }
@@ -925,8 +935,7 @@
                     this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
 
                     if (this._virtualTable) {
-                        this._tableSkeletonNeedsRendering = true;
-                        this.render()
+                        this.clearAndRender()
                             ._updateLastCellWidthFromScrollbar(true);
                     } else {
                         var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
@@ -1046,9 +1055,8 @@
                 var col = this._columns.get(column);
                 if (col && !!col.visible != !!visible) {
                     col.visible = !!visible;
-                    this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = this._columns.getVisibleColumns();
-                    this.render();
+                    this.clearAndRender();
                     this.trigger(visible ? 'showColumn' : 'hideColumn', column);
                 }
                 return this;
@@ -1580,8 +1588,7 @@
                         self._$tbody[0].style.height = self._height - self._$thead.outerHeight() + 'px';
                     }
                     if (self._virtualTable) {
-                        self._tableSkeletonNeedsRendering = true;
-                        self.render();
+                        self.clearAndRender();
                     }
                 }
                 return self;
@@ -1618,8 +1625,7 @@
                             var filteredCount = this._filteredRows.length;
                             this._refilter();
                             if (!this._filteredRows || this._filteredRows.length != filteredCount) {
-                                this._tableSkeletonNeedsRendering = true;
-                                this.render();
+                                this.clearAndRender();
                             }
                         } else if (this._$tbody) {
                             var firstRow = self._rows.length - data.length,

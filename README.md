@@ -123,6 +123,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Is this a replace? In other word, were the old rows removed?
 
 - Member functions:
+* `clearAndRender`: Forces a full render of the table
 * `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1) {DGTable}`: Add a column to the table
   * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
   * **before**: Column name or order to be inserted before.
