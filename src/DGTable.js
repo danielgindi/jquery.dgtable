@@ -28,7 +28,6 @@
 
     var userAgent = navigator.userAgent;
     var ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
-    var hasIeTableDisplayBlockBug = ieVersion && ieVersion < 10;
     var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
     var createElement = _.bind(document.createElement, document);
 
@@ -41,6 +40,13 @@
         el.style.display = oldDisplay;
         return el;
     }
+
+    function relativizeElement($el) {
+        if (!_.contains(['relative', 'absolute', 'fixed'], $el.css('position'))) {
+            $el.css('position', 'relative');
+        }
+    }
+
     
     /**
      * @class DGTable
@@ -79,11 +85,6 @@
                  * @private
                  * @field {Boolean} _tableSkeletonNeedsRendering */
                 this._tableSkeletonNeedsRendering = true;
-
-                /**
-                 * @private
-                 * @field {Boolean} _dataAppended */
-                this._dataAppended = false;
 
                 /**
                  * @private
@@ -193,10 +194,6 @@
                 this._headerCellFormatter = options.headerCellFormatter || function (val) {
                     return val;
                 };
-
-                if (this._virtualTable) {
-                    this._tableClassName += ' virtual';
-                }
                 
                 var i, len, col, column, columnData, order;
 
@@ -267,7 +264,6 @@
                 this._filteredRows = null;
 
                 this._height = options.height;
-                this._prevScrollTop = 0;
 
                 /*
                     Setup hover mechanism.
@@ -304,7 +300,7 @@
                 if ('addEventListener' in window) {
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._hookCellHoverIn = function (el) {
@@ -315,7 +311,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._unhookCellHoverIn = function (el) {
@@ -327,7 +323,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._hookCellHoverOut = function (el) {
@@ -338,7 +334,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._unhookCellHoverOut = function (el) {
@@ -352,7 +348,7 @@
                 } else {
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._hookCellHoverIn = function (el) {
@@ -363,7 +359,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._unhookCellHoverIn = function (el) {
@@ -375,7 +371,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._hookCellHoverOut = function (el) {
@@ -386,7 +382,7 @@
                     };
 
                     /**
-                     * @param {HTMLElement} el TD or TH
+                     * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
                     this._unhookCellHoverOut = function (el) {
@@ -472,7 +468,7 @@
                 if (this._$tbody) {
                     var trs = this._$tbody[0].childNodes;
                     for (var i = 0, len = trs.length; i < len; i++) {
-                        this.trigger('rowDestroy', trs[i]);
+                        this.trigger('rowdestroy', trs[i]);
                     }
                 }
                 this.remove();
@@ -538,32 +534,32 @@
              * @returns {DGTable} self
              */
             render: function () {
-                if (this._tableSkeletonNeedsRendering === true) {
-                    this._tableSkeletonNeedsRendering = false;
+                var self = this;
 
-                    if (this._$tbody) {
-                        this._prevScrollTop = this._$tbody[0].scrollTop;
-                    }
-                    
-                    if (this._width == DGTable.Width.AUTO) {
+                if (self._tableSkeletonNeedsRendering === true) {
+                    self._tableSkeletonNeedsRendering = false;
+
+                    if (self._width == DGTable.Width.AUTO) {
                         // We need to do this to return to the specified widths instead. The arrows added to the column widths...
-                        this._clearSortArrows();
+                        self._clearSortArrows();
                     }
-                    
-                    this.tableWidthChanged(true, false) // Take this chance to calculate required column widths
+
+                    var lastScrollTop = self._table ? self._table.scrollTop : 0,
+                        lastScrollLeft = self._table ? self._table.scrollLeft : 0;
+
+                    self.tableWidthChanged(true, false) // Take this chance to calculate required column widths
                         ._renderSkeleton(); // Actual render
 
-                    var maxScrollTop = this._$tbody[0].scrollHeight - this._$tbody.height();
-                    if (this._prevScrollTop > maxScrollTop) {
-                        this._prevScrollTop = maxScrollTop;
+                    if (!this._virtualTable) {
+                        var rows = self._filteredRows || self._rows, rowCount = rows.length;
+                        var renderedRows = self.renderRows(0, rowCount - 1);
+                        self._$tbody.html('').append(renderedRows);
+                        self._updateLastCellWidthFromScrollbar(true);
                     }
 
-                    this._$tbody[0].scrollTop = this._prevScrollTop;
-
-                    if (this._virtualTable) {
-                        this._$tbody.on('scroll', _.bind(this._onVirtualTableScrolled, this));
-                        this._onVirtualTableScrolled(null, true);
-                    }
+                    self._table.scrollTop = lastScrollTop;
+                    self._table.scrollLeft = lastScrollLeft;
+                    self._header.scrollLeft = lastScrollLeft;
 
                     this._updateTableWidth(true);
 
@@ -575,14 +571,200 @@
                         this.tableWidthChanged(true);
                     }
 
-                    this._dataAppended = false;
+                    this.trigger('renderskeleton');
 
-                    this.trigger('renderSkeleton');
+                    if (this._virtualTable) {
+                        this._$table.on('scroll', _.bind(this._onVirtualTableScrolled, this));
+                        this.render();
+                    }
+
                 } else if (this._virtualTable) {
-                    this._renderVirtualRows(this._prevScrollTop, this._$tbody[0].scrollTop);
+                    var rowCount = (self._filteredRows || self._rows).length;
+                    var scrollTop = this._table.scrollTop;
+                    var firstVisible = Math.floor((scrollTop - this._virtualRowHeightFirst) / this._virtualRowHeight) + 1 /*- this._rowsBufferSize*/;
+                    var lastVisible = Math.ceil(((scrollTop - this._virtualRowHeightFirst + this._visibleHeight) / this._virtualRowHeight)) /*+ this._rowsBufferSize*/;
+                    if (firstVisible < 0) firstVisible = 0;
+                    if (lastVisible >= rowCount) {
+                        lastVisible = rowCount - 1;
+                    }
+
+                    var oldFirstVisible = -1, oldLastVisible = -1;
+                    var tbodyChildNodes = self._tbody.childNodes;
+                    if (tbodyChildNodes.length) {
+                        oldFirstVisible = tbodyChildNodes[0]['rowIndex'];
+                        oldLastVisible = tbodyChildNodes[tbodyChildNodes.length - 1]['rowIndex'];
+                    }
+
+                    if (oldFirstVisible !== -1 && oldFirstVisible < firstVisible) {
+                        var countToRemove = Math.min(oldLastVisible + 1, firstVisible) - oldFirstVisible;
+                        for (var i = 0; i < countToRemove; i++) {
+                            self.trigger('rowdestroy', tbodyChildNodes[0]);
+                            self._tbody.removeChild(tbodyChildNodes[0]);
+                        }
+                        oldFirstVisible += countToRemove;
+                        if (oldFirstVisible > oldLastVisible) {
+                            oldFirstVisible = oldLastVisible = -1;
+                        }
+                    } else if (oldLastVisible !== -1 && oldLastVisible > lastVisible) {
+                        var countToRemove = oldLastVisible - Math.max(oldFirstVisible - 1, lastVisible);
+                        for (var i = 0; i < countToRemove; i++) {
+                            self.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            self._tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
+                        }
+                        if (oldLastVisible < oldFirstVisible) {
+                            oldFirstVisible = oldLastVisible = -1;
+                        }
+                    }
+
+                    if (firstVisible < oldFirstVisible) {
+                        var renderedRows = self.renderRows(firstVisible, Math.min(lastVisible, oldFirstVisible - 1));
+                        self._$tbody.prepend(renderedRows);
+                    }
+                    if (lastVisible > oldLastVisible || oldLastVisible === -1) {
+                        var renderedRows = self.renderRows(oldLastVisible === -1 ? firstVisible : oldLastVisible + 1, lastVisible);
+                        self._$tbody.append(renderedRows);
+                    }
                 }
                 this.trigger('render');
                 return this;
+            },
+
+            /**
+             * Render rows
+             * @private
+             * @param {Number} first first row to render
+             * @param {Number} last last row to render
+             * @returns {DocumentFragment} fragment containing all rendered rows
+             */
+            renderRows: function (first, last) {
+
+                var self = this,
+                    tableClassName = self._tableClassName,
+                    rowClassName = tableClassName + '-row',
+                    cellClassName = tableClassName + '-cell',
+                    rows = self._filteredRows || self._rows,
+                    isDataFiltered = !!self._filteredRows,
+                    allowCellPreview = self._allowCellPreview,
+                    visibleColumns = self._visibleColumns,
+                    cellFormatter = self._cellFormatter,
+                    isVirtual = self._virtualTable,
+                    virtualRowHeightFirst = this._virtualRowHeightFirst,
+                    virtualRowHeight = this._virtualRowHeight,
+                    top;
+
+                var colCount = visibleColumns.length;
+                for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
+                    column = visibleColumns[colIndex];
+                    column._finalWidth = (column.actualWidthConsideringScrollbarWidth || column.actualWidth);
+                }
+
+                var bodyFragment = document.createDocumentFragment();
+
+                var isRtl = this.$el.css('direction') === 'rtl',
+                    virtualRowXAttr = isRtl ? 'right' : 'left';
+
+                for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
+                     i < rowCount && i <= last;
+                     i++) {
+                    rowData = rows[i];
+                    row = createElement('div');
+                    row.className = rowClassName;
+                    row['rowIndex'] = i;
+                    for (colIndex = 0; colIndex < colCount; colIndex++) {
+                        column = visibleColumns[colIndex];
+                        cell = createElement('div');
+                        cell['columnName'] = column.name;
+                        cell.className = cellClassName;
+                        cell.style.width = column._finalWidth + 'px';
+                        if (column.cellClasses) cell.className += ' ' + column.cellClasses;
+                        if (allowCellPreview) {
+                            this._hookCellHoverIn(cell);
+                        }
+                        cellInner = cell.appendChild(createElement('div'));
+                        cellInner.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
+                        row.appendChild(cell);
+                    }
+
+                    if (isVirtual) {
+                        top = i > 0 ? virtualRowHeightFirst + (i - 1) * virtualRowHeight : 0;
+                        row.style.position = 'absolute';
+                        row.style[virtualRowXAttr] = 0;
+                        row.style.top = top + 'px';
+                    }
+
+                    bodyFragment.appendChild(row);
+
+                    self.trigger('rowcreate', i, isDataFiltered ? rowData['__i'] : i, row, rowData);
+                }
+
+                return bodyFragment;
+            },
+
+            /**
+             * Calculate virtual table height for scrollbar
+             * @private
+             * @returns {DGTable} self
+             */
+            _calculateVirtualHeight: function () {
+                if (this._tbody) {
+                    var rowCount = (this._filteredRows || this._rows).length;
+                    var height = this._virtualRowHeight * rowCount;
+                    if (rowCount) {
+                        height += (this._virtualRowHeightFirst - this._virtualRowHeight);
+                        height += (this._virtualRowHeightLast - this._virtualRowHeight);
+                    }
+                    this._tbody.style.height = height + 'px';
+                }
+                return this;
+            },
+
+            /**
+             * Calculate the size required for the table body width (which is the row's width)
+             * @private
+             * @returns {Number} calculated width
+             */
+            _calculateTbodyWidth: function () {
+                var self = this,
+                    tableClassName = self._tableClassName,
+                    rowClassName = tableClassName + '-row',
+                    cellClassName = tableClassName + '-cell',
+                    visibleColumns = self._visibleColumns,
+                    colCount = visibleColumns.length,
+                    cell,
+                    cellInner,
+                    colIndex,
+                    column;
+
+                var $row = $('<div>').addClass(rowClassName).css('float', 'left');
+
+                for (colIndex = 0; colIndex < colCount; colIndex++) {
+                    column = visibleColumns[colIndex];
+                    cell = createElement('div');
+                    cell.className = cellClassName;
+                    cell.style.width = column.actualWidth + 'px';
+                    if (column.cellClasses) cell.className += ' ' + column.cellClasses;
+                    cellInner = cell.appendChild(createElement('div'));
+                    $row.append(cell);
+                }
+
+                var $thisWrapper = $('<div>')
+                    .addClass(this.className)
+                    .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', 'float': 'left', width: '1px', overflow: 'hidden' })
+                    .append(
+                        $('<div>').addClass(tableClassName).append(
+                            $('<div>').addClass(tableClassName + '-body').css('width', 99999).append(
+                                $row
+                            )
+                        )
+                    );
+
+                $thisWrapper.appendTo(document.body);
+
+                var width = $row.outerWidth();
+                width -= this._scrollbarWidth || 0;
+
+                $thisWrapper.remove();
+                return width;
             },
 
             /**
@@ -662,6 +844,9 @@
                     this._filteredRows = this._rows.filteredCollection(column, filter, caseSensitive);
                     if (hasFilter || this._filteredRows) {
                         this._tableSkeletonNeedsRendering = true;
+                        if (this._virtualTable) {
+                            this._calculateVirtualHeight();
+                        }
                         this.render();
                         this.trigger('filter', column, filter, caseSensitive);
                     }
@@ -735,12 +920,13 @@
 
                     if (this._virtualTable) {
                         this._tableSkeletonNeedsRendering = true;
-                        this.render();
+                        this.render()
+                            ._updateLastCellWidthFromScrollbar(true);
                     } else {
-                        var th = this._$thead.find('>tr>th');
+                        var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
                         var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
                             fromPos = srcOrder;
-                        th[0].parentNode.insertBefore(th[fromPos], th[beforePos]);
+                        headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
 
                         var srcWidth = this._visibleColumns[srcOrder];
                         srcWidth = (srcWidth.actualWidthConsideringScrollbarWidth || srcWidth.actualWidth) + 'px';
@@ -817,9 +1003,15 @@
                         this.tableWidthChanged(true);
                     }
 
-                    if (!this._virtualTable) {
+                    if (this._virtualTable) {
+                        while (this._tbody.firstChild) {
+                            this.trigger('rowdestroy', this._tbody.firstChild);
+                            this._tbody.removeChild(this._tbody.firstChild);
+                        }
+                    } else {
                         this._tableSkeletonNeedsRendering = true;
                     }
+
                     this._rows.sort(!!this._filteredRows);
                     this._refilter();
                     if (this._filteredRows) {
@@ -907,9 +1099,9 @@
                 if (this._sortableColumns != sortableColumns) {
                     this._sortableColumns = sortableColumns;
                     if (this._$table) {
-                        var th = this._$table.find('thead>tr>th');
-                        for (var i = 0; i < th.length; i++) {
-                            $(th[0])[(this._sortableColumns > 0 && this._visibleColumns[i].sortable) ? 'addClass' : 'removeClass']('sortable');
+                        var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
+                        for (var i = 0; i < headerCell.length; i++) {
+                            $(headerCell[0])[(this._sortableColumns > 0 && this._visibleColumns[i].sortable) ? 'addClass' : 'removeClass']('sortable');
                         }
                     }
                 }
@@ -1019,7 +1211,7 @@
              * @public
              * @expose
              * @param {String} column name of the column
-             * @returns {String?} the serialized width of the specified column, or null if column not found
+             * @returns {String|null} the serialized width of the specified column, or null if column not found
              */
             getColumnWidth: function (column) {
                 var col = this._columns.get(column);
@@ -1139,78 +1331,52 @@
              * @returns {Number} width
              */
             _calculateWidthAvailableForColumns: function() {
+
                 // Changing display mode briefly, to prevent taking in account the  parent's scrollbar width when we are the cause for it
-                var oldDisplay;
+                var oldDisplay, lastScrollTop, lastScrollLeft;
                 if (this._$table) {
+                    lastScrollTop = this._table ? this._table.scrollTop : 0;
+                    lastScrollLeft = this._table ? this._table.scrollLeft : 0;
+
                     oldDisplay = this._$table[0].style.display;
                     this._$table[0].style.display = 'none';
                 }
                 var detectedWidth = this.$el.width();
                 if (this._$table) {
                     this._$table[0].style.display = oldDisplay;
+
+                    this._table.scrollTop = lastScrollTop;
+                    this._table.scrollLeft = lastScrollLeft;
+                    this._header.scrollLeft = lastScrollLeft;
                 }
 
-                var $thisWrapper, $table, $thead;
+                var $thisWrapper, $header, $headerRow;
+                var tableClassName = this._tableClassName;
 
                 if (!this._$table) {
 
-                    $thisWrapper = $('<div></div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
-                    $table = $('<table></table>').css({'position': 'absolute', top: '-9999px', 'visibility': 'hidden'}).addClass(this._tableClassName);
-                    $thead = $('<thead></thead>');
-                    var $tr = $('<tr></tr>');
+                    $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
+                    $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
+                    $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
                     for (var i = 0; i < this._visibleColumns.length; i++) {
-                        $tr.append($('<th><div></div></th>'));
+                        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell'));
                     }
-                    $table.append($thead.append($tr)).appendTo($thisWrapper.appendTo(document.body));
-
+                    $thisWrapper.appendTo(document.body);
                 } else {
-                    $table = this._$table;
-                    $thead = this._$thead;
+                    $headerRow = this._$headerRow;
                 }
 
-                var isRtl = $table.css('direction') == 'rtl';
+                detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
+                var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
+                for (var i = 0, $cell, $div, cellBorderBox; i < $cells.length; i++) {
+                    $div = $($cells[i].firstChild);
+                    $cell = $($cells[i]);
 
-                // We need this, because jQuery figures out "CSS" width using offsetWidth, which produces wrong results for TH elements
-                var curCss = window.getComputedStyle ? function(el, css) {
-                    var computed = window.getComputedStyle(el, null);
-                    return computed ? computed.getPropertyValue(css) : null;
-                } : function(el, css) {
-                    var computed = el.currentStyle;
-                    return computed ? computed[css] : null;
-                };
-                var realCssWidth = function (el) {
-                    var value = curCss(el, 'width');
-                    if (value === 'auto') { // old browsers like IE8
-                        return (parseFloat($(el).css('width')) || 0) + 1;
-                    }
-                    return parseFloat(value) || 0;
-                };
-
-                detectedWidth -= this._horizontalBorderWidth($table[0]);
-                var $ths = $thead.find('>tr>th'), leftBorderWidth;
-                for (var i = 0, $th, $div, thBorderBox; i < $ths.length; i++) {
-                    $div = $($ths[i].firstChild);
-                    $th = $($ths[i]);
-
-                    // Borders are collapsed...
-                    if (isRtl) {
-                        leftBorderWidth = Math.max(parseFloat($th.css('border-right-width')) || 0, i > 0 ? (parseFloat($($ths[i - 1]).css('border-left-width')) || 0) : 0);
-                    } else {
-                        leftBorderWidth = Math.max(parseFloat($th.css('border-left-width')) || 0, i > 0 ? (parseFloat($($ths[i - 1]).css('border-right-width')) || 0) : 0);
-                    }
-
-                    thBorderBox = $th.css('boxSizing') === 'border-box';
-                    detectedWidth -= leftBorderWidth + // TH's border-left-width
-                                    ($div.outerWidth() - $div.width()) + // TH>DIV's extra size of padding+border
-                                    (realCssWidth($th[0]) + (thBorderBox ? 0 : this._horizontalPadding($th[0])) - $div.outerWidth()); // TH>DIV's margins + TH's padding
-                }
-
-                if (isRtl) {
-                    // Subtract left border of the last TH
-                    detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-left-width')) || 0;
-                } else {
-                    // Subtract right border of the last TH
-                    detectedWidth -= parseFloat($($ths[$ths.length - 1]).css('border-right-width')) || 0;
+                    cellBorderBox = $cell.css('boxSizing') === 'border-box';
+                    detectedWidth -=
+                        (parseFloat($cell.css('border-right-width')) || 0) +
+                        (parseFloat($cell.css('border-left-width')) || 0) +
+                        (cellBorderBox ? 0 : this._horizontalPadding($cell[0])); // CELL's padding
                 }
 
                 if ($thisWrapper) {
@@ -1227,16 +1393,22 @@
              * @returns {DGTable} self
              */
             tableWidthChanged: (function () {
-            
+
                 var getTextWidth = function(text) {
-                    var table = $('<table><thead><tr><th>' + text + '</th></tr></thead></table>')
-                            .css({'position': 'absolute', top: '-9999px', 'visibility': 'hidden'}).addClass(this._tableClassName),
-                        th = table.find('>thead>tr>th');
-                    th.css({'position': 'absolute', 'float': 'left', 'white-space': 'nowrap', 'visibility': 'hidden'});
-                    table.appendTo(document.body);
-                    var width = th.width();
-                    table.remove();
-                    table = null; // Release memory
+                    var tableClassName = this._tableClassName;
+
+                    var $cell, $tableWrapper = $('<div>').addClass(this.$el).append(
+                        $('<div>').addClass(tableClassName + '-header').append(
+                            $('<div>').addClass(tableClassName + '-header-row').append(
+                                $cell = $('<div>').addClass(tableClassName + '-header-cell').append(
+                                    $('<div>').text(text)
+                                )
+                            )
+                        )
+                    ).css({'position': 'absolute', top: '-9999px', 'visibility': 'hidden'});
+                    $tableWrapper.appendTo(document.body);
+                    var width = $cell.width();
+                    $tableWrapper.remove();
                     return width;
                 };
                 
@@ -1253,7 +1425,15 @@
                     var detectedWidth = this._calculateWidthAvailableForColumns(),
                         sizeLeft = detectedWidth,
                         relatives = 0;
-                        
+
+                    renderColumns = renderColumns === undefined || renderColumns;
+
+                    var tableWidthBeforeCalculations = 0;
+
+                    if (renderColumns) {
+                        tableWidthBeforeCalculations = parseFloat(this._tbody.style.minWidth) || 0;
+                    }
+
                     if (sizeLeft != lastDetectedWidth || forceUpdate) {
                         lastDetectedWidth = detectedWidth;
 
@@ -1280,7 +1460,7 @@
                                     changedColumnIndexes.push(i);
                                 }
                             } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
-                                width = _.bind(getTextWidth, this)(col.label) + 20;
+                                width = getTextWidth.call(this, col.label) + 20;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
                                     width = this._minColumnWidth;
@@ -1358,9 +1538,19 @@
 
                         this._visibleColumns[this._visibleColumns.length - 1].actualWidthConsideringScrollbarWidth = this._visibleColumns[this._visibleColumns.length - 1].actualWidth - (this._scrollbarWidth || 0);
 
-                        if (renderColumns || renderColumns === undefined) {
+                        if (renderColumns) {
+                            var tableWidth = this._calculateTbodyWidth();
+
+                            if (tableWidthBeforeCalculations < tableWidth) {
+                                this._updateTableWidth(false);
+                            }
+
                             for (i = 0; i < changedColumnIndexes.length; i++) {
                                 this._resizeColumnElements(changedColumnIndexes[i]);
+                            }
+
+                            if (tableWidthBeforeCalculations > tableWidth) {
+                                this._updateTableWidth(false);
                             }
                         }
                     }
@@ -1399,16 +1589,23 @@
              * @returns {DGTable} self
              */
             addRows: function (data) {
+                var self = this;
                 if (data) {
-                    this.scrollTop = this.$el.find('.table').scrollTop();
-                    var oldRowCount = this._rows.length;
-                    this._dataAppended = true;
                     this._rows.add(data);
                     if (this._virtualTable) {
-                        this._refilter();
-                        if (oldRowCount === 0 && (this._filteredRows || this._rows).length) {
-                            this._tableSkeletonNeedsRendering = true;
+                        while (this._tbody.firstChild) {
+                            this.trigger('rowdestroy', this._tbody.firstChild);
+                            this._tbody.removeChild(this._tbody.firstChild);
                         }
+
+                        if (this._filteredRows) {
+                            this._refilter();
+                        }
+
+                        this._calculateVirtualHeight() // Calculate virtual height
+                            ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
+                            ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+
                         this.render();
                     } else {
                         if (this._filteredRows) {
@@ -1419,47 +1616,16 @@
                                 this.render();
                             }
                         } else if (this._$tbody) {
-                            var tr, div, td, bodyFragment,
-                                allowCellPreview = this._allowCellPreview,
-                                visibleColumns = this._visibleColumns,
-                                cellFormatter = this._cellFormatter;
-                                
-                            bodyFragment = document.createDocumentFragment();
+                            var firstRow = self._rows.length - data.length,
+                                lastRow = firstRow + data.length - 1;
 
-                            var oldTrCount = this._$tbody[0].childNodes.length;
-
-                            for (var i = 0, rowData, colIndex, column, colCount = this._visibleColumns.length, rowCount = data.length;
-                                 i < rowCount;
-                                 i++) {
-                                rowData = data[i];
-                                tr = createElement('tr');
-                                tr['_rowIndex'] = i;
-                                
-                                for (colIndex = 0; colIndex < colCount; colIndex++) {
-                                    column = visibleColumns[colIndex];
-                                    div = createElement('div');
-                                    div.style.width = (column.actualWidthConsideringScrollbarWidth || column.actualWidth) + 'px';
-                                    div.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
-                                    td = createElement('td');
-                                    if (column.cellClasses) {
-                                        td.className = column.cellClasses;
-                                    }
-                                    if (allowCellPreview) {
-                                        this._hookCellHoverIn(td);
-                                    }
-                                    td.appendChild(div);
-                                    tr.appendChild(td);
-                                }
-
-                                this.trigger('rowCreate', oldTrCount + i, oldRowCount + i, tr, rowData);
-
-                                bodyFragment.appendChild(tr);
-                            }
-                            this._$tbody[0].appendChild(bodyFragment);
-                            this._updateLastCellWidthFromScrollbar();
+                            var renderedRows = self.renderRows(firstRow, lastRow);
+                            self._tbody.appendChild(renderedRows);
+                            self._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
+                                ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
                         }
                     }
-                    this.trigger('addRows', data.length, false);
+                    this.trigger('addrows', data.length, false);
                 }
                 return this;
             },
@@ -1480,19 +1646,30 @@
                     this._filteredRows = this._refilter();
                     this._tableSkeletonNeedsRendering = true;
                     if (render) {
+                        // Render the skeleton with all rows from scratch
                         this.render();
                     }
-                }
-                if (render) {
-                    if (this._virtualTable) {
-                        this.render();
-                    } else {
-                        if (this._$tbody) {
-                            this._$tbody[0].childNodes.removeChild(this._$tbody[0].childNodes[row]);
-                            this._updateLastCellWidthFromScrollbar();
-                            this._updateTableWidth(true);
+                } else if (render) {
+                    var childNodes = this._tbody.childNodes;
+                    for (var i = 0; i < childNodes.length; i++) {
+                        if (childNodes[i]['rowIndex'] === row) {
+                            this.trigger('rowdestroy', childNodes[i]);
+                            this._tbody.removeChild(childNodes[i]);
+                            if (!this._virtualTable) break;
+                            // If this is a virtual table - keep on destroying all rows further, and later render them all back.
+                            // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
                         }
-                        this.trigger('render');
+                        i--;
+                    }
+                    if (this._virtualTable) {
+                        this._calculateVirtualHeight()
+                            ._updateLastCellWidthFromScrollbar()
+                            .render()
+                            ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+                    } else {
+                        this.render()
+                            ._updateLastCellWidthFromScrollbar()
+                            ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
                     }
                 }
                 return this;
@@ -1510,6 +1687,9 @@
                 this._rows.reset(data);
                 this._refilter();
                 this._tableSkeletonNeedsRendering = true;
+                if (this._virtualTable) {
+                    this._calculateVirtualHeight();
+                }
                 this.render().trigger('addRows', data.length, true);
                 return this;
             },
@@ -1617,34 +1797,17 @@
             },
 
             /**
-             * @param {jQuery.Event} evt
-             * @param {Boolean?} forceUpdate
+             * @param {jQuery.Event} event
              */
-            _onVirtualTableScrolled: function (evt, forceUpdate) {
-                if (forceUpdate === true || this._prevScrollTop !== this._$tbody[0].scrollTop) {
-                    var firstVisibleRow = parseInt(this._$tbody[0].scrollTop / this._virtualRowHeight, 10);
-                    var firstRenderedRow = firstVisibleRow - this._rowsBufferSize;
-                    if (firstRenderedRow < 0) {
-                        firstRenderedRow = 0;
-                    }
-                    this._virtualRowRange.prevFirst = this._virtualRowRange.first;
-                    this._virtualRowRange.prevLast = this._virtualRowRange.last;
-                    this._virtualRowRange.first = firstRenderedRow;
-                    this._virtualRowRange.last = firstVisibleRow + this._virtualVisibleRows + this._rowsBufferSize;
-                    var rows = this._filteredRows || this._rows;
-                    if (this._virtualRowRange.last > rows.length) {
-                        this._virtualRowRange.last = rows.length;
-                        this._virtualRowRange.first = Math.max(0, this._virtualRowRange.last - this._virtualVisibleRows - this._rowsBufferSize * 2);
-                    }
-                    this._renderVirtualRows(this._prevScrollTop, this._$tbody[0].scrollTop);
-                }
+            _onVirtualTableScrolled: function (event) {
+                this.render();
             },
 
             /**
-             * @param {jQuery.Event} evt
+             * @param {jQuery.Event} event
              */
-            _onTableScrolledHorizontally: function (evt) {
-                this._$thead[0].scrollLeft = this._$tbody[0].scrollLeft;
+            _onTableScrolledHorizontally: function (event) {
+                this._header.scrollLeft = this._table.scrollLeft;
             },
 
             /**previousElementSibling
@@ -1657,32 +1820,33 @@
 
                 var rtl = this._isTableRtl();
 
-                var $th = $(e.target).closest('th,div.' + this._cellPreviewClassName), th = $th[0];
-                if (th['__cell']) {
-                    th = th['__cell'];
-                    $th = $(th);
+                var $headerCell = $(e.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName),
+                    headerCell = $headerCell[0];
+                if (headerCell['__cell']) {
+                    headerCell = headerCell['__cell'];
+                    $headerCell = $(headerCell);
                 }
 
-                var previousElementSibling = $th[0].previousSibling;
+                var previousElementSibling = $headerCell[0].previousSibling;
                 while (previousElementSibling && previousElementSibling.nodeType != 1) {
                     previousElementSibling = previousElementSibling.previousSibling;
                 }
 
                 var firstCol = !previousElementSibling;
 
-                var mouseX = (e.originalEvent.pageX || e.originalEvent.clientX) - $th.offset().left;
+                var mouseX = (e.originalEvent.pageX || e.originalEvent.clientX) - $headerCell.offset().left;
 
                 if (rtl) {
-                    if (!firstCol && $th.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
-                        return previousElementSibling.columnName;
+                    if (!firstCol && $headerCell.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
+                        return previousElementSibling['columnName'];
                     } else if (mouseX <= this._resizeAreaWidth / 2) {
-                        return th.columnName;
+                        return headerCell['columnName'];
                     }
                 } else {
                     if (!firstCol && mouseX <= this._resizeAreaWidth / 2) {
-                        return previousElementSibling.columnName;
-                    } else if ($th.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
-                        return th.columnName;
+                        return previousElementSibling['columnName'];
+                    } else if ($headerCell.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
+                        return headerCell['columnName'];
                     }
                 }
 
@@ -1692,38 +1856,45 @@
             /**
              * @param {jQuery.Event} e event
              */
-            _onMouseMoveColumnHeader: function (e) {
+            _onMouseDownColumnHeader: function (event) {
+                this._lastColumnMouseDownEvent = event;
+            },
+
+            /**
+             * @param {jQuery.Event} event event
+             */
+            _onMouseMoveColumnHeader: function (event) {
                 if (this._resizableColumns) {
-                    var col = this._getColumnByResizePosition(e);
-                    var th = $(e.target).closest('th,div.' + this._cellPreviewClassName)[0];
+                    var col = this._getColumnByResizePosition(event);
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
                     if (!col || !this._columns.get(col).resizable) {
-                        th.style.cursor = '';
+                        headerCell.style.cursor = '';
                     } else {
-                        th.style.cursor = 'e-resize';
+                        headerCell.style.cursor = 'e-resize';
                     }
                 }
             },
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onMouseLeaveColumnHeader: function (e) {
-                var th = $(e.target).closest('th,div.' + this._cellPreviewClassName)[0];
-                th.style.cursor = '';
+            _onMouseLeaveColumnHeader: function (event) {
+                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                headerCell.style.cursor = '';
             },
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onClickColumnHeader: function (e) {
-                if (!this._getColumnByResizePosition(e)) {
-                    var th = $(e.target).closest('th,div.' + this._cellPreviewClassName)[0];
+            _onClickColumnHeader: function (event) {
+                if (!this._getColumnByResizePosition(event)) {
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
                     if (this._sortableColumns) {
-                        var column = this._columns.get(th.columnName);
+                        var column = this._columns.get(headerCell['columnName']);
                         if (column && column.sortable) {
-                            this.sort(th.columnName, undefined, true);
+                            this.sort(headerCell['columnName'], undefined, true);
                         }
                     }
                 }
@@ -1731,10 +1902,10 @@
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onStartDragColumnHeader: function (e) {
-                var col = this._getColumnByResizePosition(e), column;
+            _onStartDragColumnHeader: function (event) {
+                var col = this._getColumnByResizePosition(this._lastColumnMouseDownEvent || event), column;
                 if (col) {
                     column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
@@ -1759,28 +1930,28 @@
                         })
                         .appendTo(this.$el);
 
-                    var selectedTh = column.element,
+                    var selectedHeaderCell = column.element,
                         commonAncestor = this._$resizer.parent();
 
-                    var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
-                    if (ieVersion == 8) {
-                        posCol = selectedTh.offset(); // IE8 bug, first time it receives zeros...
+                    var posCol = selectedHeaderCell.offset(),
+                        posRelative = commonAncestor.offset();
+                    if (ieVersion === 8) {
+                        posCol = selectedHeaderCell.offset(); // IE8 bug, first time it receives zeros...
                     }
                     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                     posRelative.top += parseFloat(commonAncestor.css('border-top-width')) || 0;
                     posCol.left -= posRelative.left;
                     posCol.top -= posRelative.top;
-                    posCol.top -= parseFloat(selectedTh.css('border-top-width')) || 0;
+                    posCol.top -= parseFloat(selectedHeaderCell.css('border-top-width')) || 0;
                     var resizerWidth = this._$resizer.outerWidth();
                     if (rtl) {
-                        posCol.left -= Math.ceil((parseFloat(selectedTh.css('border-left-width')) || 0) / 2);
+                        posCol.left -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
                         posCol.left -= Math.ceil(resizerWidth / 2);
                     } else {
-                        posCol.left += selectedTh.outerWidth();
-                        posCol.left += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                        posCol.left += selectedHeaderCell.outerWidth();
+                        posCol.left += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         posCol.left -= Math.ceil(resizerWidth / 2);
                     }
-                    var height = this._$table.height() - (this._$table.offset().top - selectedTh.offset().top);
 
                     this._$resizer
                         .css({
@@ -1788,31 +1959,31 @@
                             'visibility': 'visible',
                             'left': posCol.left,
                             'top': posCol.top,
-                            'height': height
+                            'height': this.$el.height()
                         })
-                        [0].columnName = selectedTh[0].columnName;
+                        [0]['columnName'] = selectedHeaderCell[0]['columnName'];
                     try { this._$resizer[0].style.zIndex = ''; } catch (err) { }
 
                     $(document).on('mousemove', this._onMouseMoveResizeAreaBound);
                     $(document).on('mouseup', this._onEndDragColumnHeaderBound);
 
-                    e.preventDefault();
+                    event.preventDefault();
 
                 } else if (this._movableColumns) {
 
-                    var th = $(e.target).closest('th,div.' + this._cellPreviewClassName);
-                    column = this._columns.get(th[0].columnName);
+                    var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
+                    column = this._columns.get($headerCell[0]['columnName']);
                     if (column && column.movable) {
-                        th[0].style.opacity = 0.35;
+                        $headerCell[0].style.opacity = 0.35;
                         this._dragId = Math.random() * 0x9999999; // Recognize this ID on drop
-                        e.originalEvent.dataTransfer.setData('text', JSON.stringify({dragId: this._dragId, column: column.name}));
+                        event.originalEvent.dataTransfer.setData('text', JSON.stringify({dragId: this._dragId, column: column.name}));
                     } else {
-                        e.preventDefault();
+                        event.preventDefault();
                     }
 
                 } else {
 
-                    e.preventDefault();
+                    event.preventDefault();
 
                 }
 
@@ -1821,10 +1992,11 @@
 
             /**
              * @private
-             * @param {MouseEvent} e event
+             * @param {MouseEvent} event event
              */
-            _onMouseMoveResizeArea: function (e) {
-                var column = this._columns.get(this._$resizer[0].columnName);
+            _onMouseMoveResizeArea: function (event) {
+
+                var column = this._columns.get(this._$resizer[0]['columnName']);
                 var rtl = this._isTableRtl();
 
                 var selectedTh = column.element,
@@ -1834,7 +2006,7 @@
                 posCol.left -= posRelative.left;
                 var resizerWidth = this._$resizer.outerWidth();
 
-                var actualX = e.pageX - posRelative.left;
+                var actualX = event.pageX - posRelative.left;
                 var minX = posCol.left;
                 if (rtl) {
                     minX += selectedTh.outerWidth();
@@ -1860,16 +2032,16 @@
 
             /**
              * @private
-             * @param {Event} e event
+             * @param {Event} event event
              */
-            _onEndDragColumnHeader: function (e) {
+            _onEndDragColumnHeader: function (event) {
                 if (!this._$resizer) {
-                    e.target.style.opacity = null;
+                    event.target.style.opacity = null;
                 } else {
                     $(document).off('mousemove', this._onMouseMoveResizeAreaBound);
                     $(document).off('mouseup', this._onEndDragColumnHeaderBound);
 
-                    var column = this._columns.get(this._$resizer[0].columnName);
+                    var column = this._columns.get(this._$resizer[0]['columnName']);
                     var rtl = this._isTableRtl();
 
                     var selectedTh = column.element,
@@ -1879,7 +2051,7 @@
                     posCol.left -= posRelative.left;
                     var resizerWidth = this._$resizer.outerWidth();
 
-                    var actualX = e.pageX - posRelative.left;
+                    var actualX = event.pageX - posRelative.left;
                     var baseX = posCol.left, minX = posCol.left;
                     var width = 0;
                     if (rtl) {
@@ -1932,11 +2104,11 @@
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onDragEnterColumnHeader: function (e) {
+            _onDragEnterColumnHeader: function (event) {
                 if (this._movableColumns) {
-                    var dataTransferred = e.originalEvent.dataTransfer.getData('text');
+                    var dataTransferred = event.originalEvent.dataTransfer.getData('text');
                     if (dataTransferred) {
                         dataTransferred = JSON.parse(dataTransferred);
                     }
@@ -1944,13 +2116,13 @@
                         dataTransferred = null; // WebKit does not provide the dataTransfer on dragenter?..
                     }
 
-                    var th = $(e.target).closest('th,div.' + this._cellPreviewClassName);
+                    var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
                     if (!dataTransferred ||
-                        (this._dragId == dataTransferred.dragId && th.columnName !== dataTransferred.column)) {
+                        (this._dragId == dataTransferred.dragId && $headerCell['columnName'] !== dataTransferred.column)) {
 
-                        var column = this._columns.get(th[0].columnName);
+                        var column = this._columns.get($headerCell[0]['columnName']);
                         if (column && (column.movable || column != this._visibleColumns[0])) {
-                            $(th).addClass('drag-over');
+                            $($headerCell).addClass('drag-over');
                         }
                     }
                 }
@@ -1958,42 +2130,42 @@
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onDragOverColumnHeader: function (e) {
-                e.preventDefault();
+            _onDragOverColumnHeader: function (event) {
+                event.preventDefault();
             },
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onDragLeaveColumnHeader: function (e) {
-                var th = $(e.target).closest('th,div.' + this._cellPreviewClassName);
-                if ( ! $(th[0].firstChild)
-                       .has(e.originalEvent.relatedTarget).length ) {
-                    th.removeClass('drag-over');
+            _onDragLeaveColumnHeader: function (event) {
+                var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
+                if ( ! $($headerCell[0].firstChild)
+                       .has(event.originalEvent.relatedTarget).length ) {
+                    $headerCell.removeClass('drag-over');
                 }
             },
 
             /**
              * @private
-             * @param {jQuery.Event} e event
+             * @param {jQuery.Event} event event
              */
-            _onDropColumnHeader: function (e) {
-                e.preventDefault();
-                var dataTransferred = JSON.parse(e.originalEvent.dataTransfer.getData('text'));
-                var th = $(e.target).closest('th,div.' + this._cellPreviewClassName);
+            _onDropColumnHeader: function (event) {
+                event.preventDefault();
+                var dataTransferred = JSON.parse(event.originalEvent.dataTransfer.getData('text'));
+                var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
                 if (this._movableColumns && dataTransferred.dragId == this._dragId) {
                     var srcColName = dataTransferred.column,
-                        destColName = th[0].columnName,
+                        destColName = $headerCell[0]['columnName'],
                         srcCol = this._columns.get(srcColName),
                         destCol = this._columns.get(destColName);
                     if (srcCol && destCol && srcCol.movable && (destCol.movable || destCol != this._visibleColumns[0])) {
                         this.moveColumn(srcColName, destColName);
                     }
                 }
-                $(th).removeClass('drag-over');
+                $($headerCell).removeClass('drag-over');
             },
 
             /**
@@ -2002,10 +2174,11 @@
              */
             _clearSortArrows: function () {
                 if (this._$table) {
-                    var sortedColumns = this._$table.find('>thead>tr>th.sorted');
+                    var tableClassName = this._tableClassName;
+                    var sortedColumns = this._$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
                     var arrows = sortedColumns.find('>div>.sort-arrow');
                     _.forEach(arrows, _.bind(function(arrow){
-                        var col = this._columns.get(arrow.parentNode.parentNode.columnName);
+                        var col = this._columns.get(arrow.parentNode.parentNode['columnName']);
                         if (col) {
                             col.arrowProposedWidth = 0;
                         }
@@ -2044,21 +2217,19 @@
              * @returns {DGTable} self
              */
             _resizeColumnElements: function (cellIndex) {
-                var headers = this._$table.find('>thead>tr>th');
-                var col = this._columns.get(headers[cellIndex].columnName);
+                var headerCells = this._$headerRow.find('div.' + this._tableClassName + '-header-cell');
+                var col = this._columns.get(headerCells[cellIndex]['columnName']);
 
                 if (col) {
-                    headers[cellIndex].firstChild.style.width = col.actualWidth + 'px';
+                    headerCells[cellIndex].style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
 
                     var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
                     var tbodyChildren = this._$tbody[0].childNodes;
-                    for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
+                    for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
                         tr = tbodyChildren[i];
                         if (tr.nodeType !== 1) continue;
-                        tr.childNodes[cellIndex].firstChild.style.width = width;
+                        tr.childNodes[cellIndex].style.width = width;
                     }
-
-                    this._updateTableWidth(true);
                 }
 
                 return this;
@@ -2068,8 +2239,8 @@
              * @returns {DGTable} self
              * */
             _unbindHeaderEvents: function() {
-                if (this._$table) {
-                    this._$table.find('>thead>tr>th')
+                if (this._$headerRow) {
+                    this._$headerRow.find('div.' + this._tableClassName + '-header-cell')
                         .off('mousemove')
                         .off('mouseleave')
                         .off('dragstart')
@@ -2090,17 +2261,23 @@
              */
             _renderSkeleton: function () {
                 var self = this;
-                var topRowHeight = 0;
-
-                if (self._virtualScrollTopRow) {
-                    topRowHeight = parseFloat(self._virtualScrollTopRow.style.height);
-                }
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var i, len, rowData, colIndex, column, colCount, rowCount, div, tr, th, td, allowCellPreview = this._allowCellPreview, allowHeaderCellPreview = this._allowHeaderCellPreview;
+                var allowCellPreview = this._allowCellPreview,
+                    allowHeaderCellPreview = this._allowHeaderCellPreview;
 
-                var headerRow = createElement('tr'), ieDragDropHandler;
+                var tableClassName = this._tableClassName,
+                    headerCellClassName = tableClassName + '-header-cell',
+                    header = createElement('div'),
+                    $header = $(header),
+                    headerRow = createElement('div'),
+                    $headerRow = $(headerRow);
+
+                header.className = tableClassName + '-header';
+                headerRow.className = tableClassName + '-header-row';
+
+                var ieDragDropHandler;
                 if (hasIeDragAndDropBug) {
                     ieDragDropHandler = function(evt) {
                         evt.preventDefault();
@@ -2108,229 +2285,160 @@
                         return false;
                     };
                 }
-                for (i = 0; i < self._visibleColumns.length; i++) {
+
+                for (var i = 0, column, cell, cellInside, $cell; i < self._visibleColumns.length; i++) {
                     column = self._visibleColumns[i];
                     if (column.visible) {
-                        div = createElement('div');
-                        div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = this._headerCellFormatter(column.label, column.name);
-                        th = createElement('th');
-                        th.draggable = true;
-                        if (self._sortableColumns && column.sortable) th.className = 'sortable';
-                        th.columnName = column.name;
-                        if (allowCellPreview && allowHeaderCellPreview) {
-                            this._hookCellHoverIn(th);
+                        cell = createElement('div');
+                        $cell = $(cell);
+                        cell.draggable = true;
+                        cell.className = headerCellClassName;
+                        cell.style.width = column.actualWidth + 'px';
+                        if (self._sortableColumns && column.sortable) {
+                            cell.className += ' sortable';
                         }
-                        th.appendChild(div);
-                        headerRow.appendChild(th);
+                        cell['columnName'] = column.name;
+                        cellInside = createElement('div');
+                        cellInside.innerHTML = this._headerCellFormatter(column.label, column.name);
+                        cell.appendChild(cellInside);
+                        if (allowCellPreview && allowHeaderCellPreview) {
+                            this._hookCellHoverIn(cell);
+                        }
+                        headerRow.appendChild(cell);
 
-                        self._visibleColumns[i].element = $(th);
+                        self._visibleColumns[i].element = $cell;
 
-                        $(th).on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
+                        $cell.on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
+                            .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
                             .on('click', _.bind(self._onClickColumnHeader, self));
-                        $(div).on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
+                        $(cellInside)
+                            .on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
                             .on('dragover', _.bind(self._onDragOverColumnHeader, self))
                             .on('dragleave', _.bind(self._onDragLeaveColumnHeader, self))
                             .on('drop', _.bind(self._onDropColumnHeader, self));
 
                         if (hasIeDragAndDropBug) {
-                            $(th).on('selectstart', _.bind(ieDragDropHandler, th));
+                            $cell.on('selectstart', _.bind(ieDragDropHandler, cell));
                         }
                     }
                 }
-                
-                if (self._virtualTable && self._width == DGTable.Width.SCROLL) {
+
+                if (this._$header) {
+                    this._$header.remove();
+                }
+                this._$header = $header;
+                this._header = header;
+                this._$headerRow = $headerRow;
+                this._headerRow = headerRow;
+                $headerRow.appendTo(this._$header);
+                $header.prependTo(this.$el);
+
+                if (self._width == DGTable.Width.SCROLL) {
                     this.el.style.overflow = 'hidden';
                 } else {
                     this.el.style.overflow = '';
                 }
 
                 if (self._$table && self._virtualTable) {
-                    self._$tbody.off('scroll');
                     self._$table.remove();
                     if (self._$tbody) {
-                        var trs = self._$tbody[0].childNodes;
-                        for (i = 0, len = trs.length; i < len; i++) {
-                            this.trigger('rowDestroy', trs[i]);
+                        var rows = self._$tbody[0].childNodes;
+                        for (var i = 0, len = rows.length; i < len; i++) {
+                            self.trigger('rowdestroy', rows[i]);
                         }
                     }
                 }
 
-                if (self.$el.css('position') === 'static') {
-                    self.$el.css('position', 'relative');
+                relativizeElement(self.$el);
+
+                if (!self._height && self._virtualTable) {
+                    self._height = this.$el.innerHeight();
                 }
 
-                var table, thead, tbody;
+                // Calculate virtual row heights
+                if (self._virtualTable && !self._virtualRowHeight) {
+                    var createDummyRow = function() {
+                        var row = createElement('div'),
+                            cell = row.appendChild(createElement('div')),
+                            cellInner = cell.appendChild(createElement('div'));
+                        row.className = tableClassName + '-row';
+                        cell.className = tableClassName + '-cell';
+                        cellInner.innerHTML = '0';
+                        row.style.visibility = 'hidden';
+                        row.style.position = 'absolute';
+                        return row;
+                    };
 
+                    var $dummyTbody, $dummyWrapper = $('<div>')
+                        .addClass(this.className)
+                        .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' })
+                        .append(
+                        $('<div>').addClass(tableClassName).append(
+                            $dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)
+                        )
+                    );
+
+                    $dummyWrapper.appendTo(document.body);
+
+                    var tr1 = createDummyRow(), tr2 = createDummyRow(), tr3 = createDummyRow();
+                    $dummyTbody.append(tr1, tr2, tr3);
+
+                    self._virtualRowHeightFirst = $(tr1).outerHeight();
+                    self._virtualRowHeight = $(tr2).outerHeight();
+                    self._virtualRowHeightLast = $(tr3).outerHeight();
+                    self._virtualRowHeightMin = Math.min(Math.min(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
+                    self._virtualRowHeightMax = Math.max(Math.max(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
+
+                    $dummyWrapper.remove();
+                }
+
+                // Create table skeleton
                 if (self._virtualTable || !self._$table) {
 
                     var fragment = document.createDocumentFragment();
-                    table = createElement('table');
+                    var table = createElement('div');
+                    var $table = $(table);
                     table.className = self._tableClassName;
+
+                    if (this._virtualTable) {
+                        table.className += ' virtual';
+                    }
+
+                    var tableHeight = (self._height - $headerRow.outerHeight());
+                    if ($table.css('box-sizing') !== 'border-box') {
+                        tableHeight -= parseFloat($table.css('border-top-width')) || 0;
+                        tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
+                        tableHeight -= parseFloat($table.css('padding-top')) || 0;
+                        tableHeight -= parseFloat($table.css('padding-bottom')) || 0;
+                    }
+                    self._visibleHeight = tableHeight;
+                    table.style.height = self._height ? tableHeight + 'px' : 'auto';
+                    table.style.display = 'block';
+                    table.style.overflowY = 'auto';
+                    table.style.overflowX = self._width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
                     fragment.appendChild(table);
 
-                    thead = createElement('thead');
-                    thead.style.display = 'block';
-                    if (hasIeTableDisplayBlockBug) {
-                        $(thead).css({
-                            'float': self.$el.css('direction') === 'rtl' ? 'right' : 'left',
-                            'clear': 'both'
-                        });
-                    }
-                    table.appendChild(thead);
+                    var tbody = createElement('div');
+                    var $tbody = $(tbody);
+                    tbody.className = self._tableClassName + '-body';
+                    self._table = table;
+                    self._tbody = tbody;
+                    self._$table = $table;
+                    self._$tbody = $tbody;
 
-                    if (!this._height) {
-                        this._height = this.$el.innerHeight() - (parseFloat($(table).css('border-top-width')) || 0) - (parseFloat($(table).css('border-bottom-width')) || 0);
+                    if (self._virtualTable) {
+                        self._virtualVisibleRows = Math.ceil(self._visibleHeight / self._virtualRowHeightMin);
                     }
 
-                    tbody = createElement('tbody');
-                    tbody.style.height = self._height - $(thead).outerHeight() + 'px';
-                    tbody.style.display = 'block';
-                    tbody.style.overflowY = 'auto';
-                    tbody.style.overflowX = 'hidden';
-                    if (hasIeTableDisplayBlockBug) {
-                        $(tbody).css({
-                            'float': self.$el.css('direction') === 'rtl' ? 'right' : 'left',
-                            'clear': 'both'
-                        });
-                    }
-                    if (self._width == DGTable.Width.SCROLL) {
-                        thead.style.overflowX = 'hidden';
-                        tbody.style.overflowX = 'auto';
-                    }
+                    self._calculateVirtualHeight();
+
+                    relativizeElement($tbody);
+                    relativizeElement($table);
+
                     table.appendChild(tbody);
-
                     self.el.appendChild(fragment);
-
-                    self._$table = $(table);
-                    self._$tbody = $(tbody);
-                    self._$thead = $(thead);
-                } else {
-                    table = self._$table[0];
-                    tbody = self._$tbody[0];
-                    thead = self._$thead[0];
-                }
-
-                if (self._virtualTable && !self._virtualRowHeight) {
-                    var createDummyRow = function() {
-                        var tr = createElement('tr'),
-                            td = tr.appendChild(createElement('td')),
-                            div = td.appendChild(createElement('div'));
-                        div.innerHTML = '0';
-                        tr.style.visibility = 'hidden';
-                        tr.style.position = 'absolute';
-                        return tr;
-                    };
-
-                    var tr1 = tbody.appendChild(createDummyRow()),
-                        tr2 = tbody.appendChild(createDummyRow()),
-                        tr3 = tbody.appendChild(createDummyRow());
-
-                    self._virtualRowHeight = $(tr2).outerHeight();
-                    tbody.removeChild(tr1);
-                    tbody.removeChild(tr2);
-                    tbody.removeChild(tr3);
-                    self._virtualVisibleRows = parseInt((self._height - $(thead).outerHeight()) / self._virtualRowHeight, 10);
-                }
-
-                var rows = self._filteredRows || self._rows, isDataFiltered = !!self._filteredRows;
-
-                if (self._virtualTable) {
-                    if (self._virtualRowRange && self._virtualRowRange.last - self._virtualRowRange.first >= self._virtualVisibleRows) {
-                        self._virtualRowRange.prevFirst = self._virtualRowRange.prevFirst != self._virtualRowRange.first ? self._virtualRowRange.prevFirst : self._virtualRowRange.first;
-                        self._virtualRowRange.prevLast = self._virtualRowRange.prevLast != self._virtualRowRange.last ? self._virtualRowRange.prevLast : self._virtualRowRange.last;
-                        if (self._virtualRowRange.last > rows.length) {
-                            self._virtualRowRange.last = rows.length;
-                            self._virtualRowRange.first = Math.max(0, self._virtualRowRange.last - self._virtualVisibleRows - self._rowsBufferSize * 2);
-                        }
-                    } else {
-                        var last = self._virtualVisibleRows + self._rowsBufferSize;
-                        if (last > rows.length) {
-                            last = rows.length;
-                        }
-                        self._virtualRowRange = {
-                            first: 0,
-                            last: last,
-                            prevFirst: 0,
-                            prevLast: last
-                        };
-                    }
-                }
-
-                var bodyFragment = document.createDocumentFragment();
-
-                if (self._virtualTable) {
-                    // Build first row (for virtual table top scroll offset)
-                    tr = self._virtualScrollTopRow = document.createElement('tr');
-                    tr.style.height = topRowHeight + 'px';
-                    bodyFragment.appendChild(tr);
-                }
-
-                // Build visible rows
-                var firstDisplayedRow,
-                    lastDisplayedRow;
-
-                if (self._virtualTable) {
-                    firstDisplayedRow = self._virtualRowRange.first;
-                    lastDisplayedRow = self._virtualRowRange.last;
-                } else {
-                    firstDisplayedRow = 0;
-                    lastDisplayedRow = rows.length;
-                }
-
-                var visibleColumns = self._visibleColumns,
-                    cellFormatter = self._cellFormatter;
-                
-                for (i = firstDisplayedRow, colCount = visibleColumns.length, rowCount = rows.length;
-                     i < rowCount && i < lastDisplayedRow;
-                     i++) {
-                    rowData = rows[i];
-                    tr = document.createElement('tr');
-                    tr['_rowIndex'] = i;
-                    for (colIndex = 0; colIndex < colCount; colIndex++) {
-                        column = visibleColumns[colIndex];
-                        div = document.createElement('div');
-                        div.style.width = column.actualWidth + 'px';
-                        div.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
-                        td = document.createElement('td');
-                        if (column.cellClasses) td.className = column.cellClasses;
-                        if (allowCellPreview) {
-                            this._hookCellHoverIn(td);
-                        }
-                        td.appendChild(div);
-                        tr.appendChild(td);
-                    }
-
-                    bodyFragment.appendChild(tr);
-
-                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr, rowData);
-                }
-
-                if (self._virtualTable) {
-                    // Build last row (for virtual table bottom scroll offset)
-                    tr = self._virtualScrollBottomRow = document.createElement('tr');
-                    tr.style.height = (self._virtualRowHeight * Math.max(0, rows.length - self._virtualVisibleRows - self._rowsBufferSize) - topRowHeight) + 'px';
-                    bodyFragment.appendChild(tr);
-                }
-
-                // Populate THEAD
-                try { thead.innerHTML = ''; } catch (e) { /* IE8 */ thead.textContent = ''; }
-                thead.appendChild(headerRow);
-
-                if (self._virtualTable) {
-                    tbody.style.height = self._height - $(thead).outerHeight() + 'px';
-                }
-
-                // Populate TBODY
-                try { tbody.innerHTML = ''; } catch (e) { /* IE8 */ tbody.textContent = ''; }
-                tbody.appendChild(bodyFragment);
-
-                self._updateLastCellWidthFromScrollbar(true);
-
-                if (self._virtualTable) {
-                    self._adjustVirtualTableScrollHeight();
                 }
 
                 return self;
@@ -2342,7 +2450,7 @@
              */
             _updateLastCellWidthFromScrollbar: function(force) {
                 // Calculate scrollbar's width and reduce from lat column's width
-                var scrollbarWidth = this._$tbody[0].offsetWidth - this._$tbody[0].clientWidth;
+                var scrollbarWidth = this._table.offsetWidth - this._table.clientWidth;
                 if (scrollbarWidth != this._scrollbarWidth || force) {
                     this._scrollbarWidth = scrollbarWidth;
                     for (var i = 0; i < this._columns.length; i++) {
@@ -2353,219 +2461,17 @@
                         var lastColIndex = this._visibleColumns.length - 1;
                         this._visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = this._visibleColumns[lastColIndex].actualWidth - this._scrollbarWidth;
                         var lastColWidth = this._visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px';
-                        var tbodyChildren = this._$tbody[0].childNodes;
-                        for (var i = this._virtualTable ? 1 : 0, count = tbodyChildren.length - (this._virtualTable ? 1 : 0), tr; i < count; i++) {
-                            tr = tbodyChildren[i];
-                            if (tr.nodeType !== 1) continue;
-                            tr.childNodes[lastColIndex].firstChild.style.width = lastColWidth;
+                        var tbodyChildren = this._tbody.childNodes;
+                        for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+                            row = tbodyChildren[i];
+                            if (row.nodeType !== 1) continue;
+                            row.childNodes[lastColIndex].style.width = lastColWidth;
                         }
+
+                        this._headerRow.childNodes[lastColIndex].style.width = lastColWidth;
                     }
                 }
                 return this;
-            },
-
-            /**
-             * Add/remove rows from the DOM, or replace data in the current rows
-             * @private
-             * @param {Number} prevScrollTop previous scrollTop value in pixels
-             * @param {Number} scrollTop current scrollTop value in pixels
-             */
-            _renderVirtualRows: function (prevScrollTop, scrollTop) {
-                var self = this, first, last, added, removed;
-                var addedRows = (self._virtualRowRange.last - self._virtualRowRange.first) - (self._virtualRowRange.prevLast - self._virtualRowRange.prevFirst);
-                var max = self._virtualVisibleRows + self._rowsBufferSize;
-                if (scrollTop < prevScrollTop) {
-                    first = self._virtualRowRange.first;
-                    last = self._virtualRowRange.prevFirst;
-                    if (self._virtualRowRange.last <= self._virtualRowRange.prevFirst) {
-                        first = self._virtualRowRange.first;
-                        last = self._virtualRowRange.last;
-                    }
-                    self._virtualRowRange.prevFirst = self._virtualRowRange.first;
-                    self._virtualRowRange.prevLast = self._virtualRowRange.last;
-                    removed = self._removeVirtualRows(last - first - addedRows, false);
-                    added = self._addVirtualRows(first, last, true);
-                    self._adjustVirtualTableScrollHeight();
-                } else if (scrollTop > prevScrollTop) {
-                    first = self._virtualRowRange.prevLast;
-                    last = self._virtualRowRange.last;
-
-                    if (self._virtualRowRange.first >= self._virtualRowRange.prevLast) {
-                        first = self._virtualRowRange.first;
-                        last = self._virtualRowRange.last;
-                    }
-                    self._virtualRowRange.prevFirst = self._virtualRowRange.first;
-                    self._virtualRowRange.prevLast = self._virtualRowRange.last;
-                    removed = self._removeVirtualRows(last - first - addedRows, true);
-                    added = self._addVirtualRows(first, last, false);
-                    self._adjustVirtualTableScrollHeight();
-                } else if (self._dataAppended) {
-                    self._dataAppended = false;
-                    var rows = self._filteredRows || self._rows;
-                    if (self._virtualRowRange.last < rows.length && self._virtualRowRange.last < max) {
-                        first = self._virtualRowRange.last;
-                        last = rows.length;
-                        if (last > max) last = max;
-                        added = self._addVirtualRows(first, last, false);
-                        self._virtualRowRange.last = last;
-                    }
-                    self._adjustVirtualTableScrollHeight();
-                } else {
-                    self._adjustVirtualTableScrollHeight();
-                    self._refreshVirtualRows(self._virtualRowRange.first);
-                    return;
-                }
-                if (added - removed) {
-                    self._updateLastCellWidthFromScrollbar();
-                    self._updateTableWidth(false);
-                }
-                self._prevScrollTop = self._$tbody[0].scrollTop;
-            },
-
-            /**
-             * Adjusts the virtual table's scroll height
-             * @private
-             */
-            _adjustVirtualTableScrollHeight: function () {
-                var domRowCount = this._$tbody[0].childNodes.length - 2;
-                var rows = this._filteredRows || this._rows;
-                var bufferHeight = (rows.length - domRowCount) * this._virtualRowHeight;
-                if (bufferHeight < 0) {
-                    this._virtualScrollTopRow.style.height = 0;
-                    this._virtualScrollBottomRow.style.height = 0;
-                } else {
-                    var topHeight = this._virtualRowRange.first * this._virtualRowHeight;
-                    var bottomHeight = bufferHeight - topHeight;
-                    this._virtualScrollTopRow.style.height = topHeight + 'px';
-                    this._virtualScrollBottomRow.style.height = bottomHeight + 'px';
-                }
-            },
-
-            /**
-             * Append or prepend table rows to the DOM
-             * @private
-             * @param {Number} start index in the row data collection of the first row to add
-             * @param {Number} end index in the row data collection of the last row to add
-             * @param {Boolean} prepend add rows to the beginning of the table
-             */
-            _addVirtualRows: function (start, end, prepend) {
-                var rowToInsertBefore, added = 0;
-                if (prepend) {
-                    var nextElementSibling = this._virtualScrollTopRow.nextSibling;
-                    while (nextElementSibling && nextElementSibling.nodeType != 1) {
-                        nextElementSibling = nextElementSibling.nextSibling;
-                    }
-                    rowToInsertBefore = nextElementSibling;
-                } else {
-                    rowToInsertBefore = this._virtualScrollBottomRow;
-                }
-                for (var i = start; i < end; i++) {
-                    this._addVirtualRow(i, rowToInsertBefore);
-                    added ++;
-                }
-                return added;
-            },
-
-            /**
-             * Add a new row to the DOM
-             * @private
-             * @param {Number} index which row in the RowCollection to add to the DOM
-             * @param {HTMLElement} rowToInsertBefore DOM row that the new row will precede
-             */
-            _addVirtualRow: function (index, rowToInsertBefore) {
-                var tr = document.createElement('tr');
-                tr['_rowIndex'] = index;
-                var rowData = (this._filteredRows || this._rows)[index],
-                    isDataFiltered = !!this._filteredRows,
-                    allowCellPreview = this._allowCellPreview,
-                    visibleColumns = this._visibleColumns,
-                    cellFormatter = this._cellFormatter;
-                    
-                for (var i = 0, col, div, td, length = visibleColumns.length; i < length; i++) {
-                    col = visibleColumns[i];
-                    div = document.createElement('div');
-                    div.style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-                    div.innerHTML = cellFormatter(rowData[col.name], col.name, rowData);
-                    td = document.createElement('td');
-                    if (col.cellClasses) td.className = col.cellClasses;
-                    if (allowCellPreview) {
-                        this._hookCellHoverIn(td);
-                    }
-                    td.appendChild(div);
-                    tr.appendChild(td);
-                }
-                
-                this._$tbody[0].insertBefore(tr, rowToInsertBefore);
-
-                this.trigger('rowCreate', index, isDataFiltered ? rowData['__i'] : index, tr, rowData);
-            },
-
-            /**
-             * Remove table rows from the DOM
-             * @private
-             * @param {Number} numRows number of rows to remove
-             * @param {Boolean} removeFromBeginning remove rows from the beginning of the table
-             */
-            _removeVirtualRows: function (numRows, removeFromBeginning) {
-                var start, end, removed = 0;
-                if (numRows > this._virtualVisibleRows + this._rowsBufferSize * 2) {
-                    numRows = this._virtualVisibleRows + this._rowsBufferSize * 2;
-                }
-
-                var tbody = this._$tbody[0],
-                    trs = tbody.childNodes,
-                    count = this._$tbody[0].childNodes.length - 2;
-
-                if (removeFromBeginning) {
-                    start = 1;
-                    end = Math.min(numRows + 1, count + 1);
-                } else {
-                    start = count + 1 - numRows;
-                    end = count + 1;
-                }
-                for (var i = start; i < end; end--) {
-                    this._unhookCellEventsForRow(trs[start]);
-                    this.trigger('rowDestroy', trs[start]);
-                    tbody.removeChild(trs[start]);
-                    removed ++;
-                }
-                return removed;
-            },
-
-            /**
-             * Refresh the data in the rendered table rows with what is currently in the row data collection
-             * @private
-             * @param {Number} firstRow index of the first row rendered
-             */
-            _refreshVirtualRows: function (firstRow) {
-                var trs = this._$tbody[0].getElementsByTagName('tr'),
-                    rows = this._filteredRows || this._rows,
-                    isDataFiltered = !!this._filteredRows,
-                    rowIndex,
-                    rowData,
-                    visibleColumns = this._visibleColumns,
-                    cellFormatter = this._cellFormatter;
-                    
-                for (var i = 1, tr, tdList, j, div, col, colName, max = trs.length - 1;
-                     i < max;
-                     i++) {
-                    tr = trs[i];
-
-                    this.trigger('rowDestroy', tr);
-
-                    tr['_rowIndex'] = rowIndex = firstRow + i - 1;
-                    rowData = rows[rowIndex];
-
-                    tdList = $('td>div', tr);
-                    for (j = 0; j < tdList.length; j++) {
-                        div = tdList[j];
-                        col = visibleColumns[j];
-                        colName = col.name;
-                        div.innerHTML = cellFormatter(rowData[colName], colName, rowData);
-                    }
-
-                    this.trigger('rowCreate', i, isDataFiltered ? rowData['__i'] : i, tr, rowData);
-                }
             },
 
             /**
@@ -2575,43 +2481,32 @@
              * @returns {DGTable} self
              */
             _updateTableWidth: function (parentSizeMayHaveChanged) {
+                var width = this._calculateTbodyWidth();
+                this._tbody.style.minWidth = width + 'px';
+                this._headerRow.style.minWidth = (width + (this._scrollbarWidth || 0)) + 'px';
+
+                this._$table.off('scroll', this._onTableScrolledHorizontallyBound);
+
                 if (this._width == DGTable.Width.AUTO) {
-                    var cols = this._$table.find('>thead>tr>th');
-                    var newWidth = 0;
-                    for (var i = 0; i < cols.length; i++) {
-                        newWidth += $(cols[i])[0].offsetWidth;
-                    }
-                    this._$table.width(newWidth);
-                    this.$el.width(newWidth);
+                    // Update wrapper element's size to full contain the table body
+                    this.$el.width(this._$table.width(this._$tbody.outerWidth()).outerWidth());
                 } else if (this._width == DGTable.Width.SCROLL) {
 
                     if (parentSizeMayHaveChanged) {
+                        var lastScrollTop = this._table ? this._table.scrollTop : 0,
+                            lastScrollLeft = this._table ? this._table.scrollLeft : 0;
+
                         // BUGFIX: Relayout before recording the widths
                         webkitRenderBugfix(this.el);
+
+                        this._table.scrollTop = lastScrollTop;
+                        this._table.scrollLeft = lastScrollLeft;
+                        this._header.scrollLeft = lastScrollLeft;
                     }
 
-                    var elWidth = this.$el.innerWidth(),
-                        tableWidth = this._$table.width(),
-                        theadWidth = this._$thead[0].scrollWidth;
-
-                    this._$tbody.off('scroll', this._onTableScrolledHorizontallyBound);
-
-                    if (theadWidth > tableWidth || theadWidth > elWidth) {
-                        this._$thead.width(elWidth);
-                        this._$tbody.width(elWidth);
-                        this._$tbody.on('scroll', this._onTableScrolledHorizontallyBound);
-
-                        if (parentSizeMayHaveChanged) {
-                            // BUGFIX: Relayout after updating widths, so scrollbars are placed correctly
-                            webkitRenderBugfix(this.el);
-                        }
-                    } else {
-                        try { this._$thead[0].style.width = ''; }
-                        catch (err) { }
-                        try { this._$tbody[0].style.width = ''; }
-                        catch (err) { }
-                    }
+                    this._$table.on('scroll', this._onTableScrolledHorizontallyBound);
                 }
+
                 return this;
             },
 
@@ -2642,23 +2537,27 @@
                 var self = this;
 
                 self._abortCellPreview = false;
-                if (el.firstChild.scrollWidth > el.firstChild.clientWidth) {
+
+                var elInner = el.firstChild;
+
+                if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
+                    (elInner.scrollHeight - elInner.clientHeight > 1)) {
 
                     self._hideCellPreview();
 
-                    var $el = $(el), $elInner = $(el.firstChild);
+                    var $el = $(el), $elInner = $(elInner);
                     var div = createElement('div'), $div = $(div);
                     div.innerHTML = el.innerHTML;
                     div.className = self._cellPreviewClassName;
 
-                    if (el.tagName === 'TH') {
+                    var isHeaderCell = $el.hasClass(this._tableClassName + '-header-cell');
+                    if (isHeaderCell) {
                         div.className += ' header';
                         if ($el.hasClass('sortable')) {
                             div.className += ' sortable';
                         }
 
                         div.draggable = true;
-                        div.columnName = el.columnName;
 
                         $(div).on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
@@ -2682,19 +2581,16 @@
                         paddingR = parseFloat($el.css('padding-right')) || 0,
                         paddingT = parseFloat($el.css('padding-top')) || 0,
                         paddingB = parseFloat($el.css('padding-bottom')) || 0;
-                    var requiredWidth = el.firstChild.scrollWidth + el.clientWidth - el.firstChild.offsetWidth,
-                        requiredHeight = el.firstChild.scrollHeight + el.clientHeight - el.firstChild.offsetHeight;
+
+                    var requiredWidth = elInner.scrollWidth + el.clientWidth - elInner.offsetWidth;
 
                     var borderBox = $el.css('boxSizing') === 'border-box';
                     if (borderBox) {
                         requiredWidth -= parseFloat($(el).css('border-left-width')) || 0;
                         requiredWidth -= parseFloat($(el).css('border-right-width')) || 0;
-                        requiredHeight -= parseFloat($(el).css('border-top-width')) || 0;
-                        requiredHeight -= parseFloat($(el).css('border-bottom-width')) || 0;
                         $div.css('box-sizing', 'border-box');
                     } else {
                         requiredWidth -= paddingL + paddingR;
-                        requiredHeight -= paddingT + paddingB;
                         $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
                     }
 
@@ -2718,7 +2614,7 @@
                     $div.css({
                         'box-sizing': 'content-box',
                         width: requiredWidth + 'px',
-                        height: requiredHeight + 'px',
+                        'min-height': $el.height() + 'px',
                         'padding-left': paddingL,
                         'padding-right': paddingR,
                         'padding-top': paddingT,
@@ -2735,22 +2631,14 @@
                     document.body.appendChild(div);
 
                     $(div.firstChild).css({
-                        'width': (div.clientWidth - el.clientWidth + parseFloat(el.firstChild.style.width)) + 'px',
                         'direction': $elInner.css('direction'),
-                        'white-space': $elInner.css('white-space'),
-
-                        // self is for vertical-centering, same way as TH/TD do.
-                        // But we do it on the inner wrapper,
-                        // because the outer is absolute positioned and cannot really be a table-cell
-                        'height': requiredHeight, // Sorry, but 100% does not work on a table-cell
-                        'display': 'table-cell',
-                        'vertical-align': $(el).css('vertical-align')
+                        'white-space': $elInner.css('white-space')
                     }).data('row-el', $el.closest('tr'));
 
-                    var rowIndex = div['__row'] = el.parentNode['_rowIndex'];
-                    div['__column'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
+                    var rowIndex = div['row'] = el.parentNode['rowIndex'];
+                    div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
-                    self.trigger('cellPreview', div.firstChild, rowIndex == null ? null : rowIndex, div['__column'], rowIndex == null ? null : (self._filteredRows || self._rows)[rowIndex]);
+                    self.trigger('cellpreview', div.firstChild, rowIndex == null ? null : rowIndex, div['__column'], rowIndex == null ? null : (self._filteredRows || self._rows)[rowIndex]);
                     if (self._abortCellPreview) return;
 
                     var offset = $el.offset();
@@ -2804,7 +2692,7 @@
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
 
-                    this.trigger('cellPreviewDestroy', div.firstChild, div['__row'], div['__column']);
+                    this.trigger('cellpreviewdestroy', div.firstChild, div['row'], div['columnName']);
 
                     this._$cellPreviewEl = null;
                 }

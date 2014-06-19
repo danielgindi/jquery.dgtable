@@ -340,6 +340,7 @@
             ],
             height: 500,
             width: DGTable.Width.SCROLL,
+            //virtualTable: false,
             cellFormatter: function (val, colName) {
                 if (colName === 'address') {
                     return '<i>' + val + '</i>';
@@ -354,8 +355,10 @@
 
         $('#k100button').on('click', function(){
 
+            var startTime = +new Date;
+
             var data = [];
-            for (var i = 1; i < 100000; i ++) {
+            for (var i = 0; i < 100000; i ++) {
                 data.push({
                     'first': sampleData[Math.floor(Math.random() * sampleData.length)].first,
                     'last': sampleData[Math.floor(Math.random() * sampleData.length)].last,
@@ -363,8 +366,15 @@
                     'city': sampleData[Math.floor(Math.random() * sampleData.length)].city
                 });
             }
+
+            var generatedTime = +new Date;
+
             table.addRows(data);
 
+            var addTime = +new Date;
+
+            console.log('100,000 rows generated in ' + ((generatedTime - startTime) / 1000).toFixed(2) + ' seconds');
+            console.log('100,000 rows added to table in ' + ((addTime - generatedTime) / 1000).toFixed(2) + ' seconds');
         });
 
         $('#wwbutton').on('click', function(){
