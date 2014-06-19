@@ -98,27 +98,27 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 
 #### Events triggered by DGTable:
 
-* `renderSkeleton`: The table is re-drawing it's base elements, including headers. Will always be followed by a `render` event.
+* `renderskeleton`: The table is re-drawing it's base elements, including headers. Will always be followed by a `render` event.
 * `render`: The table has finished rendering (after adding rows etc.).
-* `cellPreview`: We are about to show a cell preview.
+* `cellpreview`: We are about to show a cell preview.
   * 1st argument: Preview's DOM element
   * 2nd argument: Row's index - or null for header
   * 3rd argument: Column's name
   * 4th argument: Row's data - if applicable
   * At this stage you can prevent showing the preview, by calling `table.abortCellPreview`
-* `cellPreviewDestroy`: Cell preview element is about to be destroyed after hiding
+* `cellpreviewdestroy`: Cell preview element is about to be destroyed after hiding
   * 1st argument: Preview's DOM element
   * 2nd argument: Row's index
   * 3rd argument: Column's name
   * You can use this event to release any resources that you may have used in `cellPreview` event.
-* `rowCreate`: A row has just been created
+* `rowcreate`: A row has just been created
   * 1st argument: Row's index in the currently filtered data set
   * 2st argument: Row's index in the data set
   * 3nd argument: Row's DOM TR element
   * 4th argument: Row's data
-* `rowDestroy`: Called just before removing a physical row element (TR) from the table
+* `rowdestroy`: Called just before removing a physical row element (TR) from the table
   * 1st argument: Row's DOM TR element
-* `addRows`: Data rows have been added to the table
+* `addrows`: Data rows have been added to the table
   * 1st argument: How many rows
   * 2nd argument: Is this a replace? In other word, were the old rows removed?
 
