@@ -183,6 +183,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * tableHeightChanged
 * addRows
 * removeRow
+* refreshRow
 * setRows
 * getUrlForElementContent
 * isWorkerSupported

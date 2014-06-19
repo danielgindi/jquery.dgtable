@@ -1696,6 +1696,51 @@
             },
 
             /**
+             * Refreshes the row specified
+             * @public
+             * @expose
+             * @param {Number} physicalRowIndex index
+             * @returns {DGTable} self
+             */
+            refreshRow: function(physicalRowIndex) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
+
+                // Find out if the row is in the rendered dataset
+                var rowIndex = -1;
+                if (this._filteredRows && (rowIndex = _.indexOf(this._filteredRows, this._rows[physicalRowIndex])) === -1) return this;
+
+                if (rowIndex === -1) {
+                    rowIndex = physicalRowIndex;
+                }
+
+                var childNodes = this._tbody.childNodes;
+
+                if (this._virtualTable) {
+                    // Now make sure that the row actually rendered, as this is a virtual table
+                    var isRowVisible = false;
+                    for (var i = 0; i < childNodes.length; i++) {
+                        if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                            isRowVisible = true;
+                            this.trigger('rowdestroy', childNodes[i]);
+                            this._tbody.removeChild(childNodes[i]);
+                            break;
+                        }
+                    }
+                    if (isRowVisible) {
+                        var renderedRow = this.renderRows(rowIndex, rowIndex);
+                        this._tbody.insertBefore(renderedRow, childNodes[i] || null);
+                    }
+                } else {
+                    this.trigger('rowdestroy', childNodes[rowIndex]);
+                    this._tbody.removeChild(childNodes[rowIndex]);
+                    var renderedRow = this.renderRows(rowIndex, rowIndex);
+                    this._tbody.insertBefore(renderedRow, childNodes[rowIndex] || null);
+                }
+
+                return this;
+            },
+
+            /**
              * Replace the whole dataset
              * @public
              * @expose
