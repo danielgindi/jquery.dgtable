@@ -1646,13 +1646,14 @@
              * Removes a row from the table
              * @public
              * @expose
-             * @param {Number} row index
+             * @param {Number} physicalRowIndex index
              * @param {Boolean=true} render
              * @returns {DGTable} self
              */
-            removeRow: function(row, render) {
-                if (row < 0 || row > this._rows.length - 1) return null;
-                this._rows.splice(row, 1);
+            removeRow: function(physicalRowIndex, render) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
+
+                this._rows.splice(physicalRowIndex, 1);
                 render = (render === undefined) ? true : !!render;
                 if (this._filteredRows) {
                     this._refilter();
@@ -1665,7 +1666,7 @@
                     var childNodes = this._tbody.childNodes;
                     if (this._virtualTable) {
                         for (var i = 0; i < childNodes.length; i++) {
-                            if (childNodes[i]['rowIndex'] >= row) {
+                            if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
 
@@ -1680,7 +1681,7 @@
                             ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
                     } else {
                         for (var i = 0; i < childNodes.length; i++) {
-                            if (childNodes[i]['rowIndex'] === row) {
+                            if (childNodes[i]['rowIndex'] === physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
                                 break;
