@@ -2759,6 +2759,27 @@
 
                     self._hookCellHoverOut(el);
                     self._hookCellHoverOut(div);
+
+                    $div.on('mousewheel', function (event) {
+                        var originalEvent = event.originalEvent;
+                        var xy = originalEvent.wheelDelta || -originalEvent.detail,
+                            x = originalEvent.wheelDeltaX || (originalEvent.axis == 1 ? xy : 0),
+                            y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
+
+                        if (xy) {
+                            self._hideCellPreview();
+                        }
+
+                        if (y && self._table.scrollHeight > self._table.clientHeight) {
+                            var scrollTop = (y * -1) + self._$table.scrollTop();
+                            self._$table.scrollTop(scrollTop);
+                        }
+
+                        if (x && self._table.scrollWidth > self._table.clientWidth) {
+                            var scrollLeft = (x * -1) + self._$table.scrollLeft();
+                            self._$table.scrollLeft(scrollLeft);
+                        }
+                    });
                 }
             },
 
