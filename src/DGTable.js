@@ -86,115 +86,121 @@
                  * @field {Boolean} _tableSkeletonNeedsRendering */
                 this._tableSkeletonNeedsRendering = true;
 
-                /**
-                 * @private
-                 * @field {Boolean} _virtualTable */
-                this._virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
+                var settings = this.settings = {};
 
                 /**
                  * @private
-                 * @field {Number} _rowsBufferSize */
-                this._rowsBufferSize = options.rowsBufferSize || 10;
+                 * @field {Boolean} virtualTable */
+                settings.virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
 
                 /**
                  * @private
-                 * @field {Number} _minColumnWidth */
-                this._minColumnWidth = Math.max(options.minColumnWidth || 35, 0);
+                 * @field {Number} rowsBufferSize */
+                settings.rowsBufferSize = options.rowsBufferSize || 3;
 
                 /**
                  * @private
-                 * @field {Number} _resizeAreaWidth */
-                this._resizeAreaWidth = options.resizeAreaWidth || 8;
+                 * @field {Number} minColumnWidth */
+                settings.minColumnWidth = Math.max(options.minColumnWidth || 35, 0);
 
                 /**
                  * @private
-                 * @field {Boolean} _resizableColumns */
-                this._resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
+                 * @field {Number} resizeAreaWidth */
+                settings.resizeAreaWidth = options.resizeAreaWidth || 8;
 
                 /**
                  * @private
-                 * @field {Boolean} _movableColumns */
-                this._movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
+                 * @field {Boolean} resizableColumns */
+                settings.resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
 
                 /**
                  * @private
-                 * @field {Number} _sortableColumns */
-                this._sortableColumns = options.sortableColumns === undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
+                 * @field {Boolean} movableColumns */
+                settings.movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
 
                 /**
                  * @private
-                 * @field {Boolean} _adjustColumnWidthForSortArrow */
-                this._adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
+                 * @field {Number} sortableColumns */
+                settings.sortableColumns = options.sortableColumns === undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
 
                 /**
                  * @private
-                 * @field {Boolean} _convertColumnWidthsToRelative */
-                this._convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
+                 * @field {Boolean} adjustColumnWidthForSortArrow */
+                settings.adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
 
                 /**
                  * @private
-                 * @field {String} _cellClasses */
-                this._cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
+                 * @field {Boolean} convertColumnWidthsToRelative */
+                settings.convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
 
                 /**
                  * @private
-                 * @field {String} _resizerClassName */
-                this._resizerClassName = options.resizerClassName === undefined ? 'dgtable-resize' : options.resizerClassName;
+                 * @field {String} cellClasses */
+                settings.cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
                 /**
                  * @private
-                 * @field {String} _tableClassName */
-                this._tableClassName = options.tableClassName === undefined ? 'dgtable' : options.tableClassName;
+                 * @field {String} resizerClassName */
+                settings.resizerClassName = options.resizerClassName === undefined ? 'dgtable-resize' : options.resizerClassName;
 
                 /**
                  * @private
-                 * @field {Boolean} _allowCellPreview */
-                this._allowCellPreview = options.allowCellPreview === undefined ? true : options.allowCellPreview;
+                 * @field {String} tableClassName */
+                settings.tableClassName = options.tableClassName === undefined ? 'dgtable' : options.tableClassName;
 
                 /**
                  * @private
-                 * @field {Boolean} _allowHeaderCellPreview */
-                this._allowHeaderCellPreview = options.allowHeaderCellPreview === undefined ? true : options.allowHeaderCellPreview;
+                 * @field {Boolean} allowCellPreview */
+                settings.allowCellPreview = options.allowCellPreview === undefined ? true : options.allowCellPreview;
 
                 /**
                  * @private
-                 * @field {String} _cellPreviewClassName */
-                this._cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
+                 * @field {Boolean} allowHeaderCellPreview */
+                settings.allowHeaderCellPreview = options.allowHeaderCellPreview === undefined ? true : options.allowHeaderCellPreview;
 
                 /**
                  * @private
-                 * @field {Function(String,Boolean)Function(a,b)Boolean} _comparatorCallback */
-                this._comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
+                 * @field {String} cellPreviewClassName */
+                settings.cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
 
                 /**
                  * @private
-                 * @field {Boolean} _width */
-                this._width = options.width === undefined ? DGTable.Width.NONE : options.width;
+                 * @field {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback */
+                settings.comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
                 /**
                  * @private
-                 * @field {Boolean} _relativeWidthGrowsToFillWidth */
-                this._relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
+                 * @field {Boolean} width */
+                settings.width = options.width === undefined ? DGTable.Width.NONE : options.width;
 
                 /**
                  * @private
-                 * @field {Boolean} _relativeWidthShrinksToFillWidth */
-                this._relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
+                 * @field {Boolean} relativeWidthGrowsToFillWidth */
+                settings.relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
 
                 /**
                  * @private
-                 * @field {Function} _cellFormatter */
-                this._cellFormatter = options.cellFormatter || function (val) {
+                 * @field {Boolean} relativeWidthShrinksToFillWidth */
+                settings.relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
+
+                /**
+                 * @private
+                 * @field {Function} cellFormatter */
+                settings.cellFormatter = options.cellFormatter || function (val) {
                     return val;
                 };
                 
                 /**
                  * @private
-                 * @field {Function} _headerCellFormatter */
-                this._headerCellFormatter = options.headerCellFormatter || function (val) {
+                 * @field {Function} headerCellFormatter */
+                settings.headerCellFormatter = options.headerCellFormatter || function (val) {
                     return val;
                 };
-                
+
+                /** @private
+                 * @field {Number} height */
+                settings.height = options.height;
+
                 var i, len, col, column, columnData, order;
 
                 // Prepare columns
@@ -235,7 +241,7 @@
                             if (column && !_.contains(cols, column.name)) {
                                 cols.push(column.name);
                             }
-                            if (cols.length == this._sortableColumns || cols.length == this._visibleColumns.length) {
+                            if (cols.length === settings.sortableColumns || cols.length == this._visibleColumns.length) {
                                 break;
                             }
                         }
@@ -254,16 +260,14 @@
                 this._rows = new DGTable.RowCollection({ sortColumn: options.sortColumn, columns: this.columns });
                 this.listenTo(this._rows, 'sort', this.render)
                     .listenTo(this._rows, 'requiresComparatorForColumn', _.bind(function(returnVal, column, descending){
-                        if (this._comparatorCallback) {
-                            returnVal.comparator = this._comparatorCallback(column, descending);
+                        if (settings.comparatorCallback) {
+                            returnVal.comparator = settings.comparatorCallback(column, descending);
                         }
                     }, this));
 
                 /** @private
                  * @field {DGTable.RowCollection} _filteredRows */
                 this._filteredRows = null;
-
-                this._height = options.height;
 
                 /*
                     Setup hover mechanism.
@@ -423,8 +427,8 @@
                     } else {
                         // It's an absolute size!
                             
-                        if (widthSize < this._minColumnWidth) {
-                            widthSize = this._minColumnWidth;
+                        if (widthSize < this.settings.minColumnWidth) {
+                            widthSize = this.settings.minColumnWidth;
                         }
                         widthMode = COLUMN_WIDTH_MODE.ABSOLUTE;
                     }
@@ -450,7 +454,7 @@
                     sortable: columnData.sortable === undefined ? true : columnData.sortable,
                     movable: columnData.movable === undefined ? true : columnData.movable,
                     visible: columnData.visible === undefined ? true : columnData.visible,
-                    cellClasses: columnData.cellClasses === undefined ? this._cellClasses : columnData.cellClasses
+                    cellClasses: columnData.cellClasses === undefined ? this.settings.cellClasses : columnData.cellClasses
                 };
                 
             },
@@ -477,12 +481,12 @@
                 this._$tbody.unbind();
                 this.$el.unbind();
                 this.unbind();
-                if (this.workerListeners) {
-                    for (var j = 0, worker; j < this.workerListeners.length; j++) {
-                        worker = this.workerListeners[j];
+                if (this._workerListeners) {
+                    for (var j = 0, worker; j < this._workerListeners.length; j++) {
+                        worker = this._workerListeners[j];
                         worker.worker.removeEventListener('message', worker.listener, false);
                     }
-                    this.workerListeners.length = 0;
+                    this._workerListeners.length = 0;
                 }
                 this._rows.length = this._columns.length = 0;
                 for (var prop in this) {
@@ -497,18 +501,19 @@
              * @returns {DGTable} self
              */
             _unhookCellEventsForTable: function() {
-                if (this._$thead) {
-                    for (var i = 0, rows = this._$thead[0].childNodes, rowCount = rows.length, rowToClean; i < rowCount; i++) {
+                var i, rows, rowCount, rowToClean, j, cells, cellCount;
+                if (this._headerRow) {
+                    for (i = 0, rows = this._headerRow.childNodes, rowCount = rows.length; i < rowCount; i++) {
                         rowToClean = rows[i];
-                        for (var j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
+                        for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
                             this._unhookCellHoverIn(cells[j]);
                         }
                     }
                 }
-                if (this._$tbody) {
-                    for (var i = 0, rows = this._$tbody[0].childNodes, rowCount = rows.length, rowToClean; i < rowCount; i++) {
+                if (this._tbody) {
+                    for (i = 0, rows = this._tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
                         rowToClean = rows[i];
-                        for (var j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
+                        for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
                             this._unhookCellHoverIn(cells[j]);
                         }
                     }
@@ -534,12 +539,13 @@
              * @returns {DGTable} self
              */
             render: function () {
-                var self = this;
+                var self = this,
+                    settings = this.settings;
 
-                if (self._tableSkeletonNeedsRendering === true) {
-                    self._tableSkeletonNeedsRendering = false;
+                if (this._tableSkeletonNeedsRendering === true) {
+                    this._tableSkeletonNeedsRendering = false;
 
-                    if (self._width == DGTable.Width.AUTO) {
+                    if (settings.width == DGTable.Width.AUTO) {
                         // We need to do this to return to the specified widths instead. The arrows added to the column widths...
                         self._clearSortArrows();
                     }
@@ -550,7 +556,7 @@
                     self.tableWidthChanged(true, false) // Take this chance to calculate required column widths
                         ._renderSkeleton(); // Actual render
 
-                    if (!this._virtualTable) {
+                    if (!settings.virtualTable) {
                         var rows = self._filteredRows || self._rows, rowCount = rows.length;
                         var renderedRows = self.renderRows(0, rowCount - 1);
                         self._$tbody.html('').append(renderedRows);
@@ -569,22 +575,22 @@
                     for (var i = 0; i < this._rows.sortColumn.length; i++) {
                         this._showSortArrow(this._rows.sortColumn[i].column, this._rows.sortColumn[i].descending);
                     }
-                    if (this._adjustColumnWidthForSortArrow && this._rows.sortColumn.length) {
+                    if (settings.adjustColumnWidthForSortArrow && this._rows.sortColumn.length) {
                         this.tableWidthChanged(true);
                     }
 
                     this.trigger('renderskeleton');
 
-                    if (this._virtualTable) {
+                    if (settings.virtualTable) {
                         this._$table.on('scroll', _.bind(this._onVirtualTableScrolled, this));
                         this.render();
                     }
 
-                } else if (this._virtualTable) {
+                } else if (settings.virtualTable) {
                     var rowCount = (self._filteredRows || self._rows).length;
                     var scrollTop = this._table.scrollTop;
-                    var firstVisible = Math.floor((scrollTop - this._virtualRowHeightFirst) / this._virtualRowHeight) + 1 /*- this._rowsBufferSize*/;
-                    var lastVisible = Math.ceil(((scrollTop - this._virtualRowHeightFirst + this._visibleHeight) / this._virtualRowHeight)) /*+ this._rowsBufferSize*/;
+                    var firstVisible = Math.floor((scrollTop - this._virtualRowHeightFirst) / this._virtualRowHeight) + 1 - settings.rowsBufferSize;
+                    var lastVisible = Math.ceil(((scrollTop - this._virtualRowHeightFirst + this._visibleHeight) / this._virtualRowHeight)) + settings.rowsBufferSize;
                     if (firstVisible < 0) firstVisible = 0;
                     if (lastVisible >= rowCount) {
                         lastVisible = rowCount - 1;
@@ -652,17 +658,18 @@
             renderRows: function (first, last) {
 
                 var self = this,
-                    tableClassName = self._tableClassName,
+                    settings = self.settings,
+                    tableClassName = settings.tableClassName,
                     rowClassName = tableClassName + '-row',
                     cellClassName = tableClassName + '-cell',
                     rows = self._filteredRows || self._rows,
                     isDataFiltered = !!self._filteredRows,
-                    allowCellPreview = self._allowCellPreview,
+                    allowCellPreview = settings.allowCellPreview,
                     visibleColumns = self._visibleColumns,
-                    cellFormatter = self._cellFormatter,
-                    isVirtual = self._virtualTable,
-                    virtualRowHeightFirst = this._virtualRowHeightFirst,
-                    virtualRowHeight = this._virtualRowHeight,
+                    cellFormatter = settings.cellFormatter,
+                    isVirtual = settings.virtualTable,
+                    virtualRowHeightFirst = self._virtualRowHeightFirst,
+                    virtualRowHeight = self._virtualRowHeight,
                     top,
                     physicalRowIndex;
 
@@ -744,7 +751,7 @@
              */
             _calculateTbodyWidth: function () {
                 var self = this,
-                    tableClassName = self._tableClassName,
+                    tableClassName = self.settings.tableClassName,
                     rowClassName = tableClassName + '-row',
                     cellClassName = tableClassName + '-cell',
                     visibleColumns = self._visibleColumns,
@@ -795,27 +802,29 @@
              * @returns {DGTable} self
              */
             addColumn: function (columnData, before) {
-                if (columnData && !this._columns.get(columnData.name)) {
+                var columns = this._columns;
+
+                if (columnData && !columns.get(columnData.name)) {
                     var beforeColumn = null;
                     if (before !== undefined) {
-                        beforeColumn = this._columns.get(before) || this._columns.getByOrder(before);
+                        beforeColumn = columns.get(before) || columns.getByOrder(before);
                     }
 
                     var column = this._initColumnFromData(columnData);
-                    column.order = beforeColumn ? beforeColumn.order : (this._columns.getMaxOrder() + 1);
+                    column.order = beforeColumn ? beforeColumn.order : (columns.getMaxOrder() + 1);
 
-                    for (var i = this._columns.getMaxOrder(), to = column.order, col; i >= to ; i--) {
-                        col = this._columns.getByOrder(i);
+                    for (var i = columns.getMaxOrder(), to = column.order, col; i >= to ; i--) {
+                        col = columns.getByOrder(i);
                         if (col) {
                             col.order++;
                         }
                     }
 
-                    this._columns.push(column);
-                    this._columns.normalizeOrder();
+                    columns.push(column);
+                    columns.normalizeOrder();
 
                     this._tableSkeletonNeedsRendering = true;
-                    this._visibleColumns = this._columns.getVisibleColumns();
+                    this._visibleColumns = columns.getVisibleColumns();
                     this.render();
 
                     this.trigger('addcolumn', column.name);
@@ -831,12 +840,14 @@
              * @returns {DGTable} self
              */
             removeColumn: function (column) {
-                var colIdx = this._columns.indexOf(column);
-                if (colIdx > -1) {
-                    this._columns.splice(colIdx, 1);
-                    this._columns.normalizeOrder();
+                var settings = this.settings, columns = this._columns;
 
-                    this._visibleColumns = this._columns.getVisibleColumns();
+                var colIdx = columns.indexOf(column);
+                if (colIdx > -1) {
+                    columns.splice(colIdx, 1);
+                    columns.normalizeOrder();
+
+                    this._visibleColumns = columns.getVisibleColumns();
                     this.clearAndRender();
 
                     this.trigger('removecolumn', column);
@@ -915,14 +926,16 @@
              * @returns {DGTable} self
              */
             moveColumn: function (src, dest) {
-                var col, destCol;
+                var settings = this.settings,
+                    columns = this._columns,
+                    col, destCol;
                 if (typeof src === 'string') {
-                    col = this._columns.get(src);
+                    col = columns.get(src);
                 } else if (typeof src === 'number') {
                     col = this._visibleColumns[src];
                 }
                 if (typeof dest === 'string') {
-                    destCol = this._columns.get(dest);
+                    destCol = columns.get(dest);
                 } else if (typeof dest === 'number') {
                     destCol = this._visibleColumns[dest];
                 }
@@ -930,13 +943,13 @@
                 if (col && destCol && src !== dest) {
                     var srcOrder = col.order, destOrder = destCol.order;
 
-                    this._visibleColumns = this._columns.moveColumn(col, destCol).getVisibleColumns();
+                    this._visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
 
-                    if (this._virtualTable) {
+                    if (settings.virtualTable) {
                         this.clearAndRender()
                             ._updateLastCellWidthFromScrollbar(true);
                     } else {
-                        var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
+                        var headerCell = this._$headerRow.find('>div.' + settings.tableClassName + '-header-cell');
                         var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
                             fromPos = srcOrder;
                         headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
@@ -947,12 +960,12 @@
                         destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
 
                         var tbodyChildren = this._$tbody[0].childNodes;
-                        for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
-                            tr = tbodyChildren[i];
-                            if (tr.nodeType !== 1) continue;
-                            tr.insertBefore(tr.childNodes[fromPos], tr.childNodes[beforePos]);
-                            tr.childNodes[destOrder].firstChild.style.width = destWidth;
-                            tr.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                        for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+                            row = tbodyChildren[i];
+                            if (row.nodeType !== 1) continue;
+                            row.insertBefore(row.childNodes[fromPos], row.childNodes[beforePos]);
+                            row.childNodes[destOrder].firstChild.style.width = destWidth;
+                            row.childNodes[srcOrder].firstChild.style.width = srcWidth;
                         }
                     }
 
@@ -971,7 +984,9 @@
              * @returns {DGTable} self
              */
             sort: function (column, descending, add) {
-                var col = this._columns.get(column), i;
+                var settings = this.settings,
+                    columns = this._columns,
+                    col = columns.get(column), i;
                 if (col) {
                     var currentSort = this._rows.sortColumn;
 
@@ -992,7 +1007,7 @@
                                 break;
                             }
                         }
-                        if ((this._sortableColumns > 0 /* allow manual sort when disabled */ && currentSort.length >= this._sortableColumns) || currentSort.length >= this._visibleColumns.length) {
+                        if ((settings.sortableColumns > 0 /* allow manual sort when disabled */ && currentSort.length >= settings.sortableColumns) || currentSort.length >= this._visibleColumns.length) {
                             currentSort.length = 0;
                         }
 
@@ -1012,11 +1027,11 @@
                     for (i = 0; i < currentSort.length; i++) {
                         this._showSortArrow(currentSort[i].column, currentSort[i].descending);
                     }
-                    if (this._adjustColumnWidthForSortArrow) {
+                    if (settings.adjustColumnWidthForSortArrow) {
                         this.tableWidthChanged(true);
                     }
 
-                    if (this._virtualTable) {
+                    if (settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
@@ -1082,9 +1097,10 @@
              * @returns {DGTable} self
              */
             setMinColumnWidth: function (minColumnWidth) {
+                var settings = this.settings;
                 minColumnWidth = Math.max(minColumnWidth, 0);
-                if (this._minColumnWidth != minColumnWidth) {
-                    this._minColumnWidth = minColumnWidth;
+                if (settings.minColumnWidth != minColumnWidth) {
+                    settings.minColumnWidth = minColumnWidth;
                     this.tableWidthChanged(true);
                 }
                 return this;
@@ -1097,7 +1113,7 @@
              * @returns {Number} Minimum column width
              */
             getMinColumnWidth: function () {
-                return this._minColumnWidth;
+                return this.settings.minColumnWidth;
             },
 
             /**
@@ -1108,12 +1124,13 @@
              * @returns {DGTable} self
              */
             setSortableColumns: function (sortableColumns) {
-                if (this._sortableColumns != sortableColumns) {
-                    this._sortableColumns = sortableColumns;
+                var settings = this.settings;
+                if (settings.sortableColumns != sortableColumns) {
+                    settings.sortableColumns = sortableColumns;
                     if (this._$table) {
-                        var headerCell = this._$headerRow.find('>div.' + this._tableClassName + '-header-cell');
+                        var headerCell = this._$headerRow.find('>div.' + settings.tableClassName + '-header-cell');
                         for (var i = 0; i < headerCell.length; i++) {
-                            $(headerCell[0])[(this._sortableColumns > 0 && this._visibleColumns[i].sortable) ? 'addClass' : 'removeClass']('sortable');
+                            $(headerCell[0])[(settings.sortableColumns > 0 && this._visibleColumns[i].sortable) ? 'addClass' : 'removeClass']('sortable');
                         }
                     }
                 }
@@ -1127,7 +1144,7 @@
              * @returns {Number} How many sortable columns are allowed?
              */
             getSortableColumns: function () {
-                return this._sortableColumns;
+                return this.settings.sortableColumns;
             },
 
             /**
@@ -1137,9 +1154,10 @@
              * @returns {DGTable} self
              */
             setMovableColumns: function (movableColumns) {
+                var settings = this.settings;
                 movableColumns = !!movableColumns;
-                if (this._movableColumns != movableColumns) {
-                    this._movableColumns = movableColumns;
+                if (settings.movableColumns != movableColumns) {
+                    settings.movableColumns = movableColumns;
                 }
                 return this;
             },
@@ -1150,7 +1168,7 @@
              * @returns {Boolean} are the columns movable?
              */
             getMovableColumns: function () {
-                return this._movableColumns;
+                return this.settings.movableColumns;
             },
 
             /**
@@ -1160,9 +1178,10 @@
              * @returns {DGTable} self
              */
             setResizableColumns: function (resizableColumns) {
+                var settings = this.settings;
                 resizableColumns = !!resizableColumns;
-                if (this._resizableColumns != resizableColumns) {
-                    this._resizableColumns = resizableColumns;
+                if (settings.resizableColumns != resizableColumns) {
+                    settings.resizableColumns = resizableColumns;
                 }
                 return this;
             },
@@ -1173,7 +1192,7 @@
              * @returns {Boolean} are the columns resizable?
              */
             getResizableColumns: function () {
-                return this._resizableColumns;
+                return this.settings.resizableColumns;
             },
 
             /**
@@ -1183,8 +1202,9 @@
              * @returns {DGTable} self
              */
             setComparatorCallback: function (comparatorCallback) {
-                if (this._comparatorCallback != comparatorCallback) {
-                    this._comparatorCallback = comparatorCallback;
+                var settings = this.settings;
+                if (settings.comparatorCallback != comparatorCallback) {
+                    settings.comparatorCallback = comparatorCallback;
                 }
                 return this;
             },
@@ -1291,7 +1311,7 @@
                 if (row < 0 || row > this._rows.length - 1) return null;
                 if (!this._columns.get(column)) return null;
                 var rowData = this._rows[row];
-                return this._cellFormatter(rowData[column], column, rowData);
+                return this.settings.cellFormatter(rowData[column], column, rowData);
             },
 
             /**
@@ -1343,6 +1363,7 @@
              * @returns {Number} width
              */
             _calculateWidthAvailableForColumns: function() {
+                var settings = this.settings;
 
                 // Changing display mode briefly, to prevent taking in account the  parent's scrollbar width when we are the cause for it
                 var oldDisplay, lastScrollTop, lastScrollLeft;
@@ -1363,7 +1384,7 @@
                 }
 
                 var $thisWrapper, $header, $headerRow;
-                var tableClassName = this._tableClassName;
+                var tableClassName = settings.tableClassName;
 
                 if (!this._$table) {
 
@@ -1407,7 +1428,7 @@
             tableWidthChanged: (function () {
 
                 var getTextWidth = function(text) {
-                    var tableClassName = this._tableClassName;
+                    var tableClassName = this.settings.tableClassName;
 
                     var $cell, $tableWrapper = $('<div>').addClass(this.$el).append(
                         $('<div>').addClass(tableClassName + '-header').append(
@@ -1434,7 +1455,8 @@
                  */
                 return function(forceUpdate, renderColumns) {
 
-                    var detectedWidth = this._calculateWidthAvailableForColumns(),
+                    var settings = this.settings,
+                        detectedWidth = this._calculateWidthAvailableForColumns(),
                         sizeLeft = detectedWidth,
                         relatives = 0;
 
@@ -1460,8 +1482,8 @@
                             if (col.widthMode === COLUMN_WIDTH_MODE.ABSOLUTE) {
                                 width = col.width;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
-                                if (width < this._minColumnWidth) {
-                                    width = this._minColumnWidth;
+                                if (width < settings.minColumnWidth) {
+                                    width = settings.minColumnWidth;
                                 }
                                 sizeLeft -= width;
                                 absWidthTotal += width;
@@ -1474,8 +1496,8 @@
                             } else if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
                                 width = getTextWidth.call(this, col.label) + 20;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
-                                if (width < this._minColumnWidth) {
-                                    width = this._minColumnWidth;
+                                if (width < settings.minColumnWidth) {
+                                    width = settings.minColumnWidth;
                                 }
                                 sizeLeft -= width;
                                 absWidthTotal += width;
@@ -1483,7 +1505,7 @@
                                 // Update actualWidth
                                 if (width !== col.actualWidth) {
                                     col.actualWidth = width;
-                                    if (!this._convertColumnWidthsToRelative) {
+                                    if (!settings.convertColumnWidthsToRelative) {
                                         changedColumnIndexes.push(i);
                                     }
                                 }
@@ -1494,7 +1516,7 @@
                         }
 
                         // Normalize relative sizes if needed
-                        if (this._convertColumnWidthsToRelative) {
+                        if (settings.convertColumnWidthsToRelative) {
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
                                 if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
@@ -1508,8 +1530,8 @@
                         }
 
                         // Normalize relative sizes if needed
-                        if (relatives && ((totalRelativePercentage < 1 && this._relativeWidthGrowsToFillWidth) ||
-                                        (totalRelativePercentage > 1 && this._relativeWidthShrinksToFillWidth))) {
+                        if (relatives && ((totalRelativePercentage < 1 && settings.relativeWidthGrowsToFillWidth) ||
+                                        (totalRelativePercentage > 1 && settings.relativeWidthShrinksToFillWidth))) {
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
                                 if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
@@ -1520,7 +1542,7 @@
 
                         detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
 
-                        var minColumnWidthRelative = (this._minColumnWidth / detectedWidth);
+                        var minColumnWidthRelative = (settings.minColumnWidth / detectedWidth);
                         if (isNaN(minColumnWidthRelative)) {
                             minColumnWidthRelative = 0;
                         }
@@ -1609,13 +1631,14 @@
              */
             tableHeightChanged: function () {
                 var self = this,
+                    settings = self.settings,
                     height = this.$el.innerHeight() - (parseFloat(this._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
-                if (height != self._height) {
-                    self._height = height;
+                if (height != settings.height) {
+                    settings.height = height;
                     if (self._$tbody) {
-                        self._$tbody[0].style.height = self._height - self._$thead.outerHeight() + 'px';
+                        self._$tbody[0].style.height = settings.height - self._$headerRow.outerHeight() + 'px';
                     }
-                    if (self._virtualTable) {
+                    if (settings.virtualTable) {
                         self.clearAndRender();
                     }
                 }
@@ -1633,7 +1656,7 @@
                 var self = this;
                 if (data) {
                     this._rows.add(data);
-                    if (this._virtualTable) {
+                    if (self.settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
@@ -1692,7 +1715,7 @@
                     }
                 } else if (render) {
                     var childNodes = this._tbody.childNodes;
-                    if (this._virtualTable) {
+                    if (this.settings.virtualTable) {
                         for (var i = 0; i < childNodes.length; i++) {
                             if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
@@ -1743,7 +1766,7 @@
 
                 var childNodes = this._tbody.childNodes;
 
-                if (this._virtualTable) {
+                if (this.settings.virtualTable) {
                     // Now make sure that the row actually rendered, as this is a virtual table
                     var isRowVisible = false;
                     for (var i = 0; i < childNodes.length; i++) {
@@ -1842,10 +1865,10 @@
                         }
                     };
                     worker.addEventListener('message', listener, false);
-                    if (!this.workerListeners) {
-                        this.workerListeners = [];
+                    if (!this._workerListeners) {
+                        this._workerListeners = [];
                     }
-                    this.workerListeners.push({worker: worker, listener: listener});
+                    this._workerListeners.push({worker: worker, listener: listener});
                     if (start || start === undefined) {
                         worker.postMessage(null);
                     }
@@ -1862,11 +1885,11 @@
              * @returns {DGTable} self
              */
             unbindWebWorker: function (worker) {
-                if (this.workerListeners) {
-                    for (var j = 0; j < this.workerListeners.length; j++) {
-                        if (this.workerListeners[j].worker == worker) {
-                            worker.removeEventListener('message', this.workerListeners[j].listener, false);
-                            this.workerListeners.splice(j, 1);
+                if (this._workerListeners) {
+                    for (var j = 0; j < this._workerListeners.length; j++) {
+                        if (this._workerListeners[j].worker == worker) {
+                            worker.removeEventListener('message', this._workerListeners[j].listener, false);
+                            this._workerListeners.splice(j, 1);
                             j--;
                         }
                     }
@@ -1907,9 +1930,10 @@
              */
             _getColumnByResizePosition: function (e) {
 
-                var rtl = this._isTableRtl();
+                var settings = this.settings,
+                    rtl = this._isTableRtl();
 
-                var $headerCell = $(e.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName),
+                var $headerCell = $(e.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName),
                     headerCell = $headerCell[0];
                 if (headerCell['__cell']) {
                     headerCell = headerCell['__cell'];
@@ -1926,15 +1950,15 @@
                 var mouseX = (e.originalEvent.pageX || e.originalEvent.clientX) - $headerCell.offset().left;
 
                 if (rtl) {
-                    if (!firstCol && $headerCell.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
+                    if (!firstCol && $headerCell.outerWidth() - mouseX <= settings.resizeAreaWidth / 2) {
                         return previousElementSibling['columnName'];
-                    } else if (mouseX <= this._resizeAreaWidth / 2) {
+                    } else if (mouseX <= settings.resizeAreaWidth / 2) {
                         return headerCell['columnName'];
                     }
                 } else {
-                    if (!firstCol && mouseX <= this._resizeAreaWidth / 2) {
+                    if (!firstCol && mouseX <= settings.resizeAreaWidth / 2) {
                         return previousElementSibling['columnName'];
-                    } else if ($headerCell.outerWidth() - mouseX <= this._resizeAreaWidth / 2) {
+                    } else if ($headerCell.outerWidth() - mouseX <= settings.resizeAreaWidth / 2) {
                         return headerCell['columnName'];
                     }
                 }
@@ -1946,10 +1970,11 @@
              * @param {jQuery.Event} e event
              */
             _onMouseDownColumnHeader: function (event) {
-                var col = this._getColumnByResizePosition(event);
+                var settings = this.settings,
+                    col = this._getColumnByResizePosition(event);
                 if (col) {
                     var column = this._columns.get(col);
-                    if (!this._resizableColumns || !column || !column.resizable) {
+                    if (!settings.resizableColumns || !column || !column.resizable) {
                         return false;
                     }
 
@@ -1959,7 +1984,7 @@
                         $(this._$resizer).remove();
                     }
                     this._$resizer = $('<div></div>')
-                        .addClass(this._resizerClassName)
+                        .addClass(settings.resizerClassName)
                         .css({
                             'position': 'absolute',
                             'display': 'block',
@@ -2016,9 +2041,10 @@
              * @param {jQuery.Event} event event
              */
             _onMouseMoveColumnHeader: function (event) {
-                if (this._resizableColumns) {
+                var settings = this.settings;
+                if (settings.resizableColumns) {
                     var col = this._getColumnByResizePosition(event);
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                    var headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName)[0];
                     if (!col || !this._columns.get(col).resizable) {
                         headerCell.style.cursor = '';
                     } else {
@@ -2032,7 +2058,8 @@
              * @param {jQuery.Event} event event
              */
             _onMouseLeaveColumnHeader: function (event) {
-                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                var settings = this.settings;
+                var headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName)[0];
                 headerCell.style.cursor = '';
             },
 
@@ -2042,8 +2069,9 @@
              */
             _onClickColumnHeader: function (event) {
                 if (!this._getColumnByResizePosition(event)) {
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                    if (this._sortableColumns) {
+                    var settings = this.settings;
+                    var headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName)[0];
+                    if (settings.sortableColumns) {
                         var column = this._columns.get(headerCell['columnName']);
                         if (column && column.sortable) {
                             this.sort(headerCell['columnName'], undefined, true);
@@ -2057,9 +2085,10 @@
              * @param {jQuery.Event} event event
              */
             _onStartDragColumnHeader: function (event) {
-                if (this._movableColumns) {
+                var settings = this.settings;
+                if (settings.movableColumns) {
 
-                    var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
+                    var $headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName);
                     var column = this._columns.get($headerCell[0]['columnName']);
                     if (column && column.movable) {
                         $headerCell[0].style.opacity = 0.35;
@@ -2100,7 +2129,7 @@
                     minX += selectedHeaderCell.outerWidth();
                     minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
-                    minX -= this._minColumnWidth;
+                    minX -= this.settings.minColumnWidth;
                     minX -= this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX > minX) {
                         actualX = minX;
@@ -2108,7 +2137,7 @@
                 } else {
                     minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
-                    minX += this._minColumnWidth;
+                    minX += this.settings.minColumnWidth;
                     minX += this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX < minX) {
                         actualX = minX;
@@ -2148,7 +2177,7 @@
                         baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
-                        minX -= this._minColumnWidth;
+                        minX -= this.settings.minColumnWidth;
                         if (actualX > minX) {
                             actualX = minX;
                         }
@@ -2158,7 +2187,7 @@
                         baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
-                        minX += this._minColumnWidth;
+                        minX += this.settings.minColumnWidth;
                         if (actualX < minX) {
                             actualX = minX;
                         }
@@ -2195,7 +2224,8 @@
              * @param {jQuery.Event} event event
              */
             _onDragEnterColumnHeader: function (event) {
-                if (this._movableColumns) {
+                var settings = this.settings;
+                if (settings.movableColumns) {
                     var dataTransferred = event.originalEvent.dataTransfer.getData('text');
                     if (dataTransferred) {
                         dataTransferred = JSON.parse(dataTransferred);
@@ -2204,7 +2234,7 @@
                         dataTransferred = null; // WebKit does not provide the dataTransfer on dragenter?..
                     }
 
-                    var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
+                    var $headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName);
                     if (!dataTransferred ||
                         (this._dragId == dataTransferred.dragId && $headerCell['columnName'] !== dataTransferred.column)) {
 
@@ -2229,7 +2259,8 @@
              * @param {jQuery.Event} event event
              */
             _onDragLeaveColumnHeader: function (event) {
-                var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
+                var settings = this.settings;
+                var $headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName);
                 if ( ! $($headerCell[0].firstChild)
                        .has(event.originalEvent.relatedTarget).length ) {
                     $headerCell.removeClass('drag-over');
@@ -2242,9 +2273,10 @@
              */
             _onDropColumnHeader: function (event) {
                 event.preventDefault();
+                var settings = this.settings;
                 var dataTransferred = JSON.parse(event.originalEvent.dataTransfer.getData('text'));
-                var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
-                if (this._movableColumns && dataTransferred.dragId == this._dragId) {
+                var $headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName);
+                if (settings.movableColumns && dataTransferred.dragId == this._dragId) {
                     var srcColName = dataTransferred.column,
                         destColName = $headerCell[0]['columnName'],
                         srcCol = this._columns.get(srcColName),
@@ -2262,7 +2294,7 @@
              */
             _clearSortArrows: function () {
                 if (this._$table) {
-                    var tableClassName = this._tableClassName;
+                    var tableClassName = this.settings.tableClassName;
                     var sortedColumns = this._$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
                     var arrows = sortedColumns.find('>div>.sort-arrow');
                     _.forEach(arrows, _.bind(function(arrow){
@@ -2292,7 +2324,7 @@
                 col.element.addClass(descending ? 'sorted desc' : 'sorted');
                 col.element[0].firstChild.insertBefore(arrow, col.element[0].firstChild.firstChild);
 
-                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE && this._adjustColumnWidthForSortArrow) {
+                if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE && this.settings.adjustColumnWidthForSortArrow) {
                     col.arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
                 }
 
@@ -2305,7 +2337,7 @@
              * @returns {DGTable} self
              */
             _resizeColumnElements: function (cellIndex) {
-                var headerCells = this._$headerRow.find('div.' + this._tableClassName + '-header-cell');
+                var headerCells = this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell');
                 var col = this._columns.get(headerCells[cellIndex]['columnName']);
 
                 if (col) {
@@ -2313,10 +2345,10 @@
 
                     var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
                     var tbodyChildren = this._$tbody[0].childNodes;
-                    for (var i = 0, count = tbodyChildren.length, tr; i < count; i++) {
-                        tr = tbodyChildren[i];
-                        if (tr.nodeType !== 1) continue;
-                        tr.childNodes[cellIndex].style.width = width;
+                    for (var i = 0, count = tbodyChildren.length, headerRow; i < count; i++) {
+                        headerRow = tbodyChildren[i];
+                        if (headerRow.nodeType !== 1) continue;
+                        headerRow.childNodes[cellIndex].style.width = width;
                     }
                 }
 
@@ -2328,7 +2360,7 @@
              * */
             _unbindHeaderEvents: function() {
                 if (this._$headerRow) {
-                    this._$headerRow.find('div.' + this._tableClassName + '-header-cell')
+                    this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell')
                         .off('mousedown')
                         .off('mousemove')
                         .off('mouseleave')
@@ -2353,10 +2385,11 @@
 
                 self._unbindHeaderEvents()._unhookCellEventsForTable();
 
-                var allowCellPreview = this._allowCellPreview,
-                    allowHeaderCellPreview = this._allowHeaderCellPreview;
+                var settings = this.settings,
+                    allowCellPreview = settings.allowCellPreview,
+                    allowHeaderCellPreview = settings.allowHeaderCellPreview;
 
-                var tableClassName = this._tableClassName,
+                var tableClassName = settings.tableClassName,
                     headerCellClassName = tableClassName + '-header-cell',
                     header = createElement('div'),
                     $header = $(header),
@@ -2383,12 +2416,12 @@
                         cell.draggable = true;
                         cell.className = headerCellClassName;
                         cell.style.width = column.actualWidth + 'px';
-                        if (self._sortableColumns && column.sortable) {
+                        if (settings.sortableColumns && column.sortable) {
                             cell.className += ' sortable';
                         }
                         cell['columnName'] = column.name;
                         cellInside = createElement('div');
-                        cellInside.innerHTML = this._headerCellFormatter(column.label, column.name);
+                        cellInside.innerHTML = settings.headerCellFormatter(column.label, column.name);
                         cell.appendChild(cellInside);
                         if (allowCellPreview && allowHeaderCellPreview) {
                             this._hookCellHoverIn(cell);
@@ -2424,13 +2457,13 @@
                 $headerRow.appendTo(this._$header);
                 $header.prependTo(this.$el);
 
-                if (self._width == DGTable.Width.SCROLL) {
+                if (settings.width == DGTable.Width.SCROLL) {
                     this.el.style.overflow = 'hidden';
                 } else {
                     this.el.style.overflow = '';
                 }
 
-                if (self._$table && self._virtualTable) {
+                if (self._$table && settings.virtualTable) {
                     self._$table.remove();
                     if (self._$tbody) {
                         var rows = self._$tbody[0].childNodes;
@@ -2442,12 +2475,12 @@
 
                 relativizeElement(self.$el);
 
-                if (!self._height && self._virtualTable) {
-                    self._height = this.$el.innerHeight();
+                if (!settings.height && settings.virtualTable) {
+                    settings.height = this.$el.innerHeight();
                 }
 
                 // Calculate virtual row heights
-                if (self._virtualTable && !self._virtualRowHeight) {
+                if (settings.virtualTable && !self._virtualRowHeight) {
                     var createDummyRow = function() {
                         var row = createElement('div'),
                             cell = row.appendChild(createElement('div')),
@@ -2471,12 +2504,12 @@
 
                     $dummyWrapper.appendTo(document.body);
 
-                    var tr1 = createDummyRow(), tr2 = createDummyRow(), tr3 = createDummyRow();
-                    $dummyTbody.append(tr1, tr2, tr3);
+                    var row1 = createDummyRow(), row2 = createDummyRow(), row3 = createDummyRow();
+                    $dummyTbody.append(row1, row2, row3);
 
-                    self._virtualRowHeightFirst = $(tr1).outerHeight();
-                    self._virtualRowHeight = $(tr2).outerHeight();
-                    self._virtualRowHeightLast = $(tr3).outerHeight();
+                    self._virtualRowHeightFirst = $(row1).outerHeight();
+                    self._virtualRowHeight = $(row2).outerHeight();
+                    self._virtualRowHeightLast = $(row3).outerHeight();
                     self._virtualRowHeightMin = Math.min(Math.min(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
                     self._virtualRowHeightMax = Math.max(Math.max(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
 
@@ -2484,18 +2517,18 @@
                 }
 
                 // Create table skeleton
-                if (self._virtualTable || !self._$table) {
+                if (settings.virtualTable || !self._$table) {
 
                     var fragment = document.createDocumentFragment();
                     var table = createElement('div');
                     var $table = $(table);
-                    table.className = self._tableClassName;
+                    table.className = settings.tableClassName;
 
-                    if (this._virtualTable) {
+                    if (settings.virtualTable) {
                         table.className += ' virtual';
                     }
 
-                    var tableHeight = (self._height - $headerRow.outerHeight());
+                    var tableHeight = (settings.height - $headerRow.outerHeight());
                     if ($table.css('box-sizing') !== 'border-box') {
                         tableHeight -= parseFloat($table.css('border-top-width')) || 0;
                         tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
@@ -2503,21 +2536,21 @@
                         tableHeight -= parseFloat($table.css('padding-bottom')) || 0;
                     }
                     self._visibleHeight = tableHeight;
-                    table.style.height = self._height ? tableHeight + 'px' : 'auto';
+                    table.style.height = settings.height ? tableHeight + 'px' : 'auto';
                     table.style.display = 'block';
                     table.style.overflowY = 'auto';
-                    table.style.overflowX = self._width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
+                    table.style.overflowX = settings.width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
                     fragment.appendChild(table);
 
                     var tbody = createElement('div');
                     var $tbody = $(tbody);
-                    tbody.className = self._tableClassName + '-body';
+                    tbody.className = settings.tableClassName + '-body';
                     self._table = table;
                     self._tbody = tbody;
                     self._$table = $table;
                     self._$tbody = $tbody;
 
-                    if (self._virtualTable) {
+                    if (settings.virtualTable) {
                         self._virtualVisibleRows = Math.ceil(self._visibleHeight / self._virtualRowHeightMin);
                     }
 
@@ -2570,16 +2603,17 @@
              * @returns {DGTable} self
              */
             _updateTableWidth: function (parentSizeMayHaveChanged) {
-                var width = this._calculateTbodyWidth();
+                var settings = this.settings,
+                    width = this._calculateTbodyWidth();
                 this._tbody.style.minWidth = width + 'px';
                 this._headerRow.style.minWidth = (width + (this._scrollbarWidth || 0)) + 'px';
 
                 this._$table.off('scroll', this._onTableScrolledHorizontallyBound);
 
-                if (this._width == DGTable.Width.AUTO) {
+                if (settings.width == DGTable.Width.AUTO) {
                     // Update wrapper element's size to full contain the table body
                     this.$el.width(this._$table.width(this._$tbody.outerWidth()).outerWidth());
-                } else if (this._width == DGTable.Width.SCROLL) {
+                } else if (settings.width == DGTable.Width.SCROLL) {
 
                     if (parentSizeMayHaveChanged) {
                         var lastScrollTop = this._table ? this._table.scrollTop : 0,
@@ -2623,9 +2657,10 @@
              * @param {HTMLElement} el
              */
             _cellMouseOverEvent: function(el) {
-                var self = this;
+                var self = this,
+                    settings = self.settings;
 
-                self._abortCellPreview = false;
+                settings.abortCellPreview = false;
 
                 var elInner = el.firstChild;
 
@@ -2637,9 +2672,9 @@
                     var $el = $(el), $elInner = $(elInner);
                     var div = createElement('div'), $div = $(div);
                     div.innerHTML = el.innerHTML;
-                    div.className = self._cellPreviewClassName;
+                    div.className = settings.cellPreviewClassName;
 
-                    var isHeaderCell = $el.hasClass(this._tableClassName + '-header-cell');
+                    var isHeaderCell = $el.hasClass(settings.tableClassName + '-header-cell');
                     if (isHeaderCell) {
                         div.className += ' header';
                         if ($el.hasClass('sortable')) {
@@ -2730,7 +2765,7 @@
                     div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
                     self.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : self._rows[physicalRowIndex]);
-                    if (self._abortCellPreview) return;
+                    if (settings.abortCellPreview) return;
 
                     var offset = $el.offset();
 
