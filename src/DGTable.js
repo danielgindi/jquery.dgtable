@@ -607,6 +607,7 @@
                         var countToRemove = Math.min(oldLastVisible + 1, firstVisible) - oldFirstVisible;
                         for (var i = 0; i < countToRemove; i++) {
                             self.trigger('rowdestroy', tbodyChildNodes[0]);
+                            self._unhookCellEventsForRow(tbodyChildNodes[0]);
                             self._tbody.removeChild(tbodyChildNodes[0]);
                         }
                         oldFirstVisible += countToRemove;
@@ -617,6 +618,7 @@
                         var countToRemove = oldLastVisible - Math.max(oldFirstVisible - 1, lastVisible);
                         for (var i = 0; i < countToRemove; i++) {
                             self.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            self._unhookCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
                             self._tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
                         }
                         if (oldLastVisible < oldFirstVisible) {
@@ -1034,6 +1036,7 @@
                     if (settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
+                            this._unhookCellEventsForRow(this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
                         }
                     } else {
@@ -1659,6 +1662,7 @@
                     if (self.settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
+                            this._unhookCellEventsForRow(this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
                         }
 
@@ -1719,6 +1723,7 @@
                         for (var i = 0; i < childNodes.length; i++) {
                             if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
+                                this._unhookCellEventsForRow(childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
 
                                 // Keep on destroying all rows further, and later render them all back.
@@ -1734,6 +1739,7 @@
                         for (var i = 0; i < childNodes.length; i++) {
                             if (childNodes[i]['rowIndex'] === physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
+                                this._unhookCellEventsForRow(childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
                                 break;
                             }
@@ -1773,6 +1779,7 @@
                         if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
                             isRowVisible = true;
                             this.trigger('rowdestroy', childNodes[i]);
+                            this._unhookCellEventsForRow(childNodes[i]);
                             this._tbody.removeChild(childNodes[i]);
                             break;
                         }
@@ -1783,6 +1790,7 @@
                     }
                 } else {
                     this.trigger('rowdestroy', childNodes[rowIndex]);
+                    this._unhookCellEventsForRow(childNodes[rowIndex]);
                     this._tbody.removeChild(childNodes[rowIndex]);
                     var renderedRow = this.renderRows(rowIndex, rowIndex);
                     this._tbody.insertBefore(renderedRow, childNodes[rowIndex] || null);
@@ -2155,8 +2163,8 @@
                 if (!this._$resizer) {
                     event.target.style.opacity = null;
                 } else {
-                    $(document).off('mousemove', this._onMouseMoveResizeAreaBound);
-                    $(document).off('mouseup', this._onEndDragColumnHeaderBound);
+                    $(document).off('mousemove', this._onMouseMoveResizeAreaBound)
+                        .off('mouseup', this._onEndDragColumnHeaderBound);
 
                     var column = this._columns.get(this._$resizer[0]['columnName']);
                     var rtl = this._isTableRtl();
@@ -2361,17 +2369,9 @@
             _unbindHeaderEvents: function() {
                 if (this._$headerRow) {
                     this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell')
-                        .off('mousedown')
-                        .off('mousemove')
-                        .off('mouseleave')
-                        .off('dragstart')
-                        .off('selectstart')
-                        .off('click')
+                        .off('.dgtable')
                         .find('>div')
-                        .off('dragenter')
-                        .off('dragover')
-                        .off('dragleave')
-                        .off('drop');
+                        .off('.dgtable');
                 }
                 return this;
             },
@@ -2383,7 +2383,7 @@
             _renderSkeleton: function () {
                 var self = this;
 
-                self._unbindHeaderEvents()._unhookCellEventsForTable();
+                self._unbindHeaderEvents();
 
                 var settings = this.settings,
                     allowCellPreview = settings.allowCellPreview,
@@ -2430,19 +2430,19 @@
 
                         self._visibleColumns[i].element = $cell;
 
-                        $cell.on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
-                            .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
-                            .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
-                            .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
-                            .on('click', _.bind(self._onClickColumnHeader, self));
+                        $cell.on('mousedown.dgtable', _.bind(self._onMouseDownColumnHeader, self))
+                            .on('mousemove.dgtable', _.bind(self._onMouseMoveColumnHeader, self))
+                            .on('mouseleave.dgtable', _.bind(self._onMouseLeaveColumnHeader, self))
+                            .on('dragstart.dgtable', _.bind(self._onStartDragColumnHeader, self))
+                            .on('click.dgtable', _.bind(self._onClickColumnHeader, self));
                         $(cellInside)
-                            .on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
-                            .on('dragover', _.bind(self._onDragOverColumnHeader, self))
-                            .on('dragleave', _.bind(self._onDragLeaveColumnHeader, self))
-                            .on('drop', _.bind(self._onDropColumnHeader, self));
+                            .on('dragenter.dgtable', _.bind(self._onDragEnterColumnHeader, self))
+                            .on('dragover.dgtable', _.bind(self._onDragOverColumnHeader, self))
+                            .on('dragleave.dgtable', _.bind(self._onDragLeaveColumnHeader, self))
+                            .on('drop.dgtable', _.bind(self._onDropColumnHeader, self));
 
                         if (hasIeDragAndDropBug) {
-                            $cell.on('selectstart', _.bind(ieDragDropHandler, cell));
+                            $cell.on('selectstart.dgtable', _.bind(ieDragDropHandler, cell));
                         }
                     }
                 }
@@ -2469,8 +2469,10 @@
                         var rows = self._$tbody[0].childNodes;
                         for (var i = 0, len = rows.length; i < len; i++) {
                             self.trigger('rowdestroy', rows[i]);
+                            self._unhookCellEventsForRow(rows[i]);
                         }
                     }
+                    self._$table = self._table = self._$tbody = self._tbody = null;
                 }
 
                 relativizeElement(self.$el);
@@ -2517,7 +2519,7 @@
                 }
 
                 // Create table skeleton
-                if (settings.virtualTable || !self._$table) {
+                if (!self._$table) {
 
                     var fragment = document.createDocumentFragment();
                     var table = createElement('div');
@@ -2688,7 +2690,8 @@
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
                             .on('click', _.bind(self._onClickColumnHeader, self));
-                        $(div.firstChild).on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
+                        $(div.firstChild)
+                            .on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
                             .on('dragover', _.bind(self._onDragOverColumnHeader, self))
                             .on('dragleave', _.bind(self._onDragLeaveColumnHeader, self))
                             .on('drop', _.bind(self._onDropColumnHeader, self));
