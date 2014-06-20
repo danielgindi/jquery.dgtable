@@ -1955,7 +1955,7 @@
 
                 var firstCol = !previousElementSibling;
 
-                var mouseX = (e.originalEvent.pageX || e.originalEvent.clientX) - $headerCell.offset().left;
+                var mouseX = ((e.pageX != null ? e.pageX : e.originalEvent.pageX) || e.originalEvent.clientX) - $headerCell.offset().left;
 
                 if (rtl) {
                     if (!firstCol && $headerCell.outerWidth() - mouseX <= settings.resizeAreaWidth / 2) {
@@ -1972,6 +1972,71 @@
                 }
 
                 return null;
+            },
+
+            /**
+             * @param {jQuery.Event} e event
+             */
+            _onTouchStartColumnHeader: function (startEvent) {
+                var self = this;
+                if (self._currentTouchId) return;
+
+                var startTouch = startEvent.originalEvent.changedTouches[0];
+                self._currentTouchId = startTouch.identifier;
+
+                var $eventTarget = $(startEvent.currentTarget);
+
+                var startPos = { x: startTouch.pageX, y: startTouch.pageY };
+
+                var unbind = function () {
+                    self._currentTouchId = null;
+                    $eventTarget.off('touchend').off('touchcancel');
+                };
+
+                var fakeEvent = function (name, event) {
+                    var fakeEvent = $.Event(name);
+                    $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY'],
+                        function () {
+                            fakeEvent[this] = startEvent[this];
+                            fakeEvent[this] = event[this];
+                        });
+                    return fakeEvent;
+                };
+
+                $eventTarget.trigger(fakeEvent('mousedown', startEvent.originalEvent.changedTouches[0]));
+
+                $eventTarget.on('touchend', function (event) {
+                    var touch = _.find(event.originalEvent.changedTouches, function(touch){ return touch.identifier === self._currentTouchId; });
+                    if (!touch) return;
+
+                    unbind();
+
+                    event.preventDefault(); // Prevent simulated mouse events
+
+                    var endPos = { x: startTouch.pageX, y: startTouch.pageY };
+                    var distanceTravelled = Math.sqrt(Math.pow(Math.abs(endPos.x - startPos.x), 2) + Math.pow(Math.abs(endPos.y - startPos.y), 2));
+
+                    if (distanceTravelled < 9 || self._$resizer) {
+                        $eventTarget.trigger(fakeEvent('mouseup', touch));
+                        $eventTarget.trigger(fakeEvent('click', touch));
+                    }
+
+                }).on('touchcancel', function () {
+                    unbind();
+                });
+
+                if (self._$resizer) {
+                    $eventTarget.on('touchmove', function (event) {
+                        var touch = _.find(event.originalEvent.changedTouches, function (touch) {
+                            return touch.identifier === self._currentTouchId;
+                        });
+                        if (!touch) return;
+
+                        event.preventDefault();
+
+                        $eventTarget.trigger(fakeEvent('mousemove', touch));
+                    });
+                }
             },
 
             /**
@@ -2384,6 +2449,7 @@
                 var self = this;
 
                 self._unbindHeaderEvents();
+                self._currentTouchId = null;
 
                 var settings = this.settings,
                     allowCellPreview = settings.allowCellPreview,
@@ -2433,6 +2499,7 @@
                         $cell.on('mousedown.dgtable', _.bind(self._onMouseDownColumnHeader, self))
                             .on('mousemove.dgtable', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave.dgtable', _.bind(self._onMouseLeaveColumnHeader, self))
+                            .on('touchstart.dgtable', _.bind(self._onTouchStartColumnHeader, self))
                             .on('dragstart.dgtable', _.bind(self._onStartDragColumnHeader, self))
                             .on('click.dgtable', _.bind(self._onClickColumnHeader, self));
                         $(cellInside)
@@ -2688,6 +2755,7 @@
                         $(div).on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
                             .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
+                            .on('touchstart', _.bind(self._onTouchStartColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
                             .on('click', _.bind(self._onClickColumnHeader, self));
                         $(div.firstChild)
