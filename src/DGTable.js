@@ -861,11 +861,7 @@
                     }
                     this._filteredRows = this._rows.filteredCollection(column, filter, caseSensitive);
                     if (hasFilter || this._filteredRows) {
-                        this._tableSkeletonNeedsRendering = true;
-                        if (this._virtualTable) {
-                            this._calculateVirtualHeight();
-                        }
-                        this.render();
+                        this.clearAndRender();
                         this.trigger('filter', column, filter, caseSensitive);
                     }
                 }
@@ -1753,11 +1749,7 @@
                 this.scrollTop = this.$el.find('.table').scrollTop();
                 this._rows.reset(data);
                 this._refilter();
-                this._tableSkeletonNeedsRendering = true;
-                if (this._virtualTable) {
-                    this._calculateVirtualHeight();
-                }
-                this.render().trigger('addRows', data.length, true);
+                this.clearAndRender().trigger('addrows', data.length, true);
                 return this;
             },
 
