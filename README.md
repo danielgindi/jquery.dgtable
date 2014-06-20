@@ -121,6 +121,28 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `addrows`: Data rows have been added to the table
   * 1st argument: How many rows
   * 2nd argument: Is this a replace? In other word, were the old rows removed?
+* `addcolumn`: A column was added
+  * 1st argument: The column's name
+* `removecolumn`: A column was removed
+  * 1st argument: The column's name
+* `movecolumn`: A column was moved
+  * 1st argument: The column's name
+  * 2nd argument: From index
+  * 3nd argument: To index
+* `showcolumn`: A column was shown
+  * 1st argument: The column's name
+* `hidecolumn`: A column was hidden
+  * 1st argument: The column's name
+* `columnwidth`: A column was resized
+  * 1st argument: The column's name
+  * 2nd argument: Old width
+  * 3nd argument: New width
+* `filter`: A filter was applied
+  * 1st argument: The column's name
+  * 2nd argument: The filter keyword
+  * 3nd argument: Case sensitive?
+* `sort`: The data was sorted
+  * 1st argument: Array of sort constructs [{ "column": "column's name", "descending": true/false }, ...]
 
 - Member functions:
 * `clearAndRender`: Forces a full render of the table
