@@ -674,7 +674,7 @@
 
                 var bodyFragment = document.createDocumentFragment();
 
-                var isRtl = this.$el.css('direction') === 'rtl',
+                var isRtl = this._isTableRtl(),
                     virtualRowXAttr = isRtl ? 'right' : 'left';
 
                 for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
