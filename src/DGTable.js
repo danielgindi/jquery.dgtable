@@ -555,6 +555,8 @@
                         var renderedRows = self.renderRows(0, rowCount - 1);
                         self._$tbody.html('').append(renderedRows);
                         self._updateLastCellWidthFromScrollbar(true);
+                    } else {
+                        self._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
                     }
 
                     self._table.scrollTop = lastScrollTop;
