@@ -1946,57 +1946,9 @@
              * @param {jQuery.Event} e event
              */
             _onMouseDownColumnHeader: function (event) {
-                this._lastColumnMouseDownEvent = event;
-            },
-
-            /**
-             * @param {jQuery.Event} event event
-             */
-            _onMouseMoveColumnHeader: function (event) {
-                if (this._resizableColumns) {
-                    var col = this._getColumnByResizePosition(event);
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                    if (!col || !this._columns.get(col).resizable) {
-                        headerCell.style.cursor = '';
-                    } else {
-                        headerCell.style.cursor = 'e-resize';
-                    }
-                }
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onMouseLeaveColumnHeader: function (event) {
-                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                headerCell.style.cursor = '';
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onClickColumnHeader: function (event) {
-                if (!this._getColumnByResizePosition(event)) {
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                    if (this._sortableColumns) {
-                        var column = this._columns.get(headerCell['columnName']);
-                        if (column && column.sortable) {
-                            this.sort(headerCell['columnName'], undefined, true);
-                        }
-                    }
-                }
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onStartDragColumnHeader: function (event) {
-                var col = this._getColumnByResizePosition(this._lastColumnMouseDownEvent || event), column;
+                var col = this._getColumnByResizePosition(event);
                 if (col) {
-                    column = this._columns.get(col);
+                    var column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
                         return false;
                     }
@@ -2057,11 +2009,58 @@
                     $(document).on('mouseup', this._onEndDragColumnHeaderBound);
 
                     event.preventDefault();
+                }
+            },
 
-                } else if (this._movableColumns) {
+            /**
+             * @param {jQuery.Event} event event
+             */
+            _onMouseMoveColumnHeader: function (event) {
+                if (this._resizableColumns) {
+                    var col = this._getColumnByResizePosition(event);
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                    if (!col || !this._columns.get(col).resizable) {
+                        headerCell.style.cursor = '';
+                    } else {
+                        headerCell.style.cursor = 'e-resize';
+                    }
+                }
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onMouseLeaveColumnHeader: function (event) {
+                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                headerCell.style.cursor = '';
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onClickColumnHeader: function (event) {
+                if (!this._getColumnByResizePosition(event)) {
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                    if (this._sortableColumns) {
+                        var column = this._columns.get(headerCell['columnName']);
+                        if (column && column.sortable) {
+                            this.sort(headerCell['columnName'], undefined, true);
+                        }
+                    }
+                }
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onStartDragColumnHeader: function (event) {
+                if (this._movableColumns) {
 
                     var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
-                    column = this._columns.get($headerCell[0]['columnName']);
+                    var column = this._columns.get($headerCell[0]['columnName']);
                     if (column && column.movable) {
                         $headerCell[0].style.opacity = 0.35;
                         this._dragId = Math.random() * 0x9999999; // Recognize this ID on drop
@@ -2330,6 +2329,7 @@
             _unbindHeaderEvents: function() {
                 if (this._$headerRow) {
                     this._$headerRow.find('div.' + this._tableClassName + '-header-cell')
+                        .off('mousedown')
                         .off('mousemove')
                         .off('mouseleave')
                         .off('dragstart')
@@ -2648,7 +2648,8 @@
 
                         div.draggable = true;
 
-                        $(div).on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
+                        $(div).on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
+                            .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
                             .on('click', _.bind(self._onClickColumnHeader, self));
