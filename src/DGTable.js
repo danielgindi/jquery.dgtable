@@ -1371,7 +1371,7 @@
                     $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
                     $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
                     for (var i = 0; i < this._visibleColumns.length; i++) {
-                        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell'));
+                        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(this._visibleColumns[i].cellClasses || ''));
                     }
                     $thisWrapper.appendTo(document.body);
                 } else {
