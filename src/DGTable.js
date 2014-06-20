@@ -2738,6 +2738,7 @@
                         var w = $div.outerWidth();
                         var elW = $el.outerWidth();
                         offset.left -= w - elW;
+                        offset.left -= parseFloat($(el).css('border-right-width')) || 0;
                     } else {
                         offset.left += parseFloat($(el).css('border-left-width')) || 0;
                     }
