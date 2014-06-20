@@ -2087,9 +2087,9 @@
                 var column = this._columns.get(this._$resizer[0]['columnName']);
                 var rtl = this._isTableRtl();
 
-                var selectedTh = column.element,
+                var selectedHeaderCell = column.element,
                     commonAncestor = this._$resizer.parent();
-                var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
+                var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
                 posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                 posCol.left -= posRelative.left;
                 var resizerWidth = this._$resizer.outerWidth();
@@ -2097,19 +2097,19 @@
                 var actualX = event.pageX - posRelative.left;
                 var minX = posCol.left;
                 if (rtl) {
-                    minX += selectedTh.outerWidth();
-                    minX -= Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                    minX += selectedHeaderCell.outerWidth();
+                    minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
                     minX -= this._minColumnWidth;
-                    minX -= this._horizontalPadding(selectedTh[0]);
+                    minX -= this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX > minX) {
                         actualX = minX;
                     }
                 } else {
-                    minX += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                    minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
                     minX += this._minColumnWidth;
-                    minX += this._horizontalPadding(selectedTh[0]);
+                    minX += this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX < minX) {
                         actualX = minX;
                     }
@@ -2132,9 +2132,9 @@
                     var column = this._columns.get(this._$resizer[0]['columnName']);
                     var rtl = this._isTableRtl();
 
-                    var selectedTh = column.element,
+                    var selectedHeaderCell = column.element,
                         commonAncestor = this._$resizer.parent();
-                    var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
+                    var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
                     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                     posCol.left -= posRelative.left;
                     var resizerWidth = this._$resizer.outerWidth();
@@ -2143,9 +2143,9 @@
                     var baseX = posCol.left, minX = posCol.left;
                     var width = 0;
                     if (rtl) {
-                        actualX += this._horizontalPadding(selectedTh[0]);
-                        baseX += selectedTh.outerWidth();
-                        baseX -= Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                        actualX += this._horizontalPadding(selectedHeaderCell[0]);
+                        baseX += selectedHeaderCell.outerWidth();
+                        baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX -= this._minColumnWidth;
@@ -2154,8 +2154,8 @@
                         }
                         width = baseX - actualX;
                     } else {
-                        actualX -= this._horizontalPadding(selectedTh[0]);
-                        baseX += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                        actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+                        baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX += this._minColumnWidth;
