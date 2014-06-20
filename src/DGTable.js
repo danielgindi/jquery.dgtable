@@ -818,7 +818,7 @@
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.render();
 
-                    this.trigger('addColumn', column.name);
+                    this.trigger('addcolumn', column.name);
                 }
                 return this;
             },
@@ -839,7 +839,7 @@
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.clearAndRender();
 
-                    this.trigger('removeColumn', column);
+                    this.trigger('removecolumn', column);
                 }
                 return this;
             },
@@ -960,7 +960,7 @@
                         }
                     }
 
-                    this.trigger('moveColumn', col.name, srcOrder, destOrder);
+                    this.trigger('movecolumn', col.name, srcOrder, destOrder);
                 }
                 return this;
             },
@@ -1059,7 +1059,7 @@
                     col.visible = !!visible;
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.clearAndRender();
-                    this.trigger(visible ? 'showColumn' : 'hideColumn', column);
+                    this.trigger(visible ? 'showcolumn' : 'hidecolumn', column);
                 }
                 return this;
             },
@@ -1218,7 +1218,7 @@
                         this.tableWidthChanged(true); // Calculate actual sizes
                     }
 
-                    this.trigger('setColumnWidth', col.name, oldWidth, newWidth);
+                    this.trigger('columnwidth', col.name, oldWidth, newWidth);
                 }
                 return this;
             },
