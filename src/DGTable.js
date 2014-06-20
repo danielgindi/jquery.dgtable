@@ -2734,7 +2734,7 @@
 
                     var offset = $el.offset();
 
-                    if (self._isTableRtl()) {
+                    if ($el.css('float') === 'right') {
                         var w = $div.outerWidth();
                         var elW = $el.outerWidth();
                         offset.left -= w - elW;
