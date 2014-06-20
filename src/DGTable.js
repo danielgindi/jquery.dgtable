@@ -1457,7 +1457,7 @@
 
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
-                            if (col.widthMode == COLUMN_WIDTH_MODE.ABSOLUTE) {
+                            if (col.widthMode === COLUMN_WIDTH_MODE.ABSOLUTE) {
                                 width = col.width;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
@@ -1471,7 +1471,7 @@
                                     col.actualWidth = width;
                                     changedColumnIndexes.push(i);
                                 }
-                            } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
+                            } else if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
                                 width = getTextWidth.call(this, col.label) + 20;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
@@ -1487,7 +1487,7 @@
                                         changedColumnIndexes.push(i);
                                     }
                                 }
-                            } else if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
+                            } else if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                 totalRelativePercentage += col.width;
                                 relatives++;
                             }
@@ -1520,13 +1520,43 @@
 
                         detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
 
+                        var minColumnWidthRelative = (this._minColumnWidth / detectedWidth);
+                        if (isNaN(minColumnWidthRelative)) {
+                            minColumnWidthRelative = 0;
+                        }
+                        if (minColumnWidthRelative > 0) {
+                            var extraRelative = 0, delta;
+
+                            // First pass - make sure they are all constrained to the minimum width
+                            for (i = 0; i < this._visibleColumns.length; i++) {
+                                col = this._visibleColumns[i];
+                                if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
+                                    if (col.width < minColumnWidthRelative) {
+                                        extraRelative += minColumnWidthRelative - col.width;
+                                        col.width = minColumnWidthRelative;
+                                    }
+                                }
+                            }
+
+                            // Second pass - try to take the extra width out of the other columns to compensate
+                            for (i = 0; i < this._visibleColumns.length; i++) {
+                                col = this._visibleColumns[i];
+                                if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
+                                    if (col.width > minColumnWidthRelative) {
+                                        if (extraRelative > 0) {
+                                            delta = Math.min(extraRelative, col.width - minColumnWidthRelative);
+                                            col.width -= delta;
+                                            extraRelative -= delta;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
                             if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                 width = Math.round(detectedWidth * col.width);
-                                if (width < this._minColumnWidth) {
-                                    width = this._minColumnWidth;
-                                }
                                 sizeLeft -= width;
                                 relatives--;
 
