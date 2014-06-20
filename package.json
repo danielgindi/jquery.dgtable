@@ -2,7 +2,7 @@
   "name": "DGTable.js",
   "title": "DGTable.js",
   "description": "High-performance table View for Backbone + jQuery",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": {
     "name": "Daniel Cohen Gindi",
     "email": "danielgindi@gmail.com"

@@ -62,7 +62,7 @@
             tagName: 'div',
 			
 			/** @expose */
-            VERSION: '0.3.1',
+            VERSION: '0.3.2',
 
             /**
              * @constructs
@@ -555,6 +555,8 @@
                         var renderedRows = self.renderRows(0, rowCount - 1);
                         self._$tbody.html('').append(renderedRows);
                         self._updateLastCellWidthFromScrollbar(true);
+                    } else {
+                        self._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
                     }
 
                     self._table.scrollTop = lastScrollTop;
@@ -672,7 +674,7 @@
 
                 var bodyFragment = document.createDocumentFragment();
 
-                var isRtl = this.$el.css('direction') === 'rtl',
+                var isRtl = this._isTableRtl(),
                     virtualRowXAttr = isRtl ? 'right' : 'left';
 
                 for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
@@ -816,7 +818,7 @@
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.render();
 
-                    this.trigger('addColumn', column.name);
+                    this.trigger('addcolumn', column.name);
                 }
                 return this;
             },
@@ -837,7 +839,7 @@
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.clearAndRender();
 
-                    this.trigger('removeColumn', column);
+                    this.trigger('removecolumn', column);
                 }
                 return this;
             },
@@ -859,11 +861,7 @@
                     }
                     this._filteredRows = this._rows.filteredCollection(column, filter, caseSensitive);
                     if (hasFilter || this._filteredRows) {
-                        this._tableSkeletonNeedsRendering = true;
-                        if (this._virtualTable) {
-                            this._calculateVirtualHeight();
-                        }
-                        this.render();
+                        this.clearAndRender();
                         this.trigger('filter', column, filter, caseSensitive);
                     }
                 }
@@ -958,7 +956,7 @@
                         }
                     }
 
-                    this.trigger('moveColumn', col.name, srcOrder, destOrder);
+                    this.trigger('movecolumn', col.name, srcOrder, destOrder);
                 }
                 return this;
             },
@@ -1057,7 +1055,7 @@
                     col.visible = !!visible;
                     this._visibleColumns = this._columns.getVisibleColumns();
                     this.clearAndRender();
-                    this.trigger(visible ? 'showColumn' : 'hideColumn', column);
+                    this.trigger(visible ? 'showcolumn' : 'hidecolumn', column);
                 }
                 return this;
             },
@@ -1216,7 +1214,7 @@
                         this.tableWidthChanged(true); // Calculate actual sizes
                     }
 
-                    this.trigger('setColumnWidth', col.name, oldWidth, newWidth);
+                    this.trigger('columnwidth', col.name, oldWidth, newWidth);
                 }
                 return this;
             },
@@ -1373,7 +1371,7 @@
                     $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
                     $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
                     for (var i = 0; i < this._visibleColumns.length; i++) {
-                        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell'));
+                        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(this._visibleColumns[i].cellClasses || ''));
                     }
                     $thisWrapper.appendTo(document.body);
                 } else {
@@ -1459,7 +1457,7 @@
 
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
-                            if (col.widthMode == COLUMN_WIDTH_MODE.ABSOLUTE) {
+                            if (col.widthMode === COLUMN_WIDTH_MODE.ABSOLUTE) {
                                 width = col.width;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
@@ -1473,7 +1471,7 @@
                                     col.actualWidth = width;
                                     changedColumnIndexes.push(i);
                                 }
-                            } else if (col.widthMode == COLUMN_WIDTH_MODE.AUTO) {
+                            } else if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
                                 width = getTextWidth.call(this, col.label) + 20;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
                                 if (width < this._minColumnWidth) {
@@ -1489,7 +1487,7 @@
                                         changedColumnIndexes.push(i);
                                     }
                                 }
-                            } else if (col.widthMode == COLUMN_WIDTH_MODE.RELATIVE) {
+                            } else if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                 totalRelativePercentage += col.width;
                                 relatives++;
                             }
@@ -1522,13 +1520,43 @@
 
                         detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
 
+                        var minColumnWidthRelative = (this._minColumnWidth / detectedWidth);
+                        if (isNaN(minColumnWidthRelative)) {
+                            minColumnWidthRelative = 0;
+                        }
+                        if (minColumnWidthRelative > 0) {
+                            var extraRelative = 0, delta;
+
+                            // First pass - make sure they are all constrained to the minimum width
+                            for (i = 0; i < this._visibleColumns.length; i++) {
+                                col = this._visibleColumns[i];
+                                if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
+                                    if (col.width < minColumnWidthRelative) {
+                                        extraRelative += minColumnWidthRelative - col.width;
+                                        col.width = minColumnWidthRelative;
+                                    }
+                                }
+                            }
+
+                            // Second pass - try to take the extra width out of the other columns to compensate
+                            for (i = 0; i < this._visibleColumns.length; i++) {
+                                col = this._visibleColumns[i];
+                                if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
+                                    if (col.width > minColumnWidthRelative) {
+                                        if (extraRelative > 0) {
+                                            delta = Math.min(extraRelative, col.width - minColumnWidthRelative);
+                                            col.width -= delta;
+                                            extraRelative -= delta;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         for (i = 0; i < this._visibleColumns.length; i++) {
                             col = this._visibleColumns[i];
                             if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
                                 width = Math.round(detectedWidth * col.width);
-                                if (width < this._minColumnWidth) {
-                                    width = this._minColumnWidth;
-                                }
                                 sizeLeft -= width;
                                 relatives--;
 
@@ -1751,11 +1779,7 @@
                 this.scrollTop = this.$el.find('.table').scrollTop();
                 this._rows.reset(data);
                 this._refilter();
-                this._tableSkeletonNeedsRendering = true;
-                if (this._virtualTable) {
-                    this._calculateVirtualHeight();
-                }
-                this.render().trigger('addRows', data.length, true);
+                this.clearAndRender().trigger('addrows', data.length, true);
                 return this;
             },
 
@@ -1922,57 +1946,9 @@
              * @param {jQuery.Event} e event
              */
             _onMouseDownColumnHeader: function (event) {
-                this._lastColumnMouseDownEvent = event;
-            },
-
-            /**
-             * @param {jQuery.Event} event event
-             */
-            _onMouseMoveColumnHeader: function (event) {
-                if (this._resizableColumns) {
-                    var col = this._getColumnByResizePosition(event);
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                    if (!col || !this._columns.get(col).resizable) {
-                        headerCell.style.cursor = '';
-                    } else {
-                        headerCell.style.cursor = 'e-resize';
-                    }
-                }
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onMouseLeaveColumnHeader: function (event) {
-                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                headerCell.style.cursor = '';
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onClickColumnHeader: function (event) {
-                if (!this._getColumnByResizePosition(event)) {
-                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
-                    if (this._sortableColumns) {
-                        var column = this._columns.get(headerCell['columnName']);
-                        if (column && column.sortable) {
-                            this.sort(headerCell['columnName'], undefined, true);
-                        }
-                    }
-                }
-            },
-
-            /**
-             * @private
-             * @param {jQuery.Event} event event
-             */
-            _onStartDragColumnHeader: function (event) {
-                var col = this._getColumnByResizePosition(this._lastColumnMouseDownEvent || event), column;
+                var col = this._getColumnByResizePosition(event);
                 if (col) {
-                    column = this._columns.get(col);
+                    var column = this._columns.get(col);
                     if (!this._resizableColumns || !column || !column.resizable) {
                         return false;
                     }
@@ -2033,11 +2009,58 @@
                     $(document).on('mouseup', this._onEndDragColumnHeaderBound);
 
                     event.preventDefault();
+                }
+            },
 
-                } else if (this._movableColumns) {
+            /**
+             * @param {jQuery.Event} event event
+             */
+            _onMouseMoveColumnHeader: function (event) {
+                if (this._resizableColumns) {
+                    var col = this._getColumnByResizePosition(event);
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                    if (!col || !this._columns.get(col).resizable) {
+                        headerCell.style.cursor = '';
+                    } else {
+                        headerCell.style.cursor = 'e-resize';
+                    }
+                }
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onMouseLeaveColumnHeader: function (event) {
+                var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                headerCell.style.cursor = '';
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onClickColumnHeader: function (event) {
+                if (!this._getColumnByResizePosition(event)) {
+                    var headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName)[0];
+                    if (this._sortableColumns) {
+                        var column = this._columns.get(headerCell['columnName']);
+                        if (column && column.sortable) {
+                            this.sort(headerCell['columnName'], undefined, true);
+                        }
+                    }
+                }
+            },
+
+            /**
+             * @private
+             * @param {jQuery.Event} event event
+             */
+            _onStartDragColumnHeader: function (event) {
+                if (this._movableColumns) {
 
                     var $headerCell = $(event.target).closest('div.' + this._tableClassName + '-header-cell,div.' + this._cellPreviewClassName);
-                    column = this._columns.get($headerCell[0]['columnName']);
+                    var column = this._columns.get($headerCell[0]['columnName']);
                     if (column && column.movable) {
                         $headerCell[0].style.opacity = 0.35;
                         this._dragId = Math.random() * 0x9999999; // Recognize this ID on drop
@@ -2064,9 +2087,9 @@
                 var column = this._columns.get(this._$resizer[0]['columnName']);
                 var rtl = this._isTableRtl();
 
-                var selectedTh = column.element,
+                var selectedHeaderCell = column.element,
                     commonAncestor = this._$resizer.parent();
-                var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
+                var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
                 posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                 posCol.left -= posRelative.left;
                 var resizerWidth = this._$resizer.outerWidth();
@@ -2074,19 +2097,19 @@
                 var actualX = event.pageX - posRelative.left;
                 var minX = posCol.left;
                 if (rtl) {
-                    minX += selectedTh.outerWidth();
-                    minX -= Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                    minX += selectedHeaderCell.outerWidth();
+                    minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
                     minX -= this._minColumnWidth;
-                    minX -= this._horizontalPadding(selectedTh[0]);
+                    minX -= this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX > minX) {
                         actualX = minX;
                     }
                 } else {
-                    minX += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                    minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
                     minX += this._minColumnWidth;
-                    minX += this._horizontalPadding(selectedTh[0]);
+                    minX += this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX < minX) {
                         actualX = minX;
                     }
@@ -2109,9 +2132,9 @@
                     var column = this._columns.get(this._$resizer[0]['columnName']);
                     var rtl = this._isTableRtl();
 
-                    var selectedTh = column.element,
+                    var selectedHeaderCell = column.element,
                         commonAncestor = this._$resizer.parent();
-                    var posCol = selectedTh.offset(), posRelative = commonAncestor.offset();
+                    var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
                     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
                     posCol.left -= posRelative.left;
                     var resizerWidth = this._$resizer.outerWidth();
@@ -2120,9 +2143,9 @@
                     var baseX = posCol.left, minX = posCol.left;
                     var width = 0;
                     if (rtl) {
-                        actualX += this._horizontalPadding(selectedTh[0]);
-                        baseX += selectedTh.outerWidth();
-                        baseX -= Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                        actualX += this._horizontalPadding(selectedHeaderCell[0]);
+                        baseX += selectedHeaderCell.outerWidth();
+                        baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX -= this._minColumnWidth;
@@ -2131,8 +2154,8 @@
                         }
                         width = baseX - actualX;
                     } else {
-                        actualX -= this._horizontalPadding(selectedTh[0]);
-                        baseX += Math.ceil((parseFloat(selectedTh.css('border-right-width')) || 0) / 2);
+                        actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+                        baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
                         minX += this._minColumnWidth;
@@ -2306,6 +2329,7 @@
             _unbindHeaderEvents: function() {
                 if (this._$headerRow) {
                     this._$headerRow.find('div.' + this._tableClassName + '-header-cell')
+                        .off('mousedown')
                         .off('mousemove')
                         .off('mouseleave')
                         .off('dragstart')
@@ -2624,7 +2648,8 @@
 
                         div.draggable = true;
 
-                        $(div).on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
+                        $(div).on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
+                            .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
                             .on('click', _.bind(self._onClickColumnHeader, self));
@@ -2698,7 +2723,7 @@
                     $(div.firstChild).css({
                         'direction': $elInner.css('direction'),
                         'white-space': $elInner.css('white-space')
-                    }).data('row-el', $el.closest('tr'));
+                    });
 
                     div['rowIndex'] = el.parentNode['rowIndex'];
                     var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
@@ -2709,10 +2734,11 @@
 
                     var offset = $el.offset();
 
-                    if (self._isTableRtl()) {
+                    if ($el.css('float') === 'right') {
                         var w = $div.outerWidth();
                         var elW = $el.outerWidth();
                         offset.left -= w - elW;
+                        offset.left -= parseFloat($(el).css('border-right-width')) || 0;
                     } else {
                         offset.left += parseFloat($(el).css('border-left-width')) || 0;
                     }
@@ -2733,6 +2759,27 @@
 
                     self._hookCellHoverOut(el);
                     self._hookCellHoverOut(div);
+
+                    $div.on('mousewheel', function (event) {
+                        var originalEvent = event.originalEvent;
+                        var xy = originalEvent.wheelDelta || -originalEvent.detail,
+                            x = originalEvent.wheelDeltaX || (originalEvent.axis == 1 ? xy : 0),
+                            y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
+
+                        if (xy) {
+                            self._hideCellPreview();
+                        }
+
+                        if (y && self._table.scrollHeight > self._table.clientHeight) {
+                            var scrollTop = (y * -1) + self._$table.scrollTop();
+                            self._$table.scrollTop(scrollTop);
+                        }
+
+                        if (x && self._table.scrollWidth > self._table.clientWidth) {
+                            var scrollLeft = (x * -1) + self._$table.scrollLeft();
+                            self._$table.scrollLeft(scrollLeft);
+                        }
+                    });
                 }
             },
 
