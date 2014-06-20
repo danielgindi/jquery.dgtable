@@ -2723,7 +2723,7 @@
                     $(div.firstChild).css({
                         'direction': $elInner.css('direction'),
                         'white-space': $elInner.css('white-space')
-                    }).data('row-el', $el.closest('tr'));
+                    });
 
                     div['rowIndex'] = el.parentNode['rowIndex'];
                     var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
