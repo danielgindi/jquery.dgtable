@@ -1917,6 +1917,22 @@
             },
 
             /**
+             * Cancel a resize in progress
+             * @expose
+             * @private
+             * @returns {DGTable} self
+             */
+            cancelColumnResize: function() {
+                if (this._$resizer) {
+                    this._$resizer.remove();
+                    this._$resizer = null;
+                    $(document).off('mousemove.dgtable', this._onMouseMoveResizeAreaBound)
+                        .off('mouseup.dgtable', this._onEndDragColumnHeaderBound);
+                }
+                return this;
+            },
+
+            /**
              * @param {jQuery.Event} event
              */
             _onVirtualTableScrolled: function (event) {
@@ -1977,33 +1993,61 @@
             /**
              * @param {jQuery.Event} e event
              */
-            _onTouchStartColumnHeader: function (startEvent) {
+            _onTouchStartColumnHeader: function (event) {
                 var self = this;
                 if (self._currentTouchId) return;
 
-                var startTouch = startEvent.originalEvent.changedTouches[0];
+                var startTouch = event.originalEvent.changedTouches[0];
                 self._currentTouchId = startTouch.identifier;
 
-                var $eventTarget = $(startEvent.currentTarget);
+                var $eventTarget = $(event.currentTarget);
 
-                var startPos = { x: startTouch.pageX, y: startTouch.pageY };
+                var startPos = { x: startTouch.pageX, y: startTouch.pageY },
+                    currentPos = startPos,
+                    distanceTreshold = 9;
 
                 var unbind = function () {
                     self._currentTouchId = null;
                     $eventTarget.off('touchend').off('touchcancel');
+                    clearTimeout(tapAndHoldTimeout);
                 };
 
-                var fakeEvent = function (name, event) {
+                var fakeEvent = function (name) {
                     var fakeEvent = $.Event(name);
-                    $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY'],
+                    var extendObjects = Array.prototype.slice.call(arguments, 1);
+                    $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY', 'which'],
                         function () {
-                            fakeEvent[this] = startEvent[this];
                             fakeEvent[this] = event[this];
+                            for (var i = 0; i < extendObjects.length; i++) {
+                                if (extendObjects[i][this] != null) {
+                                    fakeEvent[this] = extendObjects[i][this];
+                                }
+                            }
                         });
                     return fakeEvent;
                 };
 
-                $eventTarget.trigger(fakeEvent('mousedown', startEvent.originalEvent.changedTouches[0]));
+                $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { 'which': 1 }));
+
+                var tapAndHoldTimeout = setTimeout(function () {
+                    unbind();
+
+                    // Prevent simulated mouse events after touchend
+                    $eventTarget.one('touchend', function (event) {
+                        event.preventDefault();
+                        $eventTarget.off('touchend').off('touchcancel');
+                    }).one('touchcancel', function (event) {
+                        $eventTarget.off('touchend').off('touchcancel');
+                    });
+
+                    var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
+
+                    if (distanceTravelled < distanceTreshold) {
+                        self.cancelColumnResize();
+                        $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3 }));
+                    }
+
+                }, 500);
 
                 $eventTarget.on('touchend', function (event) {
                     var touch = _.find(event.originalEvent.changedTouches, function(touch){ return touch.identifier === self._currentTouchId; });
@@ -2013,36 +2057,39 @@
 
                     event.preventDefault(); // Prevent simulated mouse events
 
-                    var endPos = { x: startTouch.pageX, y: startTouch.pageY };
-                    var distanceTravelled = Math.sqrt(Math.pow(Math.abs(endPos.x - startPos.x), 2) + Math.pow(Math.abs(endPos.y - startPos.y), 2));
+                    currentPos = { x: touch.pageX, y: touch.pageY };
+                    var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
-                    if (distanceTravelled < 9 || self._$resizer) {
+                    if (distanceTravelled < distanceTreshold || self._$resizer) {
                         $eventTarget.trigger(fakeEvent('mouseup', touch));
                         $eventTarget.trigger(fakeEvent('click', touch));
                     }
 
                 }).on('touchcancel', function () {
                     unbind();
-                });
+                }).on('touchmove', function (event) {
+                    var touch = _.find(event.originalEvent.changedTouches, function (touch) {
+                        return touch.identifier === self._currentTouchId;
+                    });
+                    if (!touch) return;
 
-                if (self._$resizer) {
-                    $eventTarget.on('touchmove', function (event) {
-                        var touch = _.find(event.originalEvent.changedTouches, function (touch) {
-                            return touch.identifier === self._currentTouchId;
-                        });
-                        if (!touch) return;
+                    // Keep track of current position, so we know if we need to cancel the tap-and-hold
+                    currentPos = { x: touch.pageX, y: touch.pageY };
 
+                    if (self._$resizer) {
                         event.preventDefault();
 
                         $eventTarget.trigger(fakeEvent('mousemove', touch));
-                    });
-                }
+                    }
+                });
             },
 
             /**
              * @param {jQuery.Event} e event
              */
             _onMouseDownColumnHeader: function (event) {
+                if (event.which !== 1) return this; // Only treat left-clicks
+
                 var settings = this.settings,
                     col = this._getColumnByResizePosition(event);
                 if (col) {
@@ -2103,8 +2150,8 @@
                         [0]['columnName'] = selectedHeaderCell[0]['columnName'];
                     try { this._$resizer[0].style.zIndex = ''; } catch (err) { }
 
-                    $(document).on('mousemove', this._onMouseMoveResizeAreaBound);
-                    $(document).on('mouseup', this._onEndDragColumnHeaderBound);
+                    $(document).on('mousemove.dgtable', this._onMouseMoveResizeAreaBound);
+                    $(document).on('mouseup.dgtable', this._onEndDragColumnHeaderBound);
 
                     event.preventDefault();
                 }
@@ -2124,6 +2171,21 @@
                         headerCell.style.cursor = 'e-resize';
                     }
                 }
+            },
+
+            /**
+             * @param {jQuery.Event} e event
+             */
+            _onMouseUpColumnHeader: function (event) {
+                if (event.which === 3) {
+                    var settings = this.settings;
+                    var $headerCell = $(event.target).closest('div.' + settings.tableClassName + '-header-cell,div.' + settings.cellPreviewClassName);
+                    var bounds = $headerCell.offset();
+                    bounds['width'] = $headerCell.outerWidth();
+                    bounds['height'] = $headerCell.outerHeight();
+                    this.trigger('headercontextmenu', $headerCell[0]['columnName'], event.pageX, event.pageY, bounds);
+                }
+                return this;
             },
 
             /**
@@ -2228,8 +2290,8 @@
                 if (!this._$resizer) {
                     event.target.style.opacity = null;
                 } else {
-                    $(document).off('mousemove', this._onMouseMoveResizeAreaBound)
-                        .off('mouseup', this._onEndDragColumnHeaderBound);
+                    $(document).off('mousemove.dgtable', this._onMouseMoveResizeAreaBound)
+                        .off('mouseup.dgtable', this._onEndDragColumnHeaderBound);
 
                     var column = this._columns.get(this._$resizer[0]['columnName']);
                     var rtl = this._isTableRtl();
@@ -2474,6 +2536,8 @@
                     };
                 }
 
+                var preventDefault = function (event) { event.preventDefault(); };
+
                 for (var i = 0, column, cell, cellInside, $cell; i < self._visibleColumns.length; i++) {
                     column = self._visibleColumns[i];
                     if (column.visible) {
@@ -2498,10 +2562,12 @@
 
                         $cell.on('mousedown.dgtable', _.bind(self._onMouseDownColumnHeader, self))
                             .on('mousemove.dgtable', _.bind(self._onMouseMoveColumnHeader, self))
+                            .on('mouseup.dgtable', _.bind(self._onMouseUpColumnHeader, self))
                             .on('mouseleave.dgtable', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('touchstart.dgtable', _.bind(self._onTouchStartColumnHeader, self))
                             .on('dragstart.dgtable', _.bind(self._onStartDragColumnHeader, self))
-                            .on('click.dgtable', _.bind(self._onClickColumnHeader, self));
+                            .on('click.dgtable', _.bind(self._onClickColumnHeader, self))
+                            .on('contextmenu.dgtable', preventDefault);
                         $(cellInside)
                             .on('dragenter.dgtable', _.bind(self._onDragEnterColumnHeader, self))
                             .on('dragover.dgtable', _.bind(self._onDragOverColumnHeader, self))
@@ -2511,6 +2577,9 @@
                         if (hasIeDragAndDropBug) {
                             $cell.on('selectstart.dgtable', _.bind(ieDragDropHandler, cell));
                         }
+
+                        // Disable these to allow our own context menu events without interruption
+                        $cell.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
                     }
                 }
 
@@ -2754,10 +2823,12 @@
 
                         $(div).on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
                             .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
+                            .on('mouseup', _.bind(self._onMouseUpColumnHeader, self))
                             .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
                             .on('touchstart', _.bind(self._onTouchStartColumnHeader, self))
                             .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
-                            .on('click', _.bind(self._onClickColumnHeader, self));
+                            .on('click', _.bind(self._onClickColumnHeader, self))
+                            .on('contextmenu.dgtable', function (event) { event.preventDefault(); });
                         $(div.firstChild)
                             .on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
                             .on('dragover', _.bind(self._onDragOverColumnHeader, self))
@@ -2830,6 +2901,11 @@
                         'direction': $elInner.css('direction'),
                         'white-space': $elInner.css('white-space')
                     });
+
+                    if (isHeaderCell) {
+                        // Disable these to allow our own context menu events without interruption
+                        $div.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+                    }
 
                     div['rowIndex'] = el.parentNode['rowIndex'];
                     var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];

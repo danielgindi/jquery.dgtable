@@ -142,7 +142,12 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: The filter keyword
   * 3nd argument: Case sensitive?
 * `sort`: The data was sorted
-  * 1st argument: Array of sort constructs [{ "column": "column's name", "descending": true/false }, ...]
+  * 1st argument: Array of sort constructs `[{ "column": "column's name", "descending": true/false }, ...]`
+* `headercontextmenu`: A context menu should be shown for a header cell
+  * 1st argument: The column's name
+  * 2nd argument: pageX of the pointer event
+  * 3rd argument: pageY of the pointer event
+  * 4th argument: the bounds of the header cell on the page `{"left": offset().left, "top": offset().top, "width": outerWidth(), "height": outerHeight()}`
 
 - Member functions:
 * `clearAndRender`: Forces a full render of the table
