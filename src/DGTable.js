@@ -1282,7 +1282,7 @@
             getColumnsConfig: function () {
                 var config = {};
                 for (var i = 0; i < this._columns.length; i++) {
-                    config[this._columns[i].name] = this.getColumnConfig(this._columns[i]);
+                    config[this._columns[i].name] = this.getColumnConfig(this._columns[i].name);
                 }
                 return config;
             },
