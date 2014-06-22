@@ -2061,8 +2061,8 @@
                     var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
                     if (distanceTravelled < distanceTreshold || self._$resizer) {
-                        $eventTarget.trigger(fakeEvent('mouseup', touch));
-                        $eventTarget.trigger(fakeEvent('click', touch));
+                        $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1 }));
+                        $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1 }));
                     }
 
                 }).on('touchcancel', function () {
