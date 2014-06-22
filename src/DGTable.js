@@ -222,6 +222,7 @@
 
                 this._columns = columns;
                 this._visibleColumns = columns.getVisibleColumns();
+                this._ensureVisibleColumns();
 
                 if (options.sortColumn === undefined) {
                     options.sortColumn = null;
@@ -827,6 +828,7 @@
 
                     this._tableSkeletonNeedsRendering = true;
                     this._visibleColumns = columns.getVisibleColumns();
+                    this._ensureVisibleColumns();
                     this.render();
 
                     this.trigger('addcolumn', column.name);
@@ -850,7 +852,7 @@
                     columns.normalizeOrder();
 
                     this._visibleColumns = columns.getVisibleColumns();
-                    this.clearAndRender();
+                    this._ensureVisibleColumns().clearAndRender();
 
                     this.trigger('removecolumn', column);
                 }
@@ -946,6 +948,7 @@
                     var srcOrder = col.order, destOrder = destCol.order;
 
                     this._visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
+                    this._ensureVisibleColumns();
 
                     if (settings.virtualTable) {
                         this.clearAndRender()
@@ -1060,6 +1063,21 @@
             },
 
             /**
+             * Make sure there's at least one column visible
+             * @private
+             * @expose
+             * @returns {DGTable} self
+             */
+            _ensureVisibleColumns: function () {
+                if (this._visibleColumns.length === 0 && this._columns.length) {
+                    this._columns[0].visible = true;
+                    this._visibleColumns.push(this._columns[0]);
+                    this.trigger('showcolumn', this._columns[0].name);
+                }
+                return this;
+            },
+
+            /**
              * Show or hide a column
              * @public
              * @expose
@@ -1072,8 +1090,9 @@
                 if (col && !!col.visible != !!visible) {
                     col.visible = !!visible;
                     this._visibleColumns = this._columns.getVisibleColumns();
-                    this.clearAndRender();
                     this.trigger(visible ? 'showcolumn' : 'hidecolumn', column);
+                    this._ensureVisibleColumns();
+                    this.clearAndRender();
                 }
                 return this;
             },

@@ -118,9 +118,6 @@ DGTable.ColumnCollection = (function () {
                 visible.push(column);
             }
         }
-        if (visible.length === 0 && this.length) {
-            visible.push(this[0]);
-        }
         visible.sort(function(col1, col2){ return col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0); });
         return visible;
     };
