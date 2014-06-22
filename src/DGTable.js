@@ -742,6 +742,10 @@
                         height += (this._virtualRowHeightFirst - this._virtualRowHeight);
                         height += (this._virtualRowHeightLast - this._virtualRowHeight);
                     }
+                    // At least 1 pixel - to show scrollers correctly.
+                    if (height < 1) {
+                        height = 1;
+                    }
                     this._tbody.style.height = height + 'px';
                 }
                 return this;
@@ -1657,8 +1661,9 @@
                     height = this.$el.innerHeight() - (parseFloat(this._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
                 if (height != settings.height) {
                     settings.height = height;
-                    if (self._$tbody) {
-                        self._$tbody[0].style.height = settings.height - self._$headerRow.outerHeight() + 'px';
+                    if (self._tbody) {
+                        // At least 1 pixel - to show scrollers correctly.
+                        self._tbody.style.height = Math.max(settings.height - self._$headerRow.outerHeight(), 1) + 'px';
                     }
                     if (settings.virtualTable) {
                         self.clearAndRender();
