@@ -5,6 +5,7 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
 .dgtable { border-top: solid 1px #ccc; max-width: 100%; background-color: transparent; }
 .dgtable-header{ max-width: 100%; overflow: hidden; background: #eee; }
 .dgtable-header-row{ height: 26px; }
+
 .dgtable-header-cell{
     float:left; padding: 4px; height: 18px; border-left: solid 1px #ccc;
     background: #ddd;
@@ -14,10 +15,20 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
     cursor: default;
     text-align: center;
 }
-.dgtable-wrapper.rtl > .dgtable-header-cell{float:right}
 .dgtable-header-cell:first-child{ border-left: 0; }
 .dgtable-header-cell>div{ border: 1px dashed transparent; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis; }
 .dgtable-header-cell.drag-over>div{ border-color: #666; background: #bbb; }
+
+.dgtable-wrapper.rtl .dgtable-header-cell{
+    float:right;
+    border-left: 0;
+    border-right: solid 1px #ccc;
+}
+.dgtable-wrapper.rtl .dgtable-header-cell:first-child{
+    float:right;
+    border-right: 0;
+}
+
 .dgtable-row{ border-top: solid 1px #ccc; height: 28px; }
 .dgtable-row:first-child{ border-top: 0; }
 .dgtable.virtual .dgtable-row{ border-top: 0; border-bottom: solid 1px #ccc; }
@@ -26,7 +37,17 @@ body { font-family: "HelveticaNeue-Medium", "HelveticaNeue Medium", "Verdana", "
     font-size: 16px;
     line-height: 19px;
 }
-.dgtable-wrapper.rtl > .dgtable-cell{float:right}
+.dgtable-wrapper.rtl .dgtable-cell{
+    float:right;
+    border-left: 0;
+    border-right: solid 1px #ccc;
+}
+.dgtable-wrapper.rtl .dgtable-cell:first-child{
+    float:right;
+    border-right: 0;
+}
+
+
 .dgtable-cell>div{ max-height: 100%; white-space: nowrap; overflow: hidden }
 .dgtable-cell:first-child{ border-left: 0; }
 
