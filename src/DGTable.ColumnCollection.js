@@ -140,7 +140,7 @@ DGTable.ColumnCollection = (function () {
      * Move a column to a new spot in the collection
      * @param {Object} src the column to move
      * @param {Object} dest the destination column
-     * @returns {ColumnCollection} self
+     * @returns {DGTable.ColumnCollection} self
      */
     ColumnCollection.prototype.moveColumn = function (src, dest) {
         if (src && dest) {
