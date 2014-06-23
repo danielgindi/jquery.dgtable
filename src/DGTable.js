@@ -1288,10 +1288,10 @@
                 var col = this._columns.get(column);
                 if (col) {
                     return {
-                        order: col.order,
-                        width: this._serializeColumnWidth(col),
-                        visible: col.visible,
-                        label: col.label
+                        'order': col.order,
+                        'width': this._serializeColumnWidth(col),
+                        'visible': col.visible,
+                        'label': col.label
                     };
                 }
                 return null;
