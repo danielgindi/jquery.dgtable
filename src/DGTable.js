@@ -1290,7 +1290,8 @@
                     return {
                         order: col.order,
                         width: this._serializeColumnWidth(col),
-                        visible: col.visible
+                        visible: col.visible,
+                        label: col.label
                     };
                 }
                 return null;
