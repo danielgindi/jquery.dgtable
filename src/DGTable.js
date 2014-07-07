@@ -687,7 +687,7 @@
                 var isRtl = this._isTableRtl(),
                     virtualRowXAttr = isRtl ? 'right' : 'left';
 
-                for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner;
+                for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner, content;
                      i < rowCount && i <= last;
                      i++) {
 
@@ -710,7 +710,11 @@
                             this._hookCellHoverIn(cell);
                         }
                         cellInner = cell.appendChild(createElement('div'));
-                        cellInner.innerHTML = cellFormatter(rowData[column.name], column.name, rowData);
+						content = cellFormatter(rowData[column.name], column.name, rowData);
+						if (content === undefined) {
+							content = '';
+						}
+                        cellInner.innerHTML = content;
                         row.appendChild(cell);
                     }
 
@@ -1338,7 +1342,11 @@
                 if (row < 0 || row > this._rows.length - 1) return null;
                 if (!this._columns.get(column)) return null;
                 var rowData = this._rows[row];
-                return this.settings.cellFormatter(rowData[column], column, rowData);
+                var content = this.settings.cellFormatter(rowData[column], column, rowData);
+				if (content === undefined) {
+					content = '';
+				}
+				return content;
             },
 
             /**
