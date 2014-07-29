@@ -60,8 +60,8 @@
             
             /** @expose */
             tagName: 'div',
-			
-			/** @expose */
+            
+            /** @expose */
             VERSION: '@VERSION',
 
             /**
@@ -710,10 +710,10 @@
                             this._hookCellHoverIn(cell);
                         }
                         cellInner = cell.appendChild(createElement('div'));
-						content = cellFormatter(rowData[column.name], column.name, rowData);
-						if (content === undefined) {
-							content = '';
-						}
+                        content = cellFormatter(rowData[column.name], column.name, rowData);
+                        if (content === undefined) {
+                            content = '';
+                        }
                         cellInner.innerHTML = content;
                         row.appendChild(cell);
                     }
@@ -1352,10 +1352,10 @@
                 if (!this._columns.get(column)) return null;
                 var rowData = this._rows[row];
                 var content = this.settings.cellFormatter(rowData[column], column, rowData);
-				if (content === undefined) {
-					content = '';
-				}
-				return content;
+                if (content === undefined) {
+                    content = '';
+                }
+                return content;
             },
 
             /**
