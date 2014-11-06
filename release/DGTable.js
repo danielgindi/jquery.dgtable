@@ -62,7 +62,7 @@
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.3.4',
+            VERSION: '0.3.5',
 
             /**
              * @constructs
@@ -2971,6 +2971,12 @@
                     var minLeft = 0, maxLeft = $(window).width() - $div.outerWidth();
                     offset.left = offset.left < minLeft ? minLeft : offset.left > maxLeft ? maxLeft : offset.left;
 
+					var totalHeight = $el.outerHeight();
+					var maxTop = $(document).scrollTop() + $(window).innerHeight() - totalHeight;
+					if (offset.top > maxTop) {
+						offset.top = Math.max(0, maxTop);
+					}
+					
                     $div.css({
                         left: offset.left,
                         top: offset.top,
