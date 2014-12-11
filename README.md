@@ -113,9 +113,13 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Row's index
   * 3rd argument: Column's name
   * You can use this event to release any resources that you may have used in `cellPreview` event.
+* `headerrowcreate`: The header row has just been created
+  * 1st argument: Row's DOM element
+* `headerrowdestroy`: Called just before removing the physical header row element from the table
+  * 1st argument: Row's DOM element
 * `rowcreate`: A row has just been created
   * 1st argument: Row's index in the currently filtered data set
-  * 2st argument: Row's index in the data set
+  * 2nd argument: Row's index in the data set
   * 3nd argument: Row's DOM element
   * 4th argument: Row's data
 * `rowdestroy`: Called just before removing a physical row element from the table
@@ -194,31 +198,32 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * *returns* Self, to allow for call chaining.
 * `getSortableColumns() {Number}`: Get the limit on concurrent columns sorted
   * *returns* How many sortable columns are allowed?
-* TODO: Docs that I hadn't had the time to write down yet
-* setMovableColumns
-* getMovableColumns
-* setResizableColumns
-* getResizableColumns
-* setComparatorCallback
-* setColumnWidth
-* getColumnWidth
-* getColumnConfig
-* getColumnsConfig
-* getSortedColumns
-* getHtmlForCell
-* getDataForRow
-* getDataForFilteredRow
-* tableWidthChanged
-* tableHeightChanged
-* addRows
-* removeRow
-* refreshRow
-* setRows
-* getUrlForElementContent
-* isWorkerSupported
-* createWebWorker
-* unbindWebWorker
-* abortCellPreview
+* `getHeaderRowElement() {Element}`: Get the DOM element of the header row
+  * *returns* a DOM element
+* `setMovableColumns({Boolean} movableColumns) {DGTable}`: *Undocumented yet*
+* `getMovableColumns() {Boolean}`: *Undocumented yet*
+* `setResizableColumns({Boolean} resizableColumns) {DGTable}`: *Undocumented yet*
+* `getResizableColumns() {Boolean}`: *Undocumented yet*
+* `setComparatorCallback({Function(String,Boolean)Function(a,b)Boolean} comparatorCallback) {DGTable}`: *Undocumented yet*
+* `setColumnWidth({String} column, {Number|String} width) {DGTable}`: *Undocumented yet*
+* `getColumnWidth({String} column) {String|null}`: *Undocumented yet*
+* `getColumnConfig() {SERIALIZED_COLUMN}`: *Undocumented yet*
+* `getColumnsConfig() {Object}`: *Undocumented yet*
+* `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
+* `getHtmlForCell({Number} row, {String} column) {String}`: *Undocumented yet*
+* `getDataForRow({Number} row) {Object}`: *Undocumented yet*
+* `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
+* `tableWidthChanged() {DGTable}`: *Undocumented yet*
+* `tableHeightChanged() {DGTable}`: *Undocumented yet*
+* `addRows({Object[]} data) {DGTable}`: *Undocumented yet*
+* `removeRow({Number} physicalRowIndex, {Boolean=true} render) {DGTable}`: *Undocumented yet*
+* `refreshRow({Number} physicalRowIndex) {DGTable}`: *Undocumented yet*
+* `setRows({Object[]} data) {DGTable}`: *Undocumented yet*
+* `getUrlForElementContent({string} id) {string?}`: *Undocumented yet*
+* `isWorkerSupported() {Boolean}`: *Undocumented yet*
+* `createWebWorker({string} url) {Worker?}`: *Undocumented yet*
+* `unbindWebWorker({Worker} worker) {DGTable}`: *Undocumented yet*
+* `abortCellPreview() {DGTable}`: *Undocumented yet*
 * `close()`: Destroy the table and free all of its memory.
 
 ## License
