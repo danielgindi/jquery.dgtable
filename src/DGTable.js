@@ -308,7 +308,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._hookCellHoverIn = function (el) {
+                    this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
                             el.addEventListener('mouseover', el['__hoverIn'] = _.bind(hoverMouseOverHandler, el));
                         }
@@ -319,7 +319,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._unhookCellHoverIn = function (el) {
+                    this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
                             el.removeEventListener('mouseover', el['__hoverIn']);
                             el['__hoverIn'] = null;
@@ -331,7 +331,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._hookCellHoverOut = function (el) {
+                    this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
                             el.addEventListener('mouseout', el['__hoverOut'] = _.bind(hoverMouseOutHandler, el['__cell'] || el));
                         }
@@ -342,7 +342,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._unhookCellHoverOut = function (el) {
+                    this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
                             el.removeEventListener('mouseout', el['__hoverOut']);
                             el['__hoverOut'] = null;
@@ -356,7 +356,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._hookCellHoverIn = function (el) {
+                    this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
                             el.attachEvent('mouseover', el['__hoverIn'] = _.bind(hoverMouseOverHandler, el));
                         }
@@ -367,7 +367,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._unhookCellHoverIn = function (el) {
+                    this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
                             el.detachEvent('mouseover', el['__hoverIn']);
                             el['__hoverIn'] = null;
@@ -379,7 +379,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._hookCellHoverOut = function (el) {
+                    this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
                             el.attachEvent('mouseout', el['__hoverOut'] = _.bind(hoverMouseOutHandler, el['__cell'] || el));
                         }
@@ -390,7 +390,7 @@
                      * @param {HTMLElement} el cell or header-cell
                      * @returns {DGTable} self
                      * */
-                    this._unhookCellHoverOut = function (el) {
+                    this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
                             el.detachEvent('mouseout', el['__hoverOut']);
                             el['__hoverOut'] = null;
@@ -477,7 +477,7 @@
                     }
                 }
                 this.remove();
-                this._unbindHeaderEvents()._unhookCellEventsForTable();
+                this._unbindHeaderEvents()._unbindCellEventsForTable();
                 this._$table.unbind();
                 this._$tbody.unbind();
                 this.$el.unbind();
@@ -501,13 +501,13 @@
              * @private
              * @returns {DGTable} self
              */
-            _unhookCellEventsForTable: function() {
+            _unbindCellEventsForTable: function() {
                 var i, rows, rowCount, rowToClean, j, cells, cellCount;
                 if (this._headerRow) {
                     for (i = 0, rows = this._headerRow.childNodes, rowCount = rows.length; i < rowCount; i++) {
                         rowToClean = rows[i];
                         for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
-                            this._unhookCellHoverIn(cells[j]);
+                            this._unbindCellHoverIn(cells[j]);
                         }
                     }
                 }
@@ -515,7 +515,7 @@
                     for (i = 0, rows = this._tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
                         rowToClean = rows[i];
                         for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
-                            this._unhookCellHoverIn(cells[j]);
+                            this._unbindHoverIn(cells[j]);
                         }
                     }
                 }
@@ -527,9 +527,9 @@
              * @param {HTMLElement} rowToClean
              * @returns {DGTable} self
              */
-            _unhookCellEventsForRow: function(rowToClean) {
+            _unbindCellEventsForRow: function(rowToClean) {
                 for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
-                    this._unhookCellHoverIn(cells[i]);
+                    this._unbindCellHoverIn(cells[i]);
                 }
                 return this;
             },
@@ -608,7 +608,7 @@
                         var countToRemove = Math.min(oldLastVisible + 1, firstVisible) - oldFirstVisible;
                         for (var i = 0; i < countToRemove; i++) {
                             self.trigger('rowdestroy', tbodyChildNodes[0]);
-                            self._unhookCellEventsForRow(tbodyChildNodes[0]);
+                            self._unbindCellEventsForRow(tbodyChildNodes[0]);
                             self._tbody.removeChild(tbodyChildNodes[0]);
                         }
                         oldFirstVisible += countToRemove;
@@ -619,7 +619,7 @@
                         var countToRemove = oldLastVisible - Math.max(oldFirstVisible - 1, lastVisible);
                         for (var i = 0; i < countToRemove; i++) {
                             self.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
-                            self._unhookCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            self._unbindCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
                             self._tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
                         }
                         if (oldLastVisible < oldFirstVisible) {
@@ -707,7 +707,7 @@
                         cell.style.width = column._finalWidth + 'px';
                         if (column.cellClasses) cell.className += ' ' + column.cellClasses;
                         if (allowCellPreview) {
-                            this._hookCellHoverIn(cell);
+                            this._bindCellHoverIn(cell);
                         }
                         cellInner = cell.appendChild(createElement('div'));
                         content = cellFormatter(rowData[column.name], column.name, rowData);
@@ -1056,7 +1056,7 @@
                     if (settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
-                            this._unhookCellEventsForRow(this._tbody.firstChild);
+                            this._unbindCellEventsForRow(this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
                         }
                     } else {
@@ -1704,7 +1704,7 @@
                     if (self.settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
-                            this._unhookCellEventsForRow(this._tbody.firstChild);
+                            this._unbindCellEventsForRow(this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
                         }
 
@@ -1765,7 +1765,7 @@
                         for (var i = 0; i < childNodes.length; i++) {
                             if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
-                                this._unhookCellEventsForRow(childNodes[i]);
+                                this._unbindCellEventsForRow(childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
 
                                 // Keep on destroying all rows further, and later render them all back.
@@ -1781,7 +1781,7 @@
                         for (var i = 0; i < childNodes.length; i++) {
                             if (childNodes[i]['rowIndex'] === physicalRowIndex) {
                                 this.trigger('rowdestroy', childNodes[i]);
-                                this._unhookCellEventsForRow(childNodes[i]);
+                                this._unbindCellEventsForRow(childNodes[i]);
                                 this._tbody.removeChild(childNodes[i]);
                                 break;
                             }
@@ -1821,7 +1821,7 @@
                         if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
                             isRowVisible = true;
                             this.trigger('rowdestroy', childNodes[i]);
-                            this._unhookCellEventsForRow(childNodes[i]);
+                            this._unbindCellEventsForRow(childNodes[i]);
                             this._tbody.removeChild(childNodes[i]);
                             break;
                         }
@@ -1832,7 +1832,7 @@
                     }
                 } else {
                     this.trigger('rowdestroy', childNodes[rowIndex]);
-                    this._unhookCellEventsForRow(childNodes[rowIndex]);
+                    this._unbindCellEventsForRow(childNodes[rowIndex]);
                     this._tbody.removeChild(childNodes[rowIndex]);
                     var renderedRow = this.renderRows(rowIndex, rowIndex);
                     this._tbody.insertBefore(renderedRow, childNodes[rowIndex] || null);
@@ -2596,7 +2596,7 @@
                         cellInside.innerHTML = settings.headerCellFormatter(column.label, column.name);
                         cell.appendChild(cellInside);
                         if (allowCellPreview && allowHeaderCellPreview) {
-                            this._hookCellHoverIn(cell);
+                            this._bindCellHoverIn(cell);
                         }
                         headerRow.appendChild(cell);
 
@@ -2647,7 +2647,7 @@
                         var rows = self._$tbody[0].childNodes;
                         for (var i = 0, len = rows.length; i < len; i++) {
                             self.trigger('rowdestroy', rows[i]);
-                            self._unhookCellEventsForRow(rows[i]);
+                            self._unbindCellEventsForRow(rows[i]);
                         }
                     }
                     self._$table = self._table = self._$tbody = self._tbody = null;
@@ -2987,8 +2987,8 @@
                     self._$cellPreviewEl = $div;
                     el['__previewEl'] = div;
 
-                    self._hookCellHoverOut(el);
-                    self._hookCellHoverOut(div);
+                    self._bindCellHoverOut(el);
+                    self._bindCellHoverOut(div);
 
                     $div.on('mousewheel', function (event) {
                         var originalEvent = event.originalEvent;
@@ -3029,8 +3029,8 @@
                 if (this._$cellPreviewEl) {
                     var div = this._$cellPreviewEl[0];
                     this._$cellPreviewEl.remove();
-                    this._unhookCellHoverOut(div['__cell']);
-                    this._unhookCellHoverOut(div);
+                    this._unbindCellHoverOut(div['__cell']);
+                    this._unbindCellHoverOut(div);
 
                     div['__cell']['__previewEl'] = null;
                     div['__cell'] = null;
