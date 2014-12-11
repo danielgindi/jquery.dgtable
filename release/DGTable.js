@@ -62,7 +62,7 @@
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.3.5',
+            VERSION: '0.3.6',
 
             /**
              * @constructs
@@ -3188,6 +3188,12 @@
          * @type {Boolean=true}
          * */
         resizable: null,
+        
+        /**
+         * @expose
+         * @type {Boolean=true}
+         * */
+        movable: null,
         
         /**
          * @expose
