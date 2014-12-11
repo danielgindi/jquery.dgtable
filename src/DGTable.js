@@ -1375,6 +1375,16 @@
             },
 
             /**
+             * Gets the number of rows
+             * @public
+             * @expose
+             * @returns {Number} Row count
+             */
+            getRowCount: function () {
+                return this._rows ? this._rows.length : 0;
+            },
+
+            /**
              * Returns the row data for a specific row
              * @public
              * @expose

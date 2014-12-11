@@ -211,7 +211,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
 * `getHtmlForCell({Number} row, {String} column) {String}`: *Undocumented yet*
-* `getDataForRow({Number} row) {Object}`: *Undocumented yet*
+* `getDataForRow({Number} row) {Object}`: Gets the row data for a specific row
+  * *returns* row data of the row at physical index **row**
+* `getRowCount() {Number}`: Gets the number of rows
+  * *returns* the number of rows
 * `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
