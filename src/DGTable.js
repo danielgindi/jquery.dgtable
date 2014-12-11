@@ -477,7 +477,7 @@
                     }
                 }
                 this.remove();
-                this._unbindHeaderEvents()._unbindCellEventsForTable();
+                this._destroyHeaderCells()._unbindCellEventsForTable();
                 this._$table.unbind();
                 this._$tbody.unbind();
                 this.$el.unbind();
@@ -2535,12 +2535,9 @@
             /**
              * @returns {DGTable} self
              * */
-            _unbindHeaderEvents: function() {
+            _destroyHeaderCells: function() {
                 if (this._$headerRow) {
-                    this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell')
-                        .off('.dgtable')
-                        .find('>div')
-                        .off('.dgtable');
+                    this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell').remove();
                 }
                 return this;
             },
@@ -2552,7 +2549,7 @@
             _renderSkeleton: function () {
                 var self = this;
 
-                self._unbindHeaderEvents();
+                self._destroyHeaderCells();
                 self._currentTouchId = null;
 
                 var settings = this.settings,
