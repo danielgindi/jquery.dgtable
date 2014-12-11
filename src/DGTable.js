@@ -2602,6 +2602,7 @@
                             cell.className += ' sortable';
                         }
                         cell['columnName'] = column.name;
+						cell.setAttribute('data-column', column.name);
                         cellInside = createElement('div');
                         cellInside.innerHTML = settings.headerCellFormatter(column.label, column.name);
                         cell.appendChild(cellInside);
