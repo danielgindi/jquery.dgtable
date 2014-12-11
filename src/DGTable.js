@@ -1383,6 +1383,16 @@
             },
 
             /**
+             * Returns DOM element of the header row
+             * @public
+             * @expose
+             * @returns {Element} Row element
+             */
+            getHeaderRowElement: function () {
+                return this._headerRow;
+            },
+
+            /**
              * @private
              * @param {Element} el
              * @returns {Number} width
