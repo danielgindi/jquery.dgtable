@@ -703,6 +703,7 @@
                         column = visibleColumns[colIndex];
                         cell = createElement('div');
                         cell['columnName'] = column.name;
+						cell.setAttribute('data-column', column.name);
                         cell.className = cellClassName;
                         cell.style.width = column._finalWidth + 'px';
                         if (column.cellClasses) cell.className += ' ' + column.cellClasses;
