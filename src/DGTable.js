@@ -2537,7 +2537,10 @@
              * */
             _destroyHeaderCells: function() {
                 if (this._$headerRow) {
+					this.trigger('headerrowdestroy', this._headerRow);
                     this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell').remove();
+					this._$headerRow = null;
+					this._headerRow = null;
                 }
                 return this;
             },
@@ -2631,6 +2634,8 @@
                 this._headerRow = headerRow;
                 $headerRow.appendTo(this._$header);
                 $header.prependTo(this.$el);
+				
+                this.trigger('headerrowcreate', headerRow);
 
                 if (settings.width == DGTable.Width.SCROLL) {
                     this.el.style.overflow = 'hidden';
