@@ -61,6 +61,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
     * Any other value, like `0`, `null` etc. will set an automatic width mode, base of the header's content length.
   * **resizable**: `Boolean=true` Is this column resizable?
   * **sortable**: `Boolean=true` Is this column sortable?
+  * **movable**: `Boolean=true` Is this column movable?
   * **visible**: `Boolean=true` Is this column visible?
   * **cellClasses**: `String` Classes to add to the DOM element of this cell
 * **height**: `Number` Suggested height for the table
@@ -192,7 +193,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * *returns* Self, to allow for call chaining.
 * `getSortableColumns() {Number}`: Get the limit on concurrent columns sorted
   * *returns* How many sortable columns are allowed?
-* TODO:
+* TODO: Docs that I hadn't had the time to write down yet
 * setMovableColumns
 * getMovableColumns
 * setResizableColumns
