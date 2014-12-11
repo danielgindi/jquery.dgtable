@@ -1910,8 +1910,8 @@
              * @public
              * @expose
              * @param {string} url Url to the script for the Web Worker
-             * @returns {Worker?} the Web Worker, or null if not supported
              * @param {Boolean=true} start if true, starts the Worker immediately
+             * @returns {Worker?} the Web Worker, or null if not supported
              */
             createWebWorker: function (url, start) {
                 if (this.isWorkerSupported()) {
