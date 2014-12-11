@@ -1866,6 +1866,36 @@
             },
 
             /**
+             * Refreshes all virtual rows
+             * @public
+             * @expose
+             * @returns {DGTable} self
+             */
+			refreshAllVirtualRows: function () {
+
+                if (this.settings.virtualTable) {
+                    // Now make sure that the row actually rendered, as this is a virtual table
+                    var isRowVisible = false;
+					var rowsToRender = [];
+					var childNodes = this._tbody.childNodes;
+                    for (var i = 0, rowCount = childNodes.length; i < rowCount; i++) {
+						rowsToRender.push(childNodes[i]['physicalRowIndex']);
+						this.trigger('rowdestroy', childNodes[i]);
+						this._unbindCellEventsForRow(childNodes[i]);
+						this._tbody.removeChild(childNodes[i]);
+						i--;
+						rowCount--;
+                    }
+                    for (var i = 0; i < rowsToRender.length; i++) {
+                        var renderedRow = this.renderRows(rowsToRender[i], rowsToRender[i]);
+                        this._tbody.appendChild(renderedRow);
+					}
+                }
+
+                return this;
+			},
+			
+            /**
              * Replace the whole dataset
              * @public
              * @expose

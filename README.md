@@ -220,7 +220,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
 * `addRows({Object[]} data) {DGTable}`: *Undocumented yet*
 * `removeRow({Number} physicalRowIndex, {Boolean=true} render) {DGTable}`: *Undocumented yet*
-* `refreshRow({Number} physicalRowIndex) {DGTable}`: *Undocumented yet*
+* `refreshRow({Number} physicalRowIndex) {DGTable}`: Refreshes the row specified
+  * *returns* Self
+* `refreshAllVirtualRows() {DGTable}`: Refreshes all virtual rows
+  * *returns* Self
 * `setRows({Object[]} data) {DGTable}`: *Undocumented yet*
 * `getUrlForElementContent({string} id) {string?}`: *Undocumented yet*
 * `isWorkerSupported() {Boolean}`: *Undocumented yet*
