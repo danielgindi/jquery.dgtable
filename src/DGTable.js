@@ -1298,6 +1298,7 @@
             /**
              * @public
              * @expose
+             * @param {String} column name of the column
              * @returns {SERIALIZED_COLUMN} configuration for all columns
              */
             getColumnConfig: function (column) {

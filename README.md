@@ -207,7 +207,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `setComparatorCallback({Function(String,Boolean)Function(a,b)Boolean} comparatorCallback) {DGTable}`: *Undocumented yet*
 * `setColumnWidth({String} column, {Number|String} width) {DGTable}`: *Undocumented yet*
 * `getColumnWidth({String} column) {String|null}`: *Undocumented yet*
-* `getColumnConfig() {SERIALIZED_COLUMN}`: *Undocumented yet*
+* `getColumnConfig({String} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
 * `getHtmlForCell({Number} row, {String} column) {String}`: *Undocumented yet*
