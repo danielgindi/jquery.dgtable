@@ -3193,6 +3193,12 @@
          * @expose
          * @type {Boolean=true}
          * */
+        movable: null,
+        
+        /**
+         * @expose
+         * @type {Boolean=true}
+         * */
         sortable: null,
         
         /**
