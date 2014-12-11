@@ -406,9 +406,10 @@
              * Detect column width mode
              * @private
              * @param {Number|String} width
+             * @param {Number} minWidth
              * @returns {Object} parsed width
              */
-            _parseColumnWidth: function (width) {
+            _parseColumnWidth: function (width, minWidth) {
                     
                 var widthSize = parseFloat(width),
                     widthMode = COLUMN_WIDTH_MODE.AUTO; // Default
@@ -428,8 +429,8 @@
                     } else {
                         // It's an absolute size!
                             
-                        if (widthSize < this.settings.minColumnWidth) {
-                            widthSize = this.settings.minColumnWidth;
+                        if (widthSize < minWidth) {
+                            widthSize = minWidth;
                         }
                         widthMode = COLUMN_WIDTH_MODE.ABSOLUTE;
                     }
@@ -444,7 +445,7 @@
              */
             _initColumnFromData: function(columnData) {
                 
-                var parsedWidth = this._parseColumnWidth(columnData.width);
+                var parsedWidth = this._parseColumnWidth(columnData.width, columnData.ignoreMin ? 0 : this.settings.minColumnWidth);
             
                 return {
                     name: columnData.name,
@@ -455,7 +456,8 @@
                     sortable: columnData.sortable === undefined ? true : columnData.sortable,
                     movable: columnData.movable === undefined ? true : columnData.movable,
                     visible: columnData.visible === undefined ? true : columnData.visible,
-                    cellClasses: columnData.cellClasses === undefined ? this.settings.cellClasses : columnData.cellClasses
+                    cellClasses: columnData.cellClasses === undefined ? this.settings.cellClasses : columnData.cellClasses,
+                    ignoreMin: columnData.ignoreMin === undefined ? false : !!columnData.ignoreMin
                 };
                 
             },
@@ -1259,7 +1261,7 @@
              */
             setColumnWidth: function (column, width) {
 
-                var parsedWidth = this._parseColumnWidth(width);
+                var parsedWidth = this._parseColumnWidth(width, column.ignoreMin ? 0 : this.settings.minColumnWidth);
 
                 var col = this._columns.get(column);
                 if (col) {
@@ -1537,7 +1539,7 @@
                             if (col.widthMode === COLUMN_WIDTH_MODE.ABSOLUTE) {
                                 width = col.width;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
-                                if (width < settings.minColumnWidth) {
+                                if (!col.ignoreMin && width < settings.minColumnWidth) {
                                     width = settings.minColumnWidth;
                                 }
                                 sizeLeft -= width;
@@ -1551,7 +1553,7 @@
                             } else if (col.widthMode === COLUMN_WIDTH_MODE.AUTO) {
                                 width = getTextWidth.call(this, col.label) + 20;
                                 width += col.arrowProposedWidth || 0; // Sort-arrow width
-                                if (width < settings.minColumnWidth) {
+                                if (!col.ignoreMin && width < settings.minColumnWidth) {
                                     width = settings.minColumnWidth;
                                 }
                                 sizeLeft -= width;
@@ -1608,7 +1610,7 @@
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
                                 if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
-                                    if (col.width < minColumnWidthRelative) {
+                                    if (!col.ignoreMin && col.width < minColumnWidthRelative) {
                                         extraRelative += minColumnWidthRelative - col.width;
                                         col.width = minColumnWidthRelative;
                                     }
@@ -1619,7 +1621,7 @@
                             for (i = 0; i < this._visibleColumns.length; i++) {
                                 col = this._visibleColumns[i];
                                 if (col.widthMode === COLUMN_WIDTH_MODE.RELATIVE) {
-                                    if (col.width > minColumnWidthRelative) {
+                                    if (!col.ignoreMin && col.width > minColumnWidthRelative) {
                                         if (extraRelative > 0) {
                                             delta = Math.min(extraRelative, col.width - minColumnWidthRelative);
                                             col.width -= delta;
@@ -2317,7 +2319,7 @@
                     minX += selectedHeaderCell.outerWidth();
                     minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
-                    minX -= this.settings.minColumnWidth;
+                    minX -= column.ignoreMin ? 0 : this.settings.minColumnWidth;
                     minX -= this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX > minX) {
                         actualX = minX;
@@ -2325,7 +2327,7 @@
                 } else {
                     minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                     minX -= Math.ceil(resizerWidth / 2);
-                    minX += this.settings.minColumnWidth;
+                    minX += column.ignoreMin ? 0 : this.settings.minColumnWidth;
                     minX += this._horizontalPadding(selectedHeaderCell[0]);
                     if (actualX < minX) {
                         actualX = minX;
@@ -2365,7 +2367,7 @@
                         baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
-                        minX -= this.settings.minColumnWidth;
+                        minX -= column.ignoreMin ? 0 : this.settings.minColumnWidth;
                         if (actualX > minX) {
                             actualX = minX;
                         }
@@ -2375,7 +2377,7 @@
                         baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
                         baseX -= Math.ceil(resizerWidth / 2);
                         minX = baseX;
-                        minX += this.settings.minColumnWidth;
+                        minX += column.ignoreMin ? 0 : this.settings.minColumnWidth;
                         if (actualX < minX) {
                             actualX = minX;
                         }
@@ -3225,7 +3227,13 @@
          * @expose
          * @type {String}
          * */
-        cellClasses: null
+        cellClasses: null,
+        
+        /**
+         * @expose
+         * @type {Boolean=false}
+         * */
+        ignoreMin: null
     };
 
     /**

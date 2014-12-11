@@ -64,6 +64,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **movable**: `Boolean=true` Is this column movable?
   * **visible**: `Boolean=true` Is this column visible?
   * **cellClasses**: `String` Classes to add to the DOM element of this cell
+  * **ignoreMin**: `Boolean=false` Should this column ignore the minimum width specified for the table columns?
 * **height**: `Number` Suggested height for the table
 * **width**: `DGTable.Width=DGTable.Width.NONE` The way that the width of the table will be handled
   * `DGTable.Width.NONE`: No special handling
