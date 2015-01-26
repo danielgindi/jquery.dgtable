@@ -2897,7 +2897,7 @@
                 var self = this,
                     settings = self.settings;
 
-                settings.abortCellPreview = false;
+                this._abortCellPreview = false;
 
                 var elInner = el.firstChild;
 
@@ -3011,7 +3011,10 @@
                     div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
                     self.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : self._rows[physicalRowIndex]);
-                    if (settings.abortCellPreview) return;
+                    if (this._abortCellPreview) {
+						$div.remove();
+						return;
+					}
 
                     var offset = $el.offset();
 
