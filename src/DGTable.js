@@ -259,8 +259,7 @@
                 /** @private
                  * @field {DGTable.RowCollection} _rows */
                 this._rows = new DGTable.RowCollection({ sortColumn: options.sortColumn, columns: this.columns });
-                this.listenTo(this._rows, 'sort', this.render)
-                    .listenTo(this._rows, 'requiresComparatorForColumn', _.bind(function(returnVal, column, descending){
+                this.listenTo(this._rows, 'requiresComparatorForColumn', _.bind(function(returnVal, column, descending){
                         if (settings.comparatorCallback) {
                             returnVal.comparator = settings.comparatorCallback(column, descending);
                         }
@@ -1000,7 +999,7 @@
             },
 
             /**
-             * Re-sort the table
+             * Sort the table
              * @public
              * @expose
              * @param {String} column Name of the column to sort on
@@ -1046,18 +1045,16 @@
                     // Set the required column in the front of the stack
                     currentSort.push({ column: col.name, descending: !!descending });
 
-                    this._rows.sortColumn = currentSort;
-
                     this._clearSortArrows();
                     for (i = 0; i < currentSort.length; i++) {
                         this._showSortArrow(currentSort[i].column, currentSort[i].descending);
                     }
-                    if (settings.adjustColumnWidthForSortArrow) {
+                    if (settings.adjustColumnWidthForSortArrow && !settings._tableSkeletonNeedsRendering) {
                         this.tableWidthChanged(true);
                     }
 
                     if (settings.virtualTable) {
-                        while (this._tbody.firstChild) {
+                        while (this._tbody && this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
                             this._unbindCellEventsForRow(this._tbody.firstChild);
                             this._tbody.removeChild(this._tbody.firstChild);
@@ -1066,11 +1063,9 @@
                         this._tableSkeletonNeedsRendering = true;
                     }
 
+                    this._rows.sortColumn = currentSort;
                     this._rows.sort(!!this._filteredRows);
                     this._refilter();
-                    if (this._filteredRows) {
-                        this.render();
-                    }
 
                     // Build output for event, with option names that will survive compilers
                     var sorts = [];
@@ -1082,6 +1077,29 @@
                 return this;
             },
 
+            /**
+             * Re-sort the table using current sort specifiers
+             * @public
+             * @expose
+             * @returns {DGTable} self
+			 */
+			resort: function () {
+				var currentSort = this._rows.sortColumn;
+				if (currentSort.length) {
+                    this._rows.sortColumn = currentSort;
+                    this._rows.sort(!!this._filteredRows);
+                    this._refilter();
+
+                    // Build output for event, with option names that will survive compilers
+                    var sorts = [];
+                    for (var i = 0; i < currentSort.length; i++) {
+                        sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+                    }
+                    this.trigger('sort', sorts);
+				}
+				return this;
+			},
+			
             /**
              * Make sure there's at least one column visible
              * @private
@@ -1532,6 +1550,10 @@
 
                     var tableWidthBeforeCalculations = 0;
 
+					if (!this._tbody) {
+						renderColumns = false;
+					}
+					
                     if (renderColumns) {
                         tableWidthBeforeCalculations = parseFloat(this._tbody.style.minWidth) || 0;
                     }
@@ -1719,9 +1741,10 @@
              * @public
              * @expose
              * @param {Object[]} data array of rows to add to the table
+             * @param {Boolean?} resort should resort all rows?
              * @returns {DGTable} self
              */
-            addRows: function (data) {
+            addRows: function (data, resort) {
                 var self = this;
                 if (data) {
                     this._rows.add(data);
@@ -1732,9 +1755,11 @@
                             this._tbody.removeChild(this._tbody.firstChild);
                         }
 
-                        if (this._filteredRows) {
-                            this._refilter();
-                        }
+						if (resort && this._rows.sortColumn.length) {
+							this.resort();
+						} else {
+							this._refilter();
+						}
 
                         this._calculateVirtualHeight() // Calculate virtual height
                             ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
@@ -1900,12 +1925,18 @@
              * @public
              * @expose
              * @param {Object[]} data array of rows to add to the table
+             * @param {Boolean?} resort should resort all rows?
              * @returns {DGTable} self
              */
-            setRows: function (data) {
+            setRows: function (data, resort) {
                 this.scrollTop = this.$el.find('.table').scrollTop();
                 this._rows.reset(data);
-                this._refilter();
+				if (resort && this._rows.sortColumn.length) {
+					this.resort();
+				} else {
+					this._refilter();
+				}
+				this.render();
                 this.clearAndRender().trigger('addrows', data.length, true);
                 return this;
             },
@@ -1957,15 +1988,15 @@
              * @param {Boolean=true} start if true, starts the Worker immediately
              * @returns {Worker?} the Web Worker, or null if not supported
              */
-            createWebWorker: function (url, start) {
+            createWebWorker: function (url, start, resort) {
                 if (this.isWorkerSupported()) {
                     var self = this;
                     var worker = new Worker(url);
                     var listener = function (evt) {
                         if (evt.data.append) {
-                            self.addRows(evt.data.rows);
+                            self.addRows(evt.data.rows, resort);
                         } else {
-                            self.setRows(evt.data.rows);
+                            self.setRows(evt.data.rows, resort);
                         }
                     };
                     worker.addEventListener('message', listener, false);
@@ -2305,7 +2336,7 @@
                     if (settings.sortableColumns) {
                         var column = this._columns.get(headerCell['columnName']);
                         if (column && column.sortable) {
-                            this.sort(headerCell['columnName'], undefined, true);
+                            this.sort(headerCell['columnName'], undefined, true).render();
                         }
                     }
                 }
@@ -2552,8 +2583,10 @@
                 var arrow = createElement('span');
                 arrow.className = 'sort-arrow';
 
-                col.element.addClass(descending ? 'sorted desc' : 'sorted');
-                col.element[0].firstChild.insertBefore(arrow, col.element[0].firstChild.firstChild);
+				if (col.element) {
+					col.element.addClass(descending ? 'sorted desc' : 'sorted');
+					col.element[0].firstChild.insertBefore(arrow, col.element[0].firstChild.firstChild);
+				}
 
                 if (col.widthMode != COLUMN_WIDTH_MODE.RELATIVE && this.settings.adjustColumnWidthForSortArrow) {
                     col.arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);

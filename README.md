@@ -177,10 +177,12 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **src**: Name or position of the column to be moved
   * **dest**: Name of the column currently in the desired position, or the position itself
   * *returns* Self, to allow for call chaining.
-* `sort({String} column, {Boolean=} descending, {Boolean=false} add) {DGTable}`: Re-sort the table
+* `sort({String} column, {Boolean=} descending, {Boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
   * **src**: Name of the column to sort on
   * **descending**: Sort in descending order (if not specified, defaults to false or reverses current descending mode if sorting by same column)
   * **add**: Should this sort be on top of the existing sort? (For multiple column sort)
+  * *returns* Self, to allow for call chaining.
+* `resort() {DGTable}`: Re-sort the table using current sort specifiers. This does not render automatically, so you may need to call render() too.
   * *returns* Self, to allow for call chaining.
 * `setColumnVisible({String} column, {Boolean} visible) {DGTable}`: Show or hide a column
   * **column**: Unique column name
