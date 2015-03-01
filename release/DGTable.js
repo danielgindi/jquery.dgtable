@@ -62,7 +62,7 @@
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.2',
+            VERSION: '0.4.3',
 
             /**
              * @constructs
@@ -462,27 +462,34 @@
             },
 
             /**
-             * Destroy, releasing all memory, events and DOM elements
+             * The default Backbone.remove() function
              * @public
              * @expose
              */
-            close: function () {
+            remove: function () {
+
+                if (this.__removed) {
+                    return this;
+                }
+
                 if (this._$resizer) {
                     this._$resizer.remove();
                     this._$resizer = null;
                 }
+
                 if (this._$tbody) {
                     var trs = this._$tbody[0].childNodes;
                     for (var i = 0, len = trs.length; i < len; i++) {
                         this.trigger('rowdestroy', trs[i]);
                     }
                 }
-                this.remove();
+
+                DGTable.__super__.remove.apply(this, arguments);
+
                 this._destroyHeaderCells()._unbindCellEventsForTable();
-                this._$table.unbind();
-                this._$tbody.unbind();
-                this.$el.unbind();
-                this.unbind();
+                this._$table.empty();
+                this._$tbody.empty();
+
                 if (this._workerListeners) {
                     for (var j = 0, worker; j < this._workerListeners.length; j++) {
                         worker = this._workerListeners[j];
@@ -490,12 +497,32 @@
                     }
                     this._workerListeners.length = 0;
                 }
+
                 this._rows.length = this._columns.length = 0;
+
+                if (this.__deferredRender) {
+                    clearTimeout(this.__deferredRender);
+                }
+
+                // Cleanup
                 for (var prop in this) {
                     if (this.hasOwnProperty(prop)) {
                         this[prop] = null;
                     }
                 }
+
+                this.__removed = true;
+
+                return this;
+            },
+
+            /**
+             * Destroy, releasing all memory, events and DOM elements
+             * @public
+             * @expose
+             */
+            close: function () {
+                return this.remove();
             },
 
             /**
@@ -543,6 +570,19 @@
             render: function () {
                 var self = this,
                     settings = this.settings;
+
+                if (!this.el.offsetParent) {
+                    if (!this.__deferredRender) {
+                        this.__deferredRender = setTimeout(function () {
+                            this.__deferredRender = null;
+                            if (!self.__removed && self.el.offsetParent) {
+                                self.render();
+                            }
+                        });
+                    }
+
+                    return self;
+                }
 
                 if (this._tableSkeletonNeedsRendering === true) {
                     this._tableSkeletonNeedsRendering = false;
@@ -1936,7 +1976,6 @@
 				} else {
 					this._refilter();
 				}
-				this.render();
                 this.clearAndRender().trigger('addrows', data.length, true);
                 return this;
             },
@@ -2937,7 +2976,7 @@
                 if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
                     (elInner.scrollHeight - elInner.clientHeight > 1)) {
 
-                    self._hideCellPreview();
+                    self.hideCellPreview();
 
                     var $el = $(el), $elInner = $(elInner);
                     var div = createElement('div'), $div = $(div);
@@ -3090,7 +3129,7 @@
                             y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
 
                         if (xy) {
-                            self._hideCellPreview();
+                            self.hideCellPreview();
                         }
 
                         if (y && self._table.scrollHeight > self._table.clientHeight) {
@@ -3111,14 +3150,15 @@
              * @param {HTMLElement} el
              */
             _cellMouseOutEvent: function(el) {
-                this._hideCellPreview();
+                this.hideCellPreview();
             },
 
             /**
-             * @private
+             * @public
+             * @expose
              * @returns {DGTable} self
              */
-            _hideCellPreview: function() {
+            hideCellPreview: function() {
                 if (this._$cellPreviewEl) {
                     var div = this._$cellPreviewEl[0];
                     this._$cellPreviewEl.remove();
