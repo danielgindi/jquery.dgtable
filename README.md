@@ -232,6 +232,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `createWebWorker({string} url) {Worker?}`: *Undocumented yet*
 * `unbindWebWorker({Worker} worker) {DGTable}`: *Undocumented yet*
 * `abortCellPreview() {DGTable}`: *Undocumented yet*
+* `hideCellPreview() {DGTable}`: Hide any cell preview showing currently.
 * `close()`: Destroy the table and free all of its memory.
 
 ## License

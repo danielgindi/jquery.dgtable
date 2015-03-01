@@ -2937,7 +2937,7 @@
                 if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
                     (elInner.scrollHeight - elInner.clientHeight > 1)) {
 
-                    self._hideCellPreview();
+                    self.hideCellPreview();
 
                     var $el = $(el), $elInner = $(elInner);
                     var div = createElement('div'), $div = $(div);
@@ -3090,7 +3090,7 @@
                             y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
 
                         if (xy) {
-                            self._hideCellPreview();
+                            self.hideCellPreview();
                         }
 
                         if (y && self._table.scrollHeight > self._table.clientHeight) {
@@ -3111,14 +3111,15 @@
              * @param {HTMLElement} el
              */
             _cellMouseOutEvent: function(el) {
-                this._hideCellPreview();
+                this.hideCellPreview();
             },
 
             /**
-             * @private
+             * @public
+             * @expose
              * @returns {DGTable} self
              */
-            _hideCellPreview: function() {
+            hideCellPreview: function() {
                 if (this._$cellPreviewEl) {
                     var div = this._$cellPreviewEl[0];
                     this._$cellPreviewEl.remove();
