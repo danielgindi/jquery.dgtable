@@ -462,27 +462,34 @@
             },
 
             /**
-             * Destroy, releasing all memory, events and DOM elements
+             * The default Backbone.remove() function
              * @public
              * @expose
              */
-            close: function () {
+            remove: function () {
+
+                if (this.__removed) {
+                    return this;
+                }
+
                 if (this._$resizer) {
                     this._$resizer.remove();
                     this._$resizer = null;
                 }
+
                 if (this._$tbody) {
                     var trs = this._$tbody[0].childNodes;
                     for (var i = 0, len = trs.length; i < len; i++) {
                         this.trigger('rowdestroy', trs[i]);
                     }
                 }
-                this.remove();
+
+                DGTable.__super__.remove.apply(this, arguments);
+
                 this._destroyHeaderCells()._unbindCellEventsForTable();
-                this._$table.unbind();
-                this._$tbody.unbind();
-                this.$el.unbind();
-                this.unbind();
+                this._$table.empty();
+                this._$tbody.empty();
+
                 if (this._workerListeners) {
                     for (var j = 0, worker; j < this._workerListeners.length; j++) {
                         worker = this._workerListeners[j];
@@ -490,15 +497,32 @@
                     }
                     this._workerListeners.length = 0;
                 }
+
                 this._rows.length = this._columns.length = 0;
+
                 if (this.__deferredRender) {
                     clearTimeout(this.__deferredRender);
                 }
+
+                // Cleanup
                 for (var prop in this) {
                     if (this.hasOwnProperty(prop)) {
                         this[prop] = null;
                     }
                 }
+
+                this.__removed = true;
+
+                return this;
+            },
+
+            /**
+             * Destroy, releasing all memory, events and DOM elements
+             * @public
+             * @expose
+             */
+            close: function () {
+                return this.remove();
             },
 
             /**
@@ -551,9 +575,8 @@
                     if (!this.__deferredRender) {
                         this.__deferredRender = setTimeout(function () {
                             this.__deferredRender = null;
-                            if (self.el.offsetParent) {
+                            if (!self.__removed && self.el.offsetParent) {
                                 self.render();
-
                             }
                         });
                     }
