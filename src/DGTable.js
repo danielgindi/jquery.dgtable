@@ -491,6 +491,9 @@
                     this._workerListeners.length = 0;
                 }
                 this._rows.length = this._columns.length = 0;
+                if (this.__deferredRender) {
+                    clearTimeout(this.__deferredRender);
+                }
                 for (var prop in this) {
                     if (this.hasOwnProperty(prop)) {
                         this[prop] = null;
@@ -543,6 +546,20 @@
             render: function () {
                 var self = this,
                     settings = this.settings;
+
+                if (!this.el.offsetParent) {
+                    if (!this.__deferredRender) {
+                        this.__deferredRender = setTimeout(function () {
+                            this.__deferredRender = null;
+                            if (self.el.offsetParent) {
+                                self.render();
+
+                            }
+                        });
+                    }
+
+                    return self;
+                }
 
                 if (this._tableSkeletonNeedsRendering === true) {
                     this._tableSkeletonNeedsRendering = false;
@@ -1936,7 +1953,6 @@
 				} else {
 					this._refilter();
 				}
-				this.render();
                 this.clearAndRender().trigger('addrows', data.length, true);
                 return this;
             },
