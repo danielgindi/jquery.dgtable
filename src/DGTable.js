@@ -484,7 +484,8 @@ this._$table
                     }
                 }
 
-                DGTable.__super__.remove.apply(this, arguments);
+				// Using quotes for __super__ because Google Closure Compiler has a bug...
+                DGTable['__super__'].remove.apply(this, arguments);
 
                 this._destroyHeaderCells()._unbindCellEventsForTable();
                 this._$table.empty();
