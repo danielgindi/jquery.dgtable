@@ -9,7 +9,7 @@
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
-
+this._$table
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
 
@@ -1761,8 +1761,11 @@
              */
             tableHeightChanged: function () {
                 var self = this,
-                    settings = self.settings,
-                    height = this.$el.innerHeight() - (parseFloat(this._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
+                    settings = self.settings;
+                if (!self._$table) {
+                    return self;
+                }
+                var height = self.$el.innerHeight() - (parseFloat(self._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
                 if (height != settings.height) {
                     settings.height = height;
                     if (self._tbody) {
