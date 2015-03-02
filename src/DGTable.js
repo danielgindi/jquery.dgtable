@@ -542,10 +542,7 @@ this._$table
                 }
                 if (this._tbody) {
                     for (i = 0, rows = this._tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
-                        rowToClean = rows[i];
-                        for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
-                            this._unbindHoverIn(cells[j]);
-                        }
+                        this._unbindCellEventsForRow(rows[i]);
                     }
                 }
                 return this;
