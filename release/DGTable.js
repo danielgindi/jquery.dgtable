@@ -9,7 +9,7 @@
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
-
+this._$table
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
 
@@ -62,7 +62,7 @@
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.3',
+            VERSION: '0.4.4',
 
             /**
              * @constructs
@@ -484,7 +484,8 @@
                     }
                 }
 
-                DGTable.__super__.remove.apply(this, arguments);
+				// Using quotes for __super__ because Google Closure Compiler has a bug...
+                DGTable['__super__'].remove.apply(this, arguments);
 
                 this._destroyHeaderCells()._unbindCellEventsForTable();
                 this._$table.empty();
@@ -541,10 +542,7 @@
                 }
                 if (this._tbody) {
                     for (i = 0, rows = this._tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
-                        rowToClean = rows[i];
-                        for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
-                            this._unbindHoverIn(cells[j]);
-                        }
+                        this._unbindCellEventsForRow(rows[i]);
                     }
                 }
                 return this;
@@ -1761,8 +1759,11 @@
              */
             tableHeightChanged: function () {
                 var self = this,
-                    settings = self.settings,
-                    height = this.$el.innerHeight() - (parseFloat(this._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
+                    settings = self.settings;
+                if (!self._$table) {
+                    return self;
+                }
+                var height = self.$el.innerHeight() - (parseFloat(self._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
                 if (height != settings.height) {
                     settings.height = height;
                     if (self._tbody) {
