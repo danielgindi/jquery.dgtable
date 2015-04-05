@@ -62,7 +62,7 @@ this._$table
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.4',
+            VERSION: '0.4.5',
 
             /**
              * @constructs
@@ -617,6 +617,8 @@ this._$table
                     }
                     if (settings.adjustColumnWidthForSortArrow && this._rows.sortColumn.length) {
                         this.tableWidthChanged(true);
+                    } else if (!settings.virtualTable) {
+                        this.tableWidthChanged();
                     }
 
                     this.trigger('renderskeleton');
@@ -1494,13 +1496,17 @@ this._$table
                 if (this._$table) {
                     lastScrollTop = this._table ? this._table.scrollTop : 0;
                     lastScrollLeft = this._table ? this._table.scrollLeft : 0;
-
-                    oldDisplay = this._$table[0].style.display;
-                    this._$table[0].style.display = 'none';
+                    
+                    if (settings.virtualTable) {
+                        oldDisplay = this._$table[0].style.display;
+                        this._$table[0].style.display = 'none';
+                    }
                 }
                 var detectedWidth = this.$el.width();
                 if (this._$table) {
-                    this._$table[0].style.display = oldDisplay;
+                    if (settings.virtualTable) {
+                        this._$table[0].style.display = oldDisplay;
+                    }
 
                     this._table.scrollTop = lastScrollTop;
                     this._table.scrollLeft = lastScrollLeft;
