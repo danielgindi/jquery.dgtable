@@ -108,7 +108,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Row's index - or null for header
   * 3rd argument: Column's name
   * 4th argument: Row's data - if applicable
-  * At this stage you can prevent showing the preview, by calling `table.abortCellPreview`
+  * At this stage you can prevent showing the preview, by calling `table.hideCellPreview`
 * `cellpreviewdestroy`: Cell preview element is about to be destroyed after hiding
   * 1st argument: Preview's DOM element
   * 2nd argument: Row's index
@@ -232,8 +232,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `isWorkerSupported() {Boolean}`: *Undocumented yet*
 * `createWebWorker({string} url) {Worker?}`: *Undocumented yet*
 * `unbindWebWorker({Worker} worker) {DGTable}`: *Undocumented yet*
-* `abortCellPreview() {DGTable}`: Prevent showing a cell preview, from within the `cellpreview` event
-* `hideCellPreview() {DGTable}`: Hide any cell preview showing currently.
+* `hideCellPreview() {DGTable}`: Hide any cell preview showing currently, or prevent showing a cell preview from within the `cellpreview` event.
 * `close()`: Destroy the table and free all of its memory.
 
 ## License

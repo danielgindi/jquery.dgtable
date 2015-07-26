@@ -2084,13 +2084,13 @@ this._$table
             },
 
             /**
-             * Abort cell preview (called from within a cellPreview event)
+             * A synonym for hideCellPreview()
              * @expose
              * @public
              * @returns {DGTable} self
              */
             abortCellPreview: function() {
-                this._abortCellPreview = true;
+                this.hideCellPreview();
                 return this;
             },
 
@@ -3170,6 +3170,8 @@ this._$table
             },
 
             /**
+             * Hides the current cell preview,
+             * or prevents the one that is currently trying to show (in the 'cellpreview' event)
              * @public
              * @expose
              * @returns {DGTable} self
@@ -3188,6 +3190,7 @@ this._$table
 
                     this._$cellPreviewEl = null;
                 }
+                this._abortCellPreview = false;
                 return this;
             }
         }
