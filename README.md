@@ -219,6 +219,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getRowCount() {Number}`: Gets the number of rows
   * *returns* the number of rows
 * `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
+* `getRowElement({Number} physicalRowIndex) {Element?}`: Returns the element of the row specified
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
 * `addRows({Object[]} data) {DGTable}`: *Undocumented yet*

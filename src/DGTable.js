@@ -1943,6 +1943,40 @@ this._$table
             },
 
             /**
+             * Get the DOM element for the specified row, if it exists
+             * @public
+             * @expose
+             * @param {Number} physicalRowIndex index
+             * @returns {Element?} row or null
+             */
+            getRowElement: function(physicalRowIndex) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return null;
+
+                // Find out if the row is in the rendered dataset
+                var rowIndex = -1;
+                if (this._filteredRows && (rowIndex = _.indexOf(this._filteredRows, this._rows[physicalRowIndex])) === -1) return this;
+
+                if (rowIndex === -1) {
+                    rowIndex = physicalRowIndex;
+                }
+
+                var childNodes = this._tbody.childNodes;
+
+                if (this.settings.virtualTable) {
+                    // Now make sure that the row actually rendered, as this is a virtual table
+                    for (var i = 0; i < childNodes.length; i++) {
+                        if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                            return childNodes[i];
+                        }
+                    }
+                } else {
+                    return childNodes[rowIndex];
+                }
+
+                return null;
+            },
+
+            /**
              * Refreshes all virtual rows
              * @public
              * @expose
