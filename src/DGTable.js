@@ -165,6 +165,11 @@ this._$table
 
                 /**
                  * @private
+                 * @field {Boolean} cellPreviewAutoBackground */
+                settings.cellPreviewAutoBackground = options.cellPreviewAutoBackground === undefined ? true : options.cellPreviewAutoBackground;
+
+                /**
+                 * @private
                  * @field {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback */
                 settings.comparatorCallback = options.comparatorCallback === undefined ? null : options.comparatorCallback;
 
@@ -3048,15 +3053,7 @@ this._$table
                         self._transparentBgColor2 = $(tempDiv).css('background-color');
                     }
 
-                    var bgColor = $(el).css('background-color');
-                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
-                        bgColor = $(el.parentNode).css('background-color');
-                    }
-                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
-                        bgColor = '#fff';
-                    }
-
-                    $div.css({
+	                var css = {
                         'box-sizing': 'content-box',
                         width: requiredWidth + 'px',
                         'min-height': $el.height() + 'px',
@@ -3069,9 +3066,21 @@ this._$table
                         zIndex: '-1',
                         left: '0',
                         top: '0',
-                        'background-color': bgColor,
                         cursor: 'default'
-                    });
+                    };
+
+                    if (css) {
+                        var bgColor = $(el).css('background-color');
+                        if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
+                            bgColor = $(el.parentNode).css('background-color');
+                        }
+                        if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
+                            bgColor = '#fff';
+                        }
+                        css['background-color'] = bgColor;
+                    }
+
+                    $div.css(css);
 
                     document.body.appendChild(div);
 
@@ -3385,6 +3394,7 @@ this._$table
      * @param {String?} tableClassName
      * @param {Boolean=true} allowCellPreview
      * @param {String?} cellPreviewClassName
+     * @param {Boolean=true} cellPreviewAutoBackground
      * @param {String?} className
      * @param {String?} tagName
      * */
@@ -3493,6 +3503,12 @@ this._$table
          * @type {String}
          * */
         cellPreviewClassName: null,
+
+        /**
+         * @expose
+         * @type {Boolean}
+         * */
+        cellPreviewAutoBackground: null,
 
         /** @expose */
         className: null,
