@@ -62,7 +62,7 @@ this._$table
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.5',
+            VERSION: '0.4.6',
 
             /**
              * @constructs
@@ -162,6 +162,11 @@ this._$table
                  * @private
                  * @field {String} cellPreviewClassName */
                 settings.cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
+
+                /**
+                 * @private
+                 * @field {Boolean} cellPreviewAutoBackground */
+                settings.cellPreviewAutoBackground = options.cellPreviewAutoBackground === undefined ? true : options.cellPreviewAutoBackground;
 
                 /**
                  * @private
@@ -275,7 +280,7 @@ this._$table
                     Using native events to spare the overhead of jQuery's event binding, and even just the creation of the jQuery collection object.
                  */
 
-                var self = this;
+                var that = this;
 
                 /**
                  * @param {Event} evt
@@ -286,7 +291,7 @@ this._$table
                     var relatedTarget = evt.fromElement || evt.relatedTarget;
                     if (relatedTarget == this || jQuery.contains(this, relatedTarget)) return;
                     if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || jQuery.contains(this['__previewEl'], relatedTarget))) return;
-                    self._cellMouseOverEvent.call(self, this);
+                    that._cellMouseOverEvent.call(that, this);
                 };
 
                 /**
@@ -298,14 +303,14 @@ this._$table
                     var relatedTarget = evt.toElement || evt.relatedTarget;
                     if (relatedTarget == this || jQuery.contains(this, relatedTarget)) return;
                     if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || jQuery.contains(this['__previewEl'], relatedTarget))) return;
-                    self._cellMouseOutEvent.call(self, this);
+                    that._cellMouseOutEvent.call(that, this);
                 };
 
                 if ('addEventListener' in window) {
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
@@ -316,7 +321,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
@@ -328,7 +333,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
@@ -339,7 +344,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
@@ -353,7 +358,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
@@ -364,7 +369,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
@@ -376,7 +381,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
@@ -387,7 +392,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} self
+                     * @returns {DGTable} that
                      * */
                     this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
@@ -528,7 +533,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _unbindCellEventsForTable: function() {
                 var i, rows, rowCount, rowToClean, j, cells, cellCount;
@@ -551,7 +556,7 @@ this._$table
             /**
              * @private
              * @param {HTMLElement} rowToClean
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _unbindCellEventsForRow: function(rowToClean) {
                 for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
@@ -563,23 +568,23 @@ this._$table
             /**
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             render: function () {
-                var self = this,
+                var that = this,
                     settings = this.settings;
 
                 if (!this.el.offsetParent) {
                     if (!this.__deferredRender) {
                         this.__deferredRender = setTimeout(function () {
                             this.__deferredRender = null;
-                            if (!self.__removed && self.el.offsetParent) {
-                                self.render();
+                            if (!that.__removed && that.el.offsetParent) {
+                                that.render();
                             }
                         });
                     }
 
-                    return self;
+                    return that;
                 }
 
                 if (this._tableSkeletonNeedsRendering === true) {
@@ -587,27 +592,27 @@ this._$table
 
                     if (settings.width == DGTable.Width.AUTO) {
                         // We need to do this to return to the specified widths instead. The arrows added to the column widths...
-                        self._clearSortArrows();
+                        that._clearSortArrows();
                     }
 
-                    var lastScrollTop = self._table ? self._table.scrollTop : 0,
-                        lastScrollLeft = self._table ? self._table.scrollLeft : 0;
+                    var lastScrollTop = that._table ? that._table.scrollTop : 0,
+                        lastScrollLeft = that._table ? that._table.scrollLeft : 0;
 
-                    self.tableWidthChanged(true, false) // Take this chance to calculate required column widths
+                    that.tableWidthChanged(true, false) // Take this chance to calculate required column widths
                         ._renderSkeleton(); // Actual render
 
                     if (!settings.virtualTable) {
-                        var rows = self._filteredRows || self._rows, rowCount = rows.length;
-                        var renderedRows = self.renderRows(0, rowCount - 1);
-                        self._$tbody.html('').append(renderedRows);
-                        self._updateLastCellWidthFromScrollbar(true);
+                        var rows = that._filteredRows || that._rows, rowCount = rows.length;
+                        var renderedRows = that.renderRows(0, rowCount - 1);
+                        that._$tbody.html('').append(renderedRows);
+                        that._updateLastCellWidthFromScrollbar(true);
                     } else {
-                        self._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
+                        that._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
                     }
 
-                    self._table.scrollTop = lastScrollTop;
-                    self._table.scrollLeft = lastScrollLeft;
-                    self._header.scrollLeft = lastScrollLeft;
+                    that._table.scrollTop = lastScrollTop;
+                    that._table.scrollLeft = lastScrollLeft;
+                    that._header.scrollLeft = lastScrollLeft;
 
                     this._updateTableWidth(true);
 
@@ -629,7 +634,7 @@ this._$table
                     }
 
                 } else if (settings.virtualTable) {
-                    var rowCount = (self._filteredRows || self._rows).length;
+                    var rowCount = (that._filteredRows || that._rows).length;
                     var scrollTop = this._table.scrollTop;
                     var firstVisible = Math.floor((scrollTop - this._virtualRowHeightFirst) / this._virtualRowHeight) + 1 - settings.rowsBufferSize;
                     var lastVisible = Math.ceil(((scrollTop - this._virtualRowHeightFirst + this._visibleHeight) / this._virtualRowHeight)) + settings.rowsBufferSize;
@@ -639,7 +644,7 @@ this._$table
                     }
 
                     var oldFirstVisible = -1, oldLastVisible = -1;
-                    var tbodyChildNodes = self._tbody.childNodes;
+                    var tbodyChildNodes = that._tbody.childNodes;
                     if (tbodyChildNodes.length) {
                         oldFirstVisible = tbodyChildNodes[0]['rowIndex'];
                         oldLastVisible = tbodyChildNodes[tbodyChildNodes.length - 1]['rowIndex'];
@@ -648,9 +653,9 @@ this._$table
                     if (oldFirstVisible !== -1 && oldFirstVisible < firstVisible) {
                         var countToRemove = Math.min(oldLastVisible + 1, firstVisible) - oldFirstVisible;
                         for (var i = 0; i < countToRemove; i++) {
-                            self.trigger('rowdestroy', tbodyChildNodes[0]);
-                            self._unbindCellEventsForRow(tbodyChildNodes[0]);
-                            self._tbody.removeChild(tbodyChildNodes[0]);
+                            that.trigger('rowdestroy', tbodyChildNodes[0]);
+                            that._unbindCellEventsForRow(tbodyChildNodes[0]);
+                            that._tbody.removeChild(tbodyChildNodes[0]);
                         }
                         oldFirstVisible += countToRemove;
                         if (oldFirstVisible > oldLastVisible) {
@@ -659,9 +664,9 @@ this._$table
                     } else if (oldLastVisible !== -1 && oldLastVisible > lastVisible) {
                         var countToRemove = oldLastVisible - Math.max(oldFirstVisible - 1, lastVisible);
                         for (var i = 0; i < countToRemove; i++) {
-                            self.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
-                            self._unbindCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
-                            self._tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            that.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            that._unbindCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
+                            that._tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
                         }
                         if (oldLastVisible < oldFirstVisible) {
                             oldFirstVisible = oldLastVisible = -1;
@@ -669,12 +674,12 @@ this._$table
                     }
 
                     if (firstVisible < oldFirstVisible) {
-                        var renderedRows = self.renderRows(firstVisible, Math.min(lastVisible, oldFirstVisible - 1));
-                        self._$tbody.prepend(renderedRows);
+                        var renderedRows = that.renderRows(firstVisible, Math.min(lastVisible, oldFirstVisible - 1));
+                        that._$tbody.prepend(renderedRows);
                     }
                     if (lastVisible > oldLastVisible || oldLastVisible === -1) {
-                        var renderedRows = self.renderRows(oldLastVisible === -1 ? firstVisible : oldLastVisible + 1, lastVisible);
-                        self._$tbody.append(renderedRows);
+                        var renderedRows = that.renderRows(oldLastVisible === -1 ? firstVisible : oldLastVisible + 1, lastVisible);
+                        that._$tbody.append(renderedRows);
                     }
                 }
                 this.trigger('render');
@@ -685,7 +690,7 @@ this._$table
              * Forces a full render of the table
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             clearAndRender: function () {
                 this._tableSkeletonNeedsRendering = true;
@@ -701,19 +706,19 @@ this._$table
              */
             renderRows: function (first, last) {
 
-                var self = this,
-                    settings = self.settings,
+                var that = this,
+                    settings = that.settings,
                     tableClassName = settings.tableClassName,
                     rowClassName = tableClassName + '-row',
                     cellClassName = tableClassName + '-cell',
-                    rows = self._filteredRows || self._rows,
-                    isDataFiltered = !!self._filteredRows,
+                    rows = that._filteredRows || that._rows,
+                    isDataFiltered = !!that._filteredRows,
                     allowCellPreview = settings.allowCellPreview,
-                    visibleColumns = self._visibleColumns,
+                    visibleColumns = that._visibleColumns,
                     cellFormatter = settings.cellFormatter,
                     isVirtual = settings.virtualTable,
-                    virtualRowHeightFirst = self._virtualRowHeightFirst,
-                    virtualRowHeight = self._virtualRowHeight,
+                    virtualRowHeightFirst = that._virtualRowHeightFirst,
+                    virtualRowHeight = that._virtualRowHeight,
                     top,
                     physicalRowIndex;
 
@@ -769,7 +774,7 @@ this._$table
 
                     bodyFragment.appendChild(row);
 
-                    self.trigger('rowcreate', i, physicalRowIndex, row, rowData);
+                    that.trigger('rowcreate', i, physicalRowIndex, row, rowData);
                 }
 
                 return bodyFragment;
@@ -778,7 +783,7 @@ this._$table
             /**
              * Calculate virtual table height for scrollbar
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _calculateVirtualHeight: function () {
                 if (this._tbody) {
@@ -803,11 +808,11 @@ this._$table
              * @returns {Number} calculated width
              */
             _calculateTbodyWidth: function () {
-                var self = this,
-                    tableClassName = self.settings.tableClassName,
+                var that = this,
+                    tableClassName = that.settings.tableClassName,
                     rowClassName = tableClassName + '-row',
                     cellClassName = tableClassName + '-cell',
-                    visibleColumns = self._visibleColumns,
+                    visibleColumns = that._visibleColumns,
                     colCount = visibleColumns.length,
                     cell,
                     cellInner,
@@ -861,7 +866,7 @@ this._$table
              * @expose
              * @param {COLUMN_OPTIONS} columnData column properties
              * @param {String|Number} [before=-1] column name or order to be inserted before
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             addColumn: function (columnData, before) {
                 var columns = this._columns;
@@ -900,7 +905,7 @@ this._$table
              * @public
              * @expose
              * @param {String} column column name
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             removeColumn: function (column) {
                 var settings = this.settings, columns = this._columns;
@@ -924,7 +929,7 @@ this._$table
              * @param {String} column Name of the column to filter on
              * @param {String} filter Check specified column for existence of this string
              * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             filter: function (column, filter, caseSensitive) {
                 var col = this._columns.get(column);
@@ -944,7 +949,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _refilter: function() {
                 if (this._filteredRows) {
@@ -960,7 +965,7 @@ this._$table
              * @expose
              * @param {String} column Name of the column
              * @param {String} label New label for the column
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setColumnLabel: function (column, label) {
                 var col = this._columns.get(column);
@@ -986,7 +991,7 @@ this._$table
              * @expose
              * @param {String|Number} src Name or position of the column to be moved
              * @param {String|Number} dest Name of the column currently in the desired position, or the position itself
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             moveColumn: function (src, dest) {
                 var settings = this.settings,
@@ -1045,7 +1050,7 @@ this._$table
              * @param {String} column Name of the column to sort on
              * @param {Boolean=} descending Sort in descending order
              * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             sort: function (column, descending, add) {
                 var settings = this.settings,
@@ -1121,7 +1126,7 @@ this._$table
              * Re-sort the table using current sort specifiers
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
 			 */
 			resort: function () {
 				var currentSort = this._rows.sortColumn;
@@ -1144,7 +1149,7 @@ this._$table
              * Make sure there's at least one column visible
              * @private
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _ensureVisibleColumns: function () {
                 if (this._visibleColumns.length === 0 && this._columns.length) {
@@ -1161,7 +1166,7 @@ this._$table
              * @expose
              * @param {String} column Unique column name
              * @param {Boolean} visible New visibility mode for the column
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setColumnVisible: function (column, visible) {
                 var col = this._columns.get(column);
@@ -1194,7 +1199,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} minColumnWidth Minimum column width
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setMinColumnWidth: function (minColumnWidth) {
                 var settings = this.settings;
@@ -1221,7 +1226,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} sortableColumns How many sortable columns to allow?
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setSortableColumns: function (sortableColumns) {
                 var settings = this.settings;
@@ -1251,7 +1256,7 @@ this._$table
              * @public
              * @expose
              * @param {Boolean} movableColumns are the columns movable?
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setMovableColumns: function (movableColumns) {
                 var settings = this.settings;
@@ -1275,7 +1280,7 @@ this._$table
              * @public
              * @expose
              * @param {Boolean} resizableColumns are the columns resizable?
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setResizableColumns: function (resizableColumns) {
                 var settings = this.settings;
@@ -1299,7 +1304,7 @@ this._$table
              * @public
              * @expose
              * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback a callback function that returns the comparator for a specific column
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setComparatorCallback: function (comparatorCallback) {
                 var settings = this.settings;
@@ -1315,7 +1320,7 @@ this._$table
              * @expose
              * @param {String} column name of the column to resize
              * @param {Number|String} width new column as pixels, or relative size (0.5, 50%)
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setColumnWidth: function (column, width) {
 
@@ -1553,7 +1558,7 @@ this._$table
              * Notify the table that its width has changed
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             tableWidthChanged: (function () {
 
@@ -1581,7 +1586,7 @@ this._$table
                  * @public
                  * @param {Boolean} [forceUpdate=false]
                  * @param {Boolean} [renderColumns=true]
-                 * @returns {DGTable} self
+                 * @returns {DGTable} that
                  */
                 return function(forceUpdate, renderColumns) {
 
@@ -1761,26 +1766,26 @@ this._$table
              * Notify the table that its height has changed
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             tableHeightChanged: function () {
-                var self = this,
-                    settings = self.settings;
-                if (!self._$table) {
-                    return self;
+                var that = this,
+                    settings = that.settings;
+                if (!that._$table) {
+                    return that;
                 }
-                var height = self.$el.innerHeight() - (parseFloat(self._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
+                var height = that.$el.innerHeight() - (parseFloat(that._$table.css('border-top-width')) || 0) - (parseFloat(this._$table.css('border-bottom-width')) || 0);
                 if (height != settings.height) {
                     settings.height = height;
-                    if (self._tbody) {
+                    if (that._tbody) {
                         // At least 1 pixel - to show scrollers correctly.
-                        self._tbody.style.height = Math.max(settings.height - self._$headerRow.outerHeight(), 1) + 'px';
+                        that._tbody.style.height = Math.max(settings.height - that._$headerRow.outerHeight(), 1) + 'px';
                     }
                     if (settings.virtualTable) {
-                        self.clearAndRender();
+                        that.clearAndRender();
                     }
                 }
-                return self;
+                return that;
             },
 
             /**
@@ -1789,13 +1794,13 @@ this._$table
              * @expose
              * @param {Object[]} data array of rows to add to the table
              * @param {Boolean?} resort should resort all rows?
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             addRows: function (data, resort) {
-                var self = this;
+                var that = this;
                 if (data) {
                     this._rows.add(data);
-                    if (self.settings.virtualTable) {
+                    if (that.settings.virtualTable) {
                         while (this._tbody.firstChild) {
                             this.trigger('rowdestroy', this._tbody.firstChild);
                             this._unbindCellEventsForRow(this._tbody.firstChild);
@@ -1821,12 +1826,12 @@ this._$table
                                 this.clearAndRender();
                             }
                         } else if (this._$tbody) {
-                            var firstRow = self._rows.length - data.length,
+                            var firstRow = that._rows.length - data.length,
                                 lastRow = firstRow + data.length - 1;
 
-                            var renderedRows = self.renderRows(firstRow, lastRow);
-                            self._tbody.appendChild(renderedRows);
-                            self._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
+                            var renderedRows = that.renderRows(firstRow, lastRow);
+                            that._tbody.appendChild(renderedRows);
+                            that._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
                                 ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
                         }
                     }
@@ -1841,7 +1846,7 @@ this._$table
              * @expose
              * @param {Number} physicalRowIndex index
              * @param {Boolean=true} render
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             removeRow: function(physicalRowIndex, render) {
                 if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
@@ -1895,7 +1900,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} physicalRowIndex index
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             refreshRow: function(physicalRowIndex) {
                 if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
@@ -1938,10 +1943,44 @@ this._$table
             },
 
             /**
+             * Get the DOM element for the specified row, if it exists
+             * @public
+             * @expose
+             * @param {Number} physicalRowIndex index
+             * @returns {Element?} row or null
+             */
+            getRowElement: function(physicalRowIndex) {
+                if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return null;
+
+                // Find out if the row is in the rendered dataset
+                var rowIndex = -1;
+                if (this._filteredRows && (rowIndex = _.indexOf(this._filteredRows, this._rows[physicalRowIndex])) === -1) return this;
+
+                if (rowIndex === -1) {
+                    rowIndex = physicalRowIndex;
+                }
+
+                var childNodes = this._tbody.childNodes;
+
+                if (this.settings.virtualTable) {
+                    // Now make sure that the row actually rendered, as this is a virtual table
+                    for (var i = 0; i < childNodes.length; i++) {
+                        if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                            return childNodes[i];
+                        }
+                    }
+                } else {
+                    return childNodes[rowIndex];
+                }
+
+                return null;
+            },
+
+            /**
              * Refreshes all virtual rows
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
 			refreshAllVirtualRows: function () {
 
@@ -1973,7 +2012,7 @@ this._$table
              * @expose
              * @param {Object[]} data array of rows to add to the table
              * @param {Boolean?} resort should resort all rows?
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             setRows: function (data, resort) {
                 this.scrollTop = this.$el.find('.table').scrollTop();
@@ -2036,13 +2075,13 @@ this._$table
              */
             createWebWorker: function (url, start, resort) {
                 if (this.isWorkerSupported()) {
-                    var self = this;
+                    var that = this;
                     var worker = new Worker(url);
                     var listener = function (evt) {
                         if (evt.data.append) {
-                            self.addRows(evt.data.rows, resort);
+                            that.addRows(evt.data.rows, resort);
                         } else {
-                            self.setRows(evt.data.rows, resort);
+                            that.setRows(evt.data.rows, resort);
                         }
                     };
                     worker.addEventListener('message', listener, false);
@@ -2063,7 +2102,7 @@ this._$table
              * @public
              * @expose
              * @param {Worker} worker the Web Worker
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             unbindWebWorker: function (worker) {
                 if (this._workerListeners) {
@@ -2079,13 +2118,13 @@ this._$table
             },
 
             /**
-             * Abort cell preview (called from within a cellPreview event)
+             * A synonym for hideCellPreview()
              * @expose
              * @public
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             abortCellPreview: function() {
-                this._abortCellPreview = true;
+                this.hideCellPreview();
                 return this;
             },
 
@@ -2093,7 +2132,7 @@ this._$table
              * Cancel a resize in progress
              * @expose
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             cancelColumnResize: function() {
                 if (this._$resizer) {
@@ -2167,11 +2206,11 @@ this._$table
              * @param {jQuery.Event} e event
              */
             _onTouchStartColumnHeader: function (event) {
-                var self = this;
-                if (self._currentTouchId) return;
+                var that = this;
+                if (that._currentTouchId) return;
 
                 var startTouch = event.originalEvent.changedTouches[0];
-                self._currentTouchId = startTouch.identifier;
+                that._currentTouchId = startTouch.identifier;
 
                 var $eventTarget = $(event.currentTarget);
 
@@ -2180,7 +2219,7 @@ this._$table
                     distanceTreshold = 9;
 
                 var unbind = function () {
-                    self._currentTouchId = null;
+                    that._currentTouchId = null;
                     $eventTarget.off('touchend').off('touchcancel');
                     clearTimeout(tapAndHoldTimeout);
                 };
@@ -2216,14 +2255,14 @@ this._$table
                     var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
                     if (distanceTravelled < distanceTreshold) {
-                        self.cancelColumnResize();
+                        that.cancelColumnResize();
                         $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3 }));
                     }
 
                 }, 500);
 
                 $eventTarget.on('touchend', function (event) {
-                    var touch = _.find(event.originalEvent.changedTouches, function(touch){ return touch.identifier === self._currentTouchId; });
+                    var touch = _.find(event.originalEvent.changedTouches, function(touch){ return touch.identifier === that._currentTouchId; });
                     if (!touch) return;
 
                     unbind();
@@ -2233,7 +2272,7 @@ this._$table
                     currentPos = { x: touch.pageX, y: touch.pageY };
                     var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
-                    if (distanceTravelled < distanceTreshold || self._$resizer) {
+                    if (distanceTravelled < distanceTreshold || that._$resizer) {
                         $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1 }));
                         $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1 }));
                     }
@@ -2242,14 +2281,14 @@ this._$table
                     unbind();
                 }).on('touchmove', function (event) {
                     var touch = _.find(event.originalEvent.changedTouches, function (touch) {
-                        return touch.identifier === self._currentTouchId;
+                        return touch.identifier === that._currentTouchId;
                     });
                     if (!touch) return;
 
                     // Keep track of current position, so we know if we need to cancel the tap-and-hold
                     currentPos = { x: touch.pageX, y: touch.pageY };
 
-                    if (self._$resizer) {
+                    if (that._$resizer) {
                         event.preventDefault();
 
                         $eventTarget.trigger(fakeEvent('mousemove', touch));
@@ -2598,7 +2637,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _clearSortArrows: function () {
                 if (this._$table) {
@@ -2621,7 +2660,7 @@ this._$table
              * @private
              * @param {String} column the name of the sort column
              * @param {Boolean} descending table is sorted descending
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _showSortArrow: function (column, descending) {
 
@@ -2644,7 +2683,7 @@ this._$table
             /**
              * @private
              * @param {Number} cellIndex index of the column in the DOM
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _resizeColumnElements: function (cellIndex) {
                 var headerCells = this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell');
@@ -2666,7 +2705,7 @@ this._$table
             },
 
             /**
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              * */
             _destroyHeaderCells: function() {
                 if (this._$headerRow) {
@@ -2680,13 +2719,13 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _renderSkeleton: function () {
-                var self = this;
+                var that = this;
 
-                self._destroyHeaderCells();
-                self._currentTouchId = null;
+                that._destroyHeaderCells();
+                that._currentTouchId = null;
 
                 var settings = this.settings,
                     allowCellPreview = settings.allowCellPreview,
@@ -2713,8 +2752,8 @@ this._$table
 
                 var preventDefault = function (event) { event.preventDefault(); };
 
-                for (var i = 0, column, cell, cellInside, $cell; i < self._visibleColumns.length; i++) {
-                    column = self._visibleColumns[i];
+                for (var i = 0, column, cell, cellInside, $cell; i < that._visibleColumns.length; i++) {
+                    column = that._visibleColumns[i];
                     if (column.visible) {
                         cell = createElement('div');
                         $cell = $(cell);
@@ -2734,21 +2773,21 @@ this._$table
                         }
                         headerRow.appendChild(cell);
 
-                        self._visibleColumns[i].element = $cell;
+                        that._visibleColumns[i].element = $cell;
 
-                        $cell.on('mousedown.dgtable', _.bind(self._onMouseDownColumnHeader, self))
-                            .on('mousemove.dgtable', _.bind(self._onMouseMoveColumnHeader, self))
-                            .on('mouseup.dgtable', _.bind(self._onMouseUpColumnHeader, self))
-                            .on('mouseleave.dgtable', _.bind(self._onMouseLeaveColumnHeader, self))
-                            .on('touchstart.dgtable', _.bind(self._onTouchStartColumnHeader, self))
-                            .on('dragstart.dgtable', _.bind(self._onStartDragColumnHeader, self))
-                            .on('click.dgtable', _.bind(self._onClickColumnHeader, self))
+                        $cell.on('mousedown.dgtable', _.bind(that._onMouseDownColumnHeader, that))
+                            .on('mousemove.dgtable', _.bind(that._onMouseMoveColumnHeader, that))
+                            .on('mouseup.dgtable', _.bind(that._onMouseUpColumnHeader, that))
+                            .on('mouseleave.dgtable', _.bind(that._onMouseLeaveColumnHeader, that))
+                            .on('touchstart.dgtable', _.bind(that._onTouchStartColumnHeader, that))
+                            .on('dragstart.dgtable', _.bind(that._onStartDragColumnHeader, that))
+                            .on('click.dgtable', _.bind(that._onClickColumnHeader, that))
                             .on('contextmenu.dgtable', preventDefault);
                         $(cellInside)
-                            .on('dragenter.dgtable', _.bind(self._onDragEnterColumnHeader, self))
-                            .on('dragover.dgtable', _.bind(self._onDragOverColumnHeader, self))
-                            .on('dragleave.dgtable', _.bind(self._onDragLeaveColumnHeader, self))
-                            .on('drop.dgtable', _.bind(self._onDropColumnHeader, self));
+                            .on('dragenter.dgtable', _.bind(that._onDragEnterColumnHeader, that))
+                            .on('dragover.dgtable', _.bind(that._onDragOverColumnHeader, that))
+                            .on('dragleave.dgtable', _.bind(that._onDragLeaveColumnHeader, that))
+                            .on('drop.dgtable', _.bind(that._onDropColumnHeader, that));
 
                         if (hasIeDragAndDropBug) {
                             $cell.on('selectstart.dgtable', _.bind(ieDragDropHandler, cell));
@@ -2777,26 +2816,26 @@ this._$table
                     this.el.style.overflow = '';
                 }
 
-                if (self._$table && settings.virtualTable) {
-                    self._$table.remove();
-                    if (self._$tbody) {
-                        var rows = self._$tbody[0].childNodes;
+                if (that._$table && settings.virtualTable) {
+                    that._$table.remove();
+                    if (that._$tbody) {
+                        var rows = that._$tbody[0].childNodes;
                         for (var i = 0, len = rows.length; i < len; i++) {
-                            self.trigger('rowdestroy', rows[i]);
-                            self._unbindCellEventsForRow(rows[i]);
+                            that.trigger('rowdestroy', rows[i]);
+                            that._unbindCellEventsForRow(rows[i]);
                         }
                     }
-                    self._$table = self._table = self._$tbody = self._tbody = null;
+                    that._$table = that._table = that._$tbody = that._tbody = null;
                 }
 
-                relativizeElement(self.$el);
+                relativizeElement(that.$el);
 
                 if (!settings.height && settings.virtualTable) {
                     settings.height = this.$el.innerHeight();
                 }
 
                 // Calculate virtual row heights
-                if (settings.virtualTable && !self._virtualRowHeight) {
+                if (settings.virtualTable && !that._virtualRowHeight) {
                     var createDummyRow = function() {
                         var row = createElement('div'),
                             cell = row.appendChild(createElement('div')),
@@ -2823,17 +2862,17 @@ this._$table
                     var row1 = createDummyRow(), row2 = createDummyRow(), row3 = createDummyRow();
                     $dummyTbody.append(row1, row2, row3);
 
-                    self._virtualRowHeightFirst = $(row1).outerHeight();
-                    self._virtualRowHeight = $(row2).outerHeight();
-                    self._virtualRowHeightLast = $(row3).outerHeight();
-                    self._virtualRowHeightMin = Math.min(Math.min(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
-                    self._virtualRowHeightMax = Math.max(Math.max(self._virtualRowHeightFirst, self._virtualRowHeight), self._virtualRowHeightLast);
+                    that._virtualRowHeightFirst = $(row1).outerHeight();
+                    that._virtualRowHeight = $(row2).outerHeight();
+                    that._virtualRowHeightLast = $(row3).outerHeight();
+                    that._virtualRowHeightMin = Math.min(Math.min(that._virtualRowHeightFirst, that._virtualRowHeight), that._virtualRowHeightLast);
+                    that._virtualRowHeightMax = Math.max(Math.max(that._virtualRowHeightFirst, that._virtualRowHeight), that._virtualRowHeightLast);
 
                     $dummyWrapper.remove();
                 }
 
                 // Create table skeleton
-                if (!self._$table) {
+                if (!that._$table) {
 
                     var fragment = document.createDocumentFragment();
                     var table = createElement('div');
@@ -2851,7 +2890,7 @@ this._$table
                         tableHeight -= parseFloat($table.css('padding-top')) || 0;
                         tableHeight -= parseFloat($table.css('padding-bottom')) || 0;
                     }
-                    self._visibleHeight = tableHeight;
+                    that._visibleHeight = tableHeight;
                     table.style.height = settings.height ? tableHeight + 'px' : 'auto';
                     table.style.display = 'block';
                     table.style.overflowY = 'auto';
@@ -2861,30 +2900,30 @@ this._$table
                     var tbody = createElement('div');
                     var $tbody = $(tbody);
                     tbody.className = settings.tableClassName + '-body';
-                    self._table = table;
-                    self._tbody = tbody;
-                    self._$table = $table;
-                    self._$tbody = $tbody;
+                    that._table = table;
+                    that._tbody = tbody;
+                    that._$table = $table;
+                    that._$tbody = $tbody;
 
                     if (settings.virtualTable) {
-                        self._virtualVisibleRows = Math.ceil(self._visibleHeight / self._virtualRowHeightMin);
+                        that._virtualVisibleRows = Math.ceil(that._visibleHeight / that._virtualRowHeightMin);
                     }
 
-                    self._calculateVirtualHeight();
+                    that._calculateVirtualHeight();
 
                     relativizeElement($tbody);
                     relativizeElement($table);
 
                     table.appendChild(tbody);
-                    self.el.appendChild(fragment);
+                    that.el.appendChild(fragment);
                 }
 
-                return self;
+                return that;
             },
 
             /**
              * @private
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _updateLastCellWidthFromScrollbar: function(force) {
                 // Calculate scrollbar's width and reduce from lat column's width
@@ -2916,7 +2955,7 @@ this._$table
              * Explicitly set the width of the table based on the sum of the column widths
              * @private
              * @param {boolean} parentSizeMayHaveChanged Parent size may have changed, treat rendering accordingly
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             _updateTableWidth: function (parentSizeMayHaveChanged) {
                 var settings = this.settings,
@@ -2973,8 +3012,8 @@ this._$table
              * @param {HTMLElement} el
              */
             _cellMouseOverEvent: function(el) {
-                var self = this,
-                    settings = self.settings;
+                var that = this,
+                    settings = that.settings;
 
                 this._abortCellPreview = false;
 
@@ -2983,7 +3022,7 @@ this._$table
                 if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
                     (elInner.scrollHeight - elInner.clientHeight > 1)) {
 
-                    self.hideCellPreview();
+                    that.hideCellPreview();
 
                     var $el = $(el), $elInner = $(elInner);
                     var div = createElement('div'), $div = $(div);
@@ -2999,19 +3038,19 @@ this._$table
 
                         div.draggable = true;
 
-                        $(div).on('mousedown', _.bind(self._onMouseDownColumnHeader, self))
-                            .on('mousemove', _.bind(self._onMouseMoveColumnHeader, self))
-                            .on('mouseup', _.bind(self._onMouseUpColumnHeader, self))
-                            .on('mouseleave', _.bind(self._onMouseLeaveColumnHeader, self))
-                            .on('touchstart', _.bind(self._onTouchStartColumnHeader, self))
-                            .on('dragstart', _.bind(self._onStartDragColumnHeader, self))
-                            .on('click', _.bind(self._onClickColumnHeader, self))
+                        $(div).on('mousedown', _.bind(that._onMouseDownColumnHeader, that))
+                            .on('mousemove', _.bind(that._onMouseMoveColumnHeader, that))
+                            .on('mouseup', _.bind(that._onMouseUpColumnHeader, that))
+                            .on('mouseleave', _.bind(that._onMouseLeaveColumnHeader, that))
+                            .on('touchstart', _.bind(that._onTouchStartColumnHeader, that))
+                            .on('dragstart', _.bind(that._onStartDragColumnHeader, that))
+                            .on('click', _.bind(that._onClickColumnHeader, that))
                             .on('contextmenu.dgtable', function (event) { event.preventDefault(); });
                         $(div.firstChild)
-                            .on('dragenter', _.bind(self._onDragEnterColumnHeader, self))
-                            .on('dragover', _.bind(self._onDragOverColumnHeader, self))
-                            .on('dragleave', _.bind(self._onDragLeaveColumnHeader, self))
-                            .on('drop', _.bind(self._onDropColumnHeader, self));
+                            .on('dragenter', _.bind(that._onDragEnterColumnHeader, that))
+                            .on('dragover', _.bind(that._onDragOverColumnHeader, that))
+                            .on('dragleave', _.bind(that._onDragLeaveColumnHeader, that))
+                            .on('drop', _.bind(that._onDropColumnHeader, that));
 
                         if (hasIeDragAndDropBug) {
                             $(div).on('selectstart', _.bind(function(evt) {
@@ -3039,24 +3078,16 @@ this._$table
                         $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
                     }
 
-                    if (!self._transparentBgColor1) {
+                    if (!that._transparentBgColor1) {
                         // Detect browser's transparent spec
                         var tempDiv = document.createElement('div');
                         tempDiv.style.backgroundColor = 'transparent';
-                        self._transparentBgColor1 = $(tempDiv).css('background-color');
+                        that._transparentBgColor1 = $(tempDiv).css('background-color');
                         tempDiv.style.backgroundColor = 'rgba(0,0,0,0)';
-                        self._transparentBgColor2 = $(tempDiv).css('background-color');
+                        that._transparentBgColor2 = $(tempDiv).css('background-color');
                     }
 
-                    var bgColor = $(el).css('background-color');
-                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
-                        bgColor = $(el.parentNode).css('background-color');
-                    }
-                    if (bgColor === self._transparentBgColor1 || bgColor === self._transparentBgColor2) {
-                        bgColor = '#fff';
-                    }
-
-                    $div.css({
+	                var css = {
                         'box-sizing': 'content-box',
                         width: requiredWidth + 'px',
                         'min-height': $el.height() + 'px',
@@ -3069,9 +3100,21 @@ this._$table
                         zIndex: '-1',
                         left: '0',
                         top: '0',
-                        'background-color': bgColor,
                         cursor: 'default'
-                    });
+                    };
+
+                    if (css) {
+                        var bgColor = $(el).css('background-color');
+                        if (bgColor === that._transparentBgColor1 || bgColor === that._transparentBgColor2) {
+                            bgColor = $(el.parentNode).css('background-color');
+                        }
+                        if (bgColor === that._transparentBgColor1 || bgColor === that._transparentBgColor2) {
+                            bgColor = '#fff';
+                        }
+                        css['background-color'] = bgColor;
+                    }
+
+                    $div.css(css);
 
                     document.body.appendChild(div);
 
@@ -3087,9 +3130,9 @@ this._$table
 
                     div['rowIndex'] = el.parentNode['rowIndex'];
                     var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
-                    div['columnName'] = self._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
+                    div['columnName'] = that._visibleColumns[_.indexOf(el.parentNode.childNodes, el)].name;
 
-                    self.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : self._rows[physicalRowIndex]);
+                    that.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : that._rows[physicalRowIndex]);
                     if (this._abortCellPreview) {
 						$div.remove();
 						return;
@@ -3123,11 +3166,11 @@ this._$table
                     });
 
                     div['__cell'] = el;
-                    self._$cellPreviewEl = $div;
+                    that._$cellPreviewEl = $div;
                     el['__previewEl'] = div;
 
-                    self._bindCellHoverOut(el);
-                    self._bindCellHoverOut(div);
+                    that._bindCellHoverOut(el);
+                    that._bindCellHoverOut(div);
 
                     $div.on('mousewheel', function (event) {
                         var originalEvent = event.originalEvent;
@@ -3136,17 +3179,17 @@ this._$table
                             y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
 
                         if (xy) {
-                            self.hideCellPreview();
+                            that.hideCellPreview();
                         }
 
-                        if (y && self._table.scrollHeight > self._table.clientHeight) {
-                            var scrollTop = (y * -1) + self._$table.scrollTop();
-                            self._$table.scrollTop(scrollTop);
+                        if (y && that._table.scrollHeight > that._table.clientHeight) {
+                            var scrollTop = (y * -1) + that._$table.scrollTop();
+                            that._$table.scrollTop(scrollTop);
                         }
 
-                        if (x && self._table.scrollWidth > self._table.clientWidth) {
-                            var scrollLeft = (x * -1) + self._$table.scrollLeft();
-                            self._$table.scrollLeft(scrollLeft);
+                        if (x && that._table.scrollWidth > that._table.clientWidth) {
+                            var scrollLeft = (x * -1) + that._$table.scrollLeft();
+                            that._$table.scrollLeft(scrollLeft);
                         }
                     });
                 }
@@ -3161,9 +3204,11 @@ this._$table
             },
 
             /**
+             * Hides the current cell preview,
+             * or prevents the one that is currently trying to show (in the 'cellpreview' event)
              * @public
              * @expose
-             * @returns {DGTable} self
+             * @returns {DGTable} that
              */
             hideCellPreview: function() {
                 if (this._$cellPreviewEl) {
@@ -3179,6 +3224,7 @@ this._$table
 
                     this._$cellPreviewEl = null;
                 }
+                this._abortCellPreview = false;
                 return this;
             }
         }
@@ -3385,6 +3431,7 @@ this._$table
      * @param {String?} tableClassName
      * @param {Boolean=true} allowCellPreview
      * @param {String?} cellPreviewClassName
+     * @param {Boolean=true} cellPreviewAutoBackground
      * @param {String?} className
      * @param {String?} tagName
      * */
@@ -3493,6 +3540,12 @@ this._$table
          * @type {String}
          * */
         cellPreviewClassName: null,
+
+        /**
+         * @expose
+         * @type {Boolean}
+         * */
+        cellPreviewAutoBackground: null,
 
         /** @expose */
         className: null,
