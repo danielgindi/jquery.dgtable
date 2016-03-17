@@ -3168,10 +3168,10 @@ this._$table
                     offset.top -= parentOffset.top;
                     
                     // Constrain horizontally
-                    var minHorz = 0, 
+                    var minHorz = 0,
                         maxHorz = $parent - $div.outerWidth();
-                    offset[prop] = offset[prop] < minHorz ? 
-                        minHorz : 
+                    offset[prop] = offset[prop] < minHorz ?
+                        minHorz :
                         (offset[prop] > maxHorz ? maxHorz : offset[prop]);
 
                     // Constrain vertically
