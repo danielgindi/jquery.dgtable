@@ -3116,7 +3116,7 @@ this._$table
 
                     $div.css(css);
 
-                    document.body.appendChild(div);
+                    that.el.appendChild(div);
 
                     $(div.firstChild).css({
                         'direction': $elInner.css('direction'),
@@ -3138,32 +3138,57 @@ this._$table
 						return;
 					}
 
+                    var $parent = that.$el;
+                    var $scrollParent = $parent[0] === window ? $(document) : $parent;
+                    
                     var offset = $el.offset();
-
-                    if ($el.css('float') === 'right') {
-                        var w = $div.outerWidth();
-                        var elW = $el.outerWidth();
-                        offset.left -= w - elW;
-                        offset.left -= parseFloat($(el).css('border-right-width')) || 0;
-                    } else {
-                        offset.left += parseFloat($(el).css('border-left-width')) || 0;
+                    var parentOffset = $parent.offset();
+                    var rtl = $el.css('float') === 'right';
+                    var prop = rtl ? 'right' : 'left';
+                    
+                    // Handle RTL, go from the other side
+                    if (rtl) {
+                        var windowWidth = $(window).width();
+                        offset.right = windowWidth - (offset.left + $el.outerWidth());
+                        parentOffset.right = windowWidth - (parentOffset.left + $parent.outerWidth());
                     }
+                    
+                    // If the parent has borders, then it would offset the offset...
+                    offset.left -= parseFloat($parent.css('border-left-width')) || 0;
+                    offset.right -= parseFloat($parent.css('border-right-width')) || 0;
+                    offset.top -= parseFloat($parent.css('border-top-width')) || 0;
+                    
+                    // Handle border widths of the element being offset
+                    offset[prop] += parseFloat($(el).css('border-' + prop + '-width')) || 0;
                     offset.top += parseFloat($(el).css('border-top-width')) || parseFloat($(el).css('border-bottom-width')) || 0;
 
-                    var minLeft = 0, maxLeft = $(window).width() - $div.outerWidth();
-                    offset.left = offset.left < minLeft ? minLeft : offset.left > maxLeft ? maxLeft : offset.left;
+                    // Subtract offsets to get offset relative to parent
+                    offset.left -= parentOffset.left;
+                    offset.right -= parentOffset.right;
+                    offset.top -= parentOffset.top;
+                    
+                    // Constrain horizontally
+                    var minHorz = 0, 
+                        maxHorz = $parent - $div.outerWidth();
+                    offset[prop] = offset[prop] < minHorz ? 
+                        minHorz : 
+                        (offset[prop] > maxHorz ? maxHorz : offset[prop]);
 
+                    // Constrain vertically
 					var totalHeight = $el.outerHeight();
-					var maxTop = $(document).scrollTop() + $(window).innerHeight() - totalHeight;
+					var maxTop = $scrollParent.scrollTop() + $parent.innerHeight() - totalHeight;
 					if (offset.top > maxTop) {
 						offset.top = Math.max(0, maxTop);
 					}
 					
-                    $div.css({
-                        left: offset.left,
+                    // Apply css to preview cell
+                    var previewCss = {
                         top: offset.top,
                         'z-index': 9999
-                    });
+                    };
+                    previewCss[prop] = offset[prop];
+                    
+                    $div.css(previewCss);
 
                     div['__cell'] = el;
                     that._$cellPreviewEl = $div;
