@@ -310,7 +310,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
@@ -321,7 +321,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
@@ -333,7 +333,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
@@ -344,7 +344,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
@@ -358,7 +358,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._bindCellHoverIn = function (el) {
                         if (!el['__hoverIn']) {
@@ -369,7 +369,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._unbindCellHoverIn = function (el) {
                         if (el['__hoverIn']) {
@@ -381,7 +381,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._bindCellHoverOut = function (el) {
                         if (!el['__hoverOut']) {
@@ -392,7 +392,7 @@ this._$table
 
                     /**
                      * @param {HTMLElement} el cell or header-cell
-                     * @returns {DGTable} that
+                     * @returns {DGTable} self
                      * */
                     this._unbindCellHoverOut = function (el) {
                         if (el['__hoverOut']) {
@@ -533,7 +533,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _unbindCellEventsForTable: function() {
                 var i, rows, rowCount, rowToClean, j, cells, cellCount;
@@ -556,7 +556,7 @@ this._$table
             /**
              * @private
              * @param {HTMLElement} rowToClean
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _unbindCellEventsForRow: function(rowToClean) {
                 for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
@@ -568,7 +568,7 @@ this._$table
             /**
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             render: function () {
                 var that = this,
@@ -690,7 +690,7 @@ this._$table
              * Forces a full render of the table
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             clearAndRender: function () {
                 this._tableSkeletonNeedsRendering = true;
@@ -783,7 +783,7 @@ this._$table
             /**
              * Calculate virtual table height for scrollbar
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _calculateVirtualHeight: function () {
                 if (this._tbody) {
@@ -866,7 +866,7 @@ this._$table
              * @expose
              * @param {COLUMN_OPTIONS} columnData column properties
              * @param {String|Number} [before=-1] column name or order to be inserted before
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             addColumn: function (columnData, before) {
                 var columns = this._columns;
@@ -905,7 +905,7 @@ this._$table
              * @public
              * @expose
              * @param {String} column column name
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             removeColumn: function (column) {
                 var settings = this.settings, columns = this._columns;
@@ -929,7 +929,7 @@ this._$table
              * @param {String} column Name of the column to filter on
              * @param {String} filter Check specified column for existence of this string
              * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             filter: function (column, filter, caseSensitive) {
                 var col = this._columns.get(column);
@@ -949,7 +949,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _refilter: function() {
                 if (this._filteredRows) {
@@ -965,7 +965,7 @@ this._$table
              * @expose
              * @param {String} column Name of the column
              * @param {String} label New label for the column
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setColumnLabel: function (column, label) {
                 var col = this._columns.get(column);
@@ -991,7 +991,7 @@ this._$table
              * @expose
              * @param {String|Number} src Name or position of the column to be moved
              * @param {String|Number} dest Name of the column currently in the desired position, or the position itself
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             moveColumn: function (src, dest) {
                 var settings = this.settings,
@@ -1050,7 +1050,7 @@ this._$table
              * @param {String} column Name of the column to sort on
              * @param {Boolean=} descending Sort in descending order
              * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             sort: function (column, descending, add) {
                 var settings = this.settings,
@@ -1126,7 +1126,7 @@ this._$table
              * Re-sort the table using current sort specifiers
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
 			 */
 			resort: function () {
 				var currentSort = this._rows.sortColumn;
@@ -1149,7 +1149,7 @@ this._$table
              * Make sure there's at least one column visible
              * @private
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _ensureVisibleColumns: function () {
                 if (this._visibleColumns.length === 0 && this._columns.length) {
@@ -1166,7 +1166,7 @@ this._$table
              * @expose
              * @param {String} column Unique column name
              * @param {Boolean} visible New visibility mode for the column
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setColumnVisible: function (column, visible) {
                 var col = this._columns.get(column);
@@ -1199,7 +1199,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} minColumnWidth Minimum column width
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setMinColumnWidth: function (minColumnWidth) {
                 var settings = this.settings;
@@ -1226,7 +1226,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} sortableColumns How many sortable columns to allow?
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setSortableColumns: function (sortableColumns) {
                 var settings = this.settings;
@@ -1256,7 +1256,7 @@ this._$table
              * @public
              * @expose
              * @param {Boolean} movableColumns are the columns movable?
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setMovableColumns: function (movableColumns) {
                 var settings = this.settings;
@@ -1280,7 +1280,7 @@ this._$table
              * @public
              * @expose
              * @param {Boolean} resizableColumns are the columns resizable?
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setResizableColumns: function (resizableColumns) {
                 var settings = this.settings;
@@ -1304,7 +1304,7 @@ this._$table
              * @public
              * @expose
              * @param {Function(String,Boolean)Function(a,b)Boolean} comparatorCallback a callback function that returns the comparator for a specific column
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setComparatorCallback: function (comparatorCallback) {
                 var settings = this.settings;
@@ -1320,7 +1320,7 @@ this._$table
              * @expose
              * @param {String} column name of the column to resize
              * @param {Number|String} width new column as pixels, or relative size (0.5, 50%)
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setColumnWidth: function (column, width) {
 
@@ -1558,7 +1558,7 @@ this._$table
              * Notify the table that its width has changed
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             tableWidthChanged: (function () {
 
@@ -1586,7 +1586,7 @@ this._$table
                  * @public
                  * @param {Boolean} [forceUpdate=false]
                  * @param {Boolean} [renderColumns=true]
-                 * @returns {DGTable} that
+                 * @returns {DGTable} self
                  */
                 return function(forceUpdate, renderColumns) {
 
@@ -1766,7 +1766,7 @@ this._$table
              * Notify the table that its height has changed
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             tableHeightChanged: function () {
                 var that = this,
@@ -1794,7 +1794,7 @@ this._$table
              * @expose
              * @param {Object[]} data array of rows to add to the table
              * @param {Boolean?} resort should resort all rows?
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             addRows: function (data, resort) {
                 var that = this;
@@ -1846,7 +1846,7 @@ this._$table
              * @expose
              * @param {Number} physicalRowIndex index
              * @param {Boolean=true} render
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             removeRow: function(physicalRowIndex, render) {
                 if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
@@ -1900,7 +1900,7 @@ this._$table
              * @public
              * @expose
              * @param {Number} physicalRowIndex index
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             refreshRow: function(physicalRowIndex) {
                 if (physicalRowIndex < 0 || physicalRowIndex > this._rows.length - 1) return this;
@@ -1980,7 +1980,7 @@ this._$table
              * Refreshes all virtual rows
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
 			refreshAllVirtualRows: function () {
 
@@ -2012,7 +2012,7 @@ this._$table
              * @expose
              * @param {Object[]} data array of rows to add to the table
              * @param {Boolean?} resort should resort all rows?
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             setRows: function (data, resort) {
                 this.scrollTop = this.$el.find('.table').scrollTop();
@@ -2102,7 +2102,7 @@ this._$table
              * @public
              * @expose
              * @param {Worker} worker the Web Worker
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             unbindWebWorker: function (worker) {
                 if (this._workerListeners) {
@@ -2121,7 +2121,7 @@ this._$table
              * A synonym for hideCellPreview()
              * @expose
              * @public
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             abortCellPreview: function() {
                 this.hideCellPreview();
@@ -2132,7 +2132,7 @@ this._$table
              * Cancel a resize in progress
              * @expose
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             cancelColumnResize: function() {
                 if (this._$resizer) {
@@ -2637,7 +2637,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _clearSortArrows: function () {
                 if (this._$table) {
@@ -2660,7 +2660,7 @@ this._$table
              * @private
              * @param {String} column the name of the sort column
              * @param {Boolean} descending table is sorted descending
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _showSortArrow: function (column, descending) {
 
@@ -2683,7 +2683,7 @@ this._$table
             /**
              * @private
              * @param {Number} cellIndex index of the column in the DOM
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _resizeColumnElements: function (cellIndex) {
                 var headerCells = this._$headerRow.find('div.' + this.settings.tableClassName + '-header-cell');
@@ -2705,7 +2705,7 @@ this._$table
             },
 
             /**
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              * */
             _destroyHeaderCells: function() {
                 if (this._$headerRow) {
@@ -2719,7 +2719,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _renderSkeleton: function () {
                 var that = this;
@@ -2923,7 +2923,7 @@ this._$table
 
             /**
              * @private
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _updateLastCellWidthFromScrollbar: function(force) {
                 // Calculate scrollbar's width and reduce from lat column's width
@@ -2955,7 +2955,7 @@ this._$table
              * Explicitly set the width of the table based on the sum of the column widths
              * @private
              * @param {boolean} parentSizeMayHaveChanged Parent size may have changed, treat rendering accordingly
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             _updateTableWidth: function (parentSizeMayHaveChanged) {
                 var settings = this.settings,
@@ -3233,7 +3233,7 @@ this._$table
              * or prevents the one that is currently trying to show (in the 'cellpreview' event)
              * @public
              * @expose
-             * @returns {DGTable} that
+             * @returns {DGTable} self
              */
             hideCellPreview: function() {
                 if (this._$cellPreviewEl) {
