@@ -55,6 +55,8 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **columns**: `COLUMN_OPTIONS[]` (Array of COLUMN_OPTIONS objects)
   * **name**: `String` Name of the column
   * **label**: `String=name` Used for the header of this column
+  * **dataPath**: `String=name` Path to the data to show (Defaults to `name`)
+  * **comparePath**: `String=name` Path to the data to use for comparison (Defaults to `dataPath`)
   * **width**: `Number|String`
     * A simple number (i.e `10`, `30`, `50`) will set an absolute width for the column.
     * A percentage (i.e `'30%'`) or a 0-1 decimal value (i.e `0.2`, `0.7`) will set a relative width for the column, out of the full table's width.
@@ -213,7 +215,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getColumnConfig({String} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
-* `getHtmlForCell({Number} row, {String} column) {String}`: *Undocumented yet*
+* `getHtmlForCell({Number} row, {String} columnName) {String}`: *Undocumented yet*
 * `getDataForRow({Number} row) {Object}`: Gets the row data for a specific row
   * *returns* row data of the row at physical index **row**
 * `getRowCount() {Number}`: Gets the number of rows

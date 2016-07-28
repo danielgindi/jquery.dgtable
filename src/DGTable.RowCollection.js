@@ -152,9 +152,25 @@ DGTable.RowCollection = (function () {
         var nativeSort = RowCollection.prototype.sort;
 
         function getDefaultComparator(column, descending) {
+            var columnName = column.column;
+            var comparePath = column.comparePath || columnName;
+            if (typeof comparePath === 'string') {
+                comparePath = comparePath.split('.');
+            }
+            var pathLength = comparePath.length,
+                hasPath = pathLength > 1,
+                i;
+            
             var lessVal = descending ? 1 : -1, moreVal = descending ? -1 : 1;
             return function(leftRow, rightRow) {
-                var col = column, leftVal = leftRow[col], rightVal = rightRow[col];
+                var leftVal = leftRow[comparePath[0]],
+                    rightVal = rightRow[comparePath[0]];
+                if (hasPath) {
+                    for (i = 1; i < pathLength; i++) {
+                        leftVal = leftVal && leftVal[comparePath[i]];
+                        rightVal = rightVal && rightVal[comparePath[i]];
+                    }
+                }
                 return leftVal < rightVal ? lessVal : (leftVal > rightVal ? moreVal : 0);
             };
         }
@@ -163,14 +179,16 @@ DGTable.RowCollection = (function () {
          * @param {Boolean=false} silent
          * @returns {DGTable.RowCollection} self
          */
-        RowCollection.prototype.sort = function(silent) {
+        RowCollection.prototype.sort = function (silent) {
             if (this.sortColumn.length) {
                 var comparators = [], i, returnVal;
+                
                 for (i = 0; i < this.sortColumn.length; i++) {
                     returnVal = {};
                     this.trigger('requiresComparatorForColumn', returnVal, this.sortColumn[i].column, this.sortColumn[i].descending);
-                    comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i].column, this.sortColumn[i].descending), this));
+                    comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending), this));
                 }
+                
                 if (comparators.length === 1) {
                     nativeSort.call(this, comparators[0]);
                 } else {
