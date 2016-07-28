@@ -62,7 +62,7 @@ this._$table
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.7',
+            VERSION: '0.4.8',
 
             /**
              * @constructs
@@ -229,41 +229,37 @@ this._$table
                 this._visibleColumns = columns.getVisibleColumns();
                 this._ensureVisibleColumns();
 
-                if (options.sortColumn === undefined) {
-                    options.sortColumn = null;
-                } else {
-                    if (typeof options.sortColumn == 'string') {
-                        if (!this._columns.get(options.sortColumn)) {
-                            options.sortColumn = null;
-                        } else {
-                            options.sortColumn = [{ column: options.sortColumn, descending: false }];
-                        }
-                    } else if (options.sortColumn instanceof Array) {
-                        var cols = [];
-                        for (i = 0, len = options.sortColumn.length, column; i < len; i++) {
-                            col = options.sortColumn[i];
-                            col = col.column !== undefined ? col : { column: col, descending: false };
-                            column = this._columns.get(col.column);
-                            if (column && !_.contains(cols, column.name)) {
-                                cols.push(column.name);
+                var sortColumns = [];
+                
+                if (options.sortColumn) {
+                    
+                    var tmpSortColumns = options.sortColumn;
+                    
+                    if (tmpSortColumns && typeof tmpSortColumns !== 'object') {
+                        tmpSortColumns = [tmpSortColumns];
+                    }
+                    
+                    if (tmpSortColumns instanceof Array ||
+                        typeof tmpSortColumns === 'object') {
+                            
+                        for (i = 0, len = tmpSortColumns.length, column; i < len; i++) {
+                            var sortColumn = tmpSortColumns[i];
+                            if (typeof sortColumn === 'string') {
+                                sortColumn = { column: sortColumn, descending: false };
                             }
-                            if (cols.length === settings.sortableColumns || cols.length == this._visibleColumns.length) {
-                                break;
-                            }
+                            col = this._columns.get(sortColumn.column);
+                            sortColumns.push({
+                                column: sortColumn.column,
+                                comparePath: col.comparePath,
+                                descending: sortColumn.descending
+                            });
                         }
-                        options.sortColumn = cols;
-                    } else if (typeof options.sortColumn == 'object') {
-                        if (!this._columns.get(options.sortColumn.column)) {
-                            options.sortColumn = null;
-                        }
-                    } else {
-                        options.sortColumn = null;
                     }
                 }
 
                 /** @private
                  * @field {DGTable.RowCollection} _rows */
-                this._rows = new DGTable.RowCollection({ sortColumn: options.sortColumn, columns: this.columns });
+                this._rows = new DGTable.RowCollection({ sortColumn: sortColumns, columns: this.columns });
                 this.listenTo(this._rows, 'requiresComparatorForColumn', _.bind(function(returnVal, column, descending){
                         if (settings.comparatorCallback) {
                             returnVal.comparator = settings.comparatorCallback(column, descending);
@@ -451,7 +447,7 @@ this._$table
                 
                 var parsedWidth = this._parseColumnWidth(columnData.width, columnData.ignoreMin ? 0 : this.settings.minColumnWidth);
             
-                return {
+                var col = {
                     name: columnData.name,
                     label: columnData.label === undefined ? columnData.name : columnData.label,
                     width: parsedWidth.width,
@@ -464,6 +460,17 @@ this._$table
                     ignoreMin: columnData.ignoreMin === undefined ? false : !!columnData.ignoreMin
                 };
                 
+                col.dataPath = columnData.dataPath === undefined ? col.name : columnData.dataPath;
+                col.comparePath = columnData.comparePath === undefined ? col.dataPath : columnData.comparePath;
+                
+                if (typeof col.dataPath === 'string') {
+                    col.dataPath = col.dataPath.split('.');
+                }
+                if (typeof col.comparePath === 'string') {
+                    col.comparePath = col.comparePath.split('.');
+                }
+                
+                return col;
             },
 
             /**
@@ -720,7 +727,10 @@ this._$table
                     virtualRowHeightFirst = that._virtualRowHeightFirst,
                     virtualRowHeight = that._virtualRowHeight,
                     top,
-                    physicalRowIndex;
+                    physicalRowIndex,
+                    dataPath,
+                    dataPathIndex,
+                    colValue;
 
                 var colCount = visibleColumns.length;
                 for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
@@ -757,7 +767,14 @@ this._$table
                             this._bindCellHoverIn(cell);
                         }
                         cellInner = cell.appendChild(createElement('div'));
-                        content = cellFormatter(rowData[column.name], column.name, rowData);
+                        
+                        dataPath = column.dataPath;
+                        colValue = rowData[dataPath[0]];
+                        for (dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+                            colValue = colValue && colValue[dataPath[dataPathIndex]];
+                        }
+                        
+                        content = cellFormatter(colValue, column.name, rowData);
                         if (content === undefined) {
                             content = '';
                         }
@@ -1088,7 +1105,11 @@ this._$table
                     descending = descending === undefined ? false : descending;
 
                     // Set the required column in the front of the stack
-                    currentSort.push({ column: col.name, descending: !!descending });
+                    currentSort.push({
+                        column: col.name,
+                        comparePath: col.comparePath,
+                        descending: !!descending
+                    });
 
                     this._clearSortArrows();
                     for (i = 0; i < currentSort.length; i++) {
@@ -1414,11 +1435,19 @@ this._$table
              * @param {String} column name of the column
              * @returns {String} HTML string for the specified cell
              */
-            getHtmlForCell: function (row, column) {
+            getHtmlForCell: function (row, columnName) {
                 if (row < 0 || row > this._rows.length - 1) return null;
-                if (!this._columns.get(column)) return null;
+                var column = this._columns.get(columnName);
+                if (!column) return null;
                 var rowData = this._rows[row];
-                var content = this.settings.cellFormatter(rowData[column], column, rowData);
+        
+                var dataPath = column.dataPath;
+                var colValue = rowData[dataPath[0]];
+                for (var dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+                    colValue = colValue[dataPath[dataPathIndex]];
+                }
+                
+                var content = this.settings.cellFormatter(colValue, column.name, rowData);
                 if (content === undefined) {
                     content = '';
                 }
@@ -3390,6 +3419,18 @@ this._$table
         
         /**
          * @expose
+         * @type {String=name}
+         * */
+        dataPath: null,
+        
+        /**
+         * @expose
+         * @type {String=dataPath}
+         * */
+        comparePath: null,
+        
+        /**
+         * @expose
          * @type {Number|String}
          * */
         width: null,
@@ -3929,9 +3970,25 @@ DGTable.RowCollection = (function () {
         var nativeSort = RowCollection.prototype.sort;
 
         function getDefaultComparator(column, descending) {
+            var columnName = column.column;
+            var comparePath = column.comparePath || columnName;
+            if (typeof comparePath === 'string') {
+                comparePath = comparePath.split('.');
+            }
+            var pathLength = comparePath.length,
+                hasPath = pathLength > 1,
+                i;
+            
             var lessVal = descending ? 1 : -1, moreVal = descending ? -1 : 1;
             return function(leftRow, rightRow) {
-                var col = column, leftVal = leftRow[col], rightVal = rightRow[col];
+                var leftVal = leftRow[comparePath[0]],
+                    rightVal = rightRow[comparePath[0]];
+                if (hasPath) {
+                    for (i = 1; i < pathLength; i++) {
+                        leftVal = leftVal && leftVal[comparePath[i]];
+                        rightVal = rightVal && rightVal[comparePath[i]];
+                    }
+                }
                 return leftVal < rightVal ? lessVal : (leftVal > rightVal ? moreVal : 0);
             };
         }
@@ -3940,14 +3997,16 @@ DGTable.RowCollection = (function () {
          * @param {Boolean=false} silent
          * @returns {DGTable.RowCollection} self
          */
-        RowCollection.prototype.sort = function(silent) {
+        RowCollection.prototype.sort = function (silent) {
             if (this.sortColumn.length) {
                 var comparators = [], i, returnVal;
+                
                 for (i = 0; i < this.sortColumn.length; i++) {
                     returnVal = {};
                     this.trigger('requiresComparatorForColumn', returnVal, this.sortColumn[i].column, this.sortColumn[i].descending);
-                    comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i].column, this.sortColumn[i].descending), this));
+                    comparators.push(_.bind(returnVal.comparator || getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending), this));
                 }
+                
                 if (comparators.length === 1) {
                     nativeSort.call(this, comparators[0]);
                 } else {
