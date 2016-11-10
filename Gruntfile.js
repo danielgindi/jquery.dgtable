@@ -1,5 +1,7 @@
 /*jshint node:true */
 module.exports = function( grunt ) {
+    
+    var Path = require('path');
 
 	grunt.loadNpmTasks( 'grunt-contrib-concat' );
 	grunt.loadNpmTasks( 'grunt-contrib-jshint' );
@@ -62,6 +64,11 @@ module.exports = function( grunt ) {
 				paths: 'dist/DGTable.min.js'
 			}
 		},
+		'clean-source-map-paths': {
+			"dist": {
+				paths: 'dist/DGTable.min.js.map'
+			}
+		},
 		watch: {
 			files: [ '*', '.jshintrc', '{src}/**/{*,.*}' ],
 			tasks: 'default'
@@ -75,8 +82,18 @@ module.exports = function( grunt ) {
                 grunt.file.read(path) + '//# sourceMappingURL=DGTable.min.js.map');
         });
     });
+    
+    grunt.registerMultiTask('clean-source-map-paths', 'Fix source map paths', function() {
+        var paths = grunt.file.expand(this.data.paths);
+        paths.forEach(function(path) {
+            var map = JSON.parse(grunt.file.read(path));
+            map.file = Path.basename(map.file);
+            map.sources = map.sources.map(x => Path.basename(x));
+            grunt.file.write(path, JSON.stringify(map));
+        });
+    });
 
-	grunt.registerTask( 'build', [ 'jshint:src-js', 'concat', 'closure-compiler', 'add-map-directive' ] );
+	grunt.registerTask( 'build', [ 'jshint:src-js', 'concat', 'closure-compiler', 'add-map-directive', 'clean-source-map-paths' ] );
 	grunt.registerTask( 'style', [ 'jshint:src-js' ] );
 	grunt.registerTask( 'default', [ 'build' ] );
 
