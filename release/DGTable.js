@@ -62,7 +62,7 @@ this._$table
             tagName: 'div',
             
             /** @expose */
-            VERSION: '0.4.8',
+            VERSION: '0.4.9',
 
             /**
              * @constructs
@@ -500,8 +500,12 @@ this._$table
                 DGTable['__super__'].remove.apply(this, arguments);
 
                 this._destroyHeaderCells()._unbindCellEventsForTable();
-                this._$table.empty();
-                this._$tbody.empty();
+                if (this._$table) {
+                    this._$table.empty();
+                }
+                if (this._$tbody) {
+                    this._$tbody.empty();
+                }
 
                 if (this._workerListeners) {
                     for (var j = 0, worker; j < this._workerListeners.length; j++) {
