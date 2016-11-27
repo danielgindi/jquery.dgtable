@@ -6,11 +6,7 @@
 <title>DGTable.js Example</title>
 <link rel="stylesheet" href="example.css">
 <script src="dependencies/jquery.js"></script>
-<script src="dependencies/underscore.js"></script>
-<script src="dependencies/backbone.js"></script>
-<script type="text/javascript" src="../src/DGTable.js"></script>
-<script type="text/javascript" src="../src/DGTable.ColumnCollection.js"></script>
-<script type="text/javascript" src="../src/DGTable.RowCollection.js"></script>
+<script type="text/javascript" src="../dist/jquery.dgtable.js"></script>
 <!-- <script type="text/javascript" src="../release/DGTable.min.js"></script> -->
 <script>
     var sampleData = [
@@ -346,6 +342,12 @@
                     return '<i>' + val + '</i>';
                 }
                 return val;
+            }
+        });
+
+        table.on('rowcreate', function (rowIndex, physicalRowIndex, row, rowData) {
+            if (rowData['last'] === 'Banks') {
+                $(row).find('[data-column=last]').css('background', 'rgba(0, 210, 0, 0.8)');
             }
         });
 

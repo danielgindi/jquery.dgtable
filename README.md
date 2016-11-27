@@ -1,7 +1,7 @@
 DGTable.js
 ==========
 
-This is a table View for Backbone + jQuery, which is meant to be high-performance, and allow simple user interactions with the UI, such as:
+This is a table View for jQuery, which is meant to be high-performance, and allow simple user interactions with the UI, such as:
 * Sorting
 * Sorting by more than one column
 * Moving columns
@@ -91,15 +91,14 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **rowsBufferSize**: `Number=10` The size of the rows buffer, for virtual table
 * **minColumnWidth**: `Number=35` In pixels, the minimum width for a column
 * **resizeAreaWidth**: `Number=8` The size of the area where you can drag to resize.
-* **comparatorCallback**: `Function(String columnName, Boolean descending):{Function(a,b):boolean}` A callback that can pass a comparator function for each column and mode as required.
+* **onComparatorRequired**: `Function(String columnName, Boolean descending):{Function(a,b):boolean}` A callback that can pass a comparator function for each column and mode as required.
 * **resizerClassName**: `String='dgtable-resize'` Class name for the dragged resizing element (showing when resizing a column)
 * **tableClassName**: `String='dgtable'` Class name for the table
 * **allowCellPreview**: `Boolean=true` When set, hovering on truncated cells will show a preview of the full content.
 * **allowHeaderCellPreview**: `Boolean=true` Allow for toggling off **allowCellPreview** for headers specifically.
 * **cellPreviewAutoBackground**: `Boolean=true` When set, the preview cell will receive its background automatically from the cell.
 * **cellPreviewClassName**: `String='dgtable-cell-preview'` Class name for the cell preview element
-* **className**: `String='dgtable-wrapper'` Backbone's wrapper element class name.
-* **tagName**: `String='div'` Backbone's wrapper element tag name.
+* **className**: `String='dgtable-wrapper'` Element class name.
 
 #### Events triggered by DGTable:
 
@@ -159,6 +158,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 4th argument: the bounds of the header cell on the page `{"left": offset().left, "top": offset().top, "width": outerWidth(), "height": outerHeight()}`
 
 - Member functions:
+* `on(eventName, {Function?} callback)`: Adds an event listener
+* `once(eventName, {Function?} callback)`: Adds a one-shot event listener
+* `off(eventName, {Function?} callback)`: Removes an event listener
+* `render()`: Renders the view. Should be called after adding to the DOM, and when the viewport has changed and the table has no knowledge of it.
 * `clearAndRender`: Forces a full render of the table
 * `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1) {DGTable}`: Add a column to the table
   * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
@@ -180,7 +183,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **src**: Name or position of the column to be moved
   * **dest**: Name of the column currently in the desired position, or the position itself
   * *returns* Self, to allow for call chaining.
-* `sort({String} column, {Boolean=} descending, {Boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
+* `sort({String} column, {Boolean?} descending, {Boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
   * **src**: Name of the column to sort on
   * **descending**: Sort in descending order (if not specified, defaults to false or reverses current descending mode if sorting by same column)
   * **add**: Should this sort be on top of the existing sort? (For multiple column sort)
