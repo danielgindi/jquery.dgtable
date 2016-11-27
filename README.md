@@ -1,5 +1,5 @@
-DGTable.js
-==========
+jquery.dgtable
+==============
 
 This is a table View for jQuery, which is meant to be high-performance, and allow simple user interactions with the UI, such as:
 * Sorting

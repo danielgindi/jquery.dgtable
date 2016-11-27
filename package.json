@@ -1,6 +1,6 @@
 {
-  "name": "DGTable.js",
-  "title": "DGTable.js",
+  "name": "jquery.dgtable",
+  "title": "jquery.dgtable",
   "description": "High-performance table View for jQuery",
   "version": "0.5.0",
   "main": "dist/jquery.dgtable.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/danielgindi/DGTable.js.git"
+    "url": "git://github.com/danielgindi/jquery.dgtable.git"
   },
   "bugs": {
-    "url": "https://github.com/danielgindi/DGTable.js/issues"
+    "url": "https://github.com/danielgindi/jquery.dgtable/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/danielgindi/DGTable.js/blob/master/LICENSE"
+      "url": "https://github.com/danielgindi/jquery.dgtable/blob/master/LICENSE"
     }
   ],
   "dependencies": {},
