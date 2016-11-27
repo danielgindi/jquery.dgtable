@@ -1,0 +1,3673 @@
+'use strict';
+
+import jQuery from 'jquery';
+import { bind, indexOf, contains, find, forEach } from './util';
+import RowCollection from './row_collection';
+import ColumnCollection from './column_collection';
+
+const $ = jQuery;
+
+var userAgent = navigator.userAgent;
+var ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
+var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
+var createElement = bind(document.createElement, document);
+
+function webkitRenderBugfix(el) {
+    // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars 
+    //   are still calculated even though they are not there yet. This is the last resort.
+    var oldDisplay = el.style.display;
+    el.style.display = 'none';
+    //noinspection BadExpressionStatementJS
+    el.offsetHeight; // No need to store this anywhere, the reference is enough
+    el.style.display = oldDisplay;
+    return el;
+}
+
+function relativizeElement($el) {
+    if (!contains(['relative', 'absolute', 'fixed'], $el.css('position'))) {
+        $el.css('position', 'relative');
+    }
+}
+
+/** @class DGTable */
+var DGTable = function DGTable () {
+    if (!(this instanceof DGTable)) {
+        // Allow constructing without `new`
+        return new (Function.prototype.bind.apply(
+            DGTable,
+            [DGTable].concat(Array.prototype.slice.call(arguments, 0))));
+    }
+
+    this.initialize.apply(this, arguments);
+};
+
+/**
+ * @public
+ * @expose
+ * @type {string}
+ */
+DGTable.VERSION = '@@VERSION';
+
+/**
+ * @public
+ * @expose
+ * @type {string}
+ */
+DGTable.prototype.VERSION = DGTable.VERSION;
+
+/**
+ * @constructs
+ * @param {DGTable.Options?} options - initialization options
+ * @returns {DGTable}
+ */
+DGTable.prototype.initialize = function (options) {
+    var that = this;
+
+    options = options || {};
+
+    /**
+     * @private
+     * @type {DGTable.Options}
+     * */
+    var o = that.o = {};
+
+    /**
+     * @private
+     * This is for encapsulating private data */
+    var p = that.p = {};
+
+    /** This is for encapsulating event callback */
+    p.events = {};
+
+    /**
+     * @public
+     * @expose
+     * */
+    var $el = that.$el = $('<div>').addClass(o.className || 'dgtable-wrapper');
+
+    /**
+     * @public
+     * @expose
+     * */
+    that.el = that.$el[0];
+
+    // Set control data
+    $el
+        .data('control', that)
+        .data('dgtable', that);
+
+    // For jQuery.UI or jquery.removeevent
+    $el.on('remove', function () {
+        that.destroy();
+    });
+
+    p.onMouseMoveResizeAreaBound = bind(this._onMouseMoveResizeArea, this);
+    p.onEndDragColumnHeaderBound = bind(this._onEndDragColumnHeader, this);
+    p.onTableScrolledHorizontallyBound = bind(this._onTableScrolledHorizontally, this);
+
+    this.$el.on('dragend', p.onEndDragColumnHeaderBound);
+
+    /**
+     * @private
+     * @field {Boolean} _tableSkeletonNeedsRendering */
+    p.tableSkeletonNeedsRendering = true;
+
+    options.columns = options.columns || [];
+
+    /**
+     * @private
+     * @field {Boolean} virtualTable */
+    o.virtualTable = o.virtualTable === undefined ? true : !!o.virtualTable;
+
+    /**
+     * @private
+     * @field {Number} rowsBufferSize */
+    o.rowsBufferSize = o.rowsBufferSize || 3;
+
+    /**
+     * @private
+     * @field {Number} minColumnWidth */
+    o.minColumnWidth = Math.max(o.minColumnWidth || 35, 0);
+
+    /**
+     * @private
+     * @field {Number} resizeAreaWidth */
+    o.resizeAreaWidth = o.resizeAreaWidth || 8;
+
+    /**
+     * @private
+     * @field {Boolean} resizableColumns */
+    o.resizableColumns = o.resizableColumns === undefined ? true : !!o.resizableColumns;
+
+    /**
+     * @private
+     * @field {Boolean} movableColumns */
+    o.movableColumns = o.movableColumns === undefined ? true : !!o.movableColumns;
+
+    /**
+     * @private
+     * @field {Number} sortableColumns */
+    o.sortableColumns = o.sortableColumns === undefined ? 1 : (parseInt(o.sortableColumns, 10) || 1);
+
+    /**
+     * @private
+     * @field {Boolean} adjustColumnWidthForSortArrow */
+    o.adjustColumnWidthForSortArrow = o.adjustColumnWidthForSortArrow === undefined ? true : !!o.adjustColumnWidthForSortArrow;
+
+    /**
+     * @private
+     * @field {Boolean} convertColumnWidthsToRelative */
+    o.convertColumnWidthsToRelative = o.convertColumnWidthsToRelative === undefined ? false : !!o.convertColumnWidthsToRelative;
+
+    /**
+     * @private
+     * @field {String} cellClasses */
+    o.cellClasses = o.cellClasses === undefined ? '' : o.cellClasses;
+
+    /**
+     * @private
+     * @field {String} resizerClassName */
+    o.resizerClassName = o.resizerClassName === undefined ? 'dgtable-resize' : o.resizerClassName;
+
+    /**
+     * @private
+     * @field {String} tableClassName */
+    o.tableClassName = o.tableClassName === undefined ? 'dgtable' : o.tableClassName;
+
+    /**
+     * @private
+     * @field {Boolean} allowCellPreview */
+    o.allowCellPreview = o.allowCellPreview === undefined ? true : o.allowCellPreview;
+
+    /**
+     * @private
+     * @field {Boolean} allowHeaderCellPreview */
+    o.allowHeaderCellPreview = o.allowHeaderCellPreview === undefined ? true : o.allowHeaderCellPreview;
+
+    /**
+     * @private
+     * @field {String} cellPreviewClassName */
+    o.cellPreviewClassName = o.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : o.cellPreviewClassName;
+
+    /**
+     * @private
+     * @field {Boolean} cellPreviewAutoBackground */
+    o.cellPreviewAutoBackground = o.cellPreviewAutoBackground === undefined ? true : o.cellPreviewAutoBackground;
+
+    /**
+     * @private
+     * @field {Function(String,Boolean)Function(a,b)Boolean} onComparatorRequired */
+    o.onComparatorRequired = o.onComparatorRequired === undefined ? null : o.onComparatorRequired;
+    if (!o.onComparatorRequired && typeof o['comparatorCallback'] === 'function') {
+        o.onComparatorRequired = o['comparatorCallback'];
+    }
+
+    /**
+     * @private
+     * @field {Boolean} width */
+    o.width = o.width === undefined ? DGTable.Width.NONE : o.width;
+
+    /**
+     * @private
+     * @field {Boolean} relativeWidthGrowsToFillWidth */
+    o.relativeWidthGrowsToFillWidth = o.relativeWidthGrowsToFillWidth === undefined ? true : !!o.relativeWidthGrowsToFillWidth;
+
+    /**
+     * @private
+     * @field {Boolean} relativeWidthShrinksToFillWidth */
+    o.relativeWidthShrinksToFillWidth = o.relativeWidthShrinksToFillWidth === undefined ? false : !!o.relativeWidthShrinksToFillWidth;
+
+    /**
+     * @private
+     * @field {Function} cellFormatter */
+    o.cellFormatter = o.cellFormatter || function (val) {
+            return val;
+        };
+
+    /**
+     * @private
+     * @field {Function} headerCellFormatter */
+    o.headerCellFormatter = o.headerCellFormatter || function (val) {
+            return val;
+        };
+
+    /** @private
+     * @field {Number} height */
+    o.height = options.height;
+
+    var i, len, col, column, columnData, order;
+
+    // Prepare columns
+    var columns = new ColumnCollection();
+    for (i = 0, order = 0; i < options.columns.length; i++) {
+        columnData = options.columns[i];
+        column = this._initColumnFromData(columnData);
+        if (columnData.order !== undefined) {
+            if (columnData.order > order) {
+                order = columnData.order + 1;
+            }
+            column.order = columnData.order;
+        } else {
+            column.order = order++;
+        }
+        columns.push(column);
+    }
+    columns.normalizeOrder();
+
+    p.columns = columns;
+    p.visibleColumns = columns.getVisibleColumns();
+    this._ensureVisibleColumns();
+
+    var sortColumns = [];
+
+    if (o.sortColumn) {
+
+        var tmpSortColumns = o.sortColumn;
+
+        if (tmpSortColumns && typeof tmpSortColumns !== 'object') {
+            tmpSortColumns = [tmpSortColumns];
+        }
+
+        if (tmpSortColumns instanceof Array ||
+            typeof tmpSortColumns === 'object') {
+
+            for (i = 0, len = tmpSortColumns.length, column; i < len; i++) {
+                var sortColumn = tmpSortColumns[i];
+                if (typeof sortColumn === 'string') {
+                    sortColumn = { column: sortColumn, descending: false };
+                }
+                col = p.columns.get(sortColumn.column);
+                sortColumns.push({
+                    column: sortColumn.column,
+                    comparePath: col.comparePath,
+                    descending: sortColumn.descending
+                });
+            }
+        }
+    }
+
+    /** @field {RowCollection} _rows */
+    p.rows = new RowCollection({ sortColumn: sortColumns, columns: this.columns });
+    p.rows.onComparatorRequired = function(column, descending){
+        if (o.onComparatorRequired) {
+            return o.onComparatorRequired(column, descending);
+        }
+    };
+
+    /** @private
+     * @field {RowCollection} _filteredRows */
+    p.filteredRows = null;
+
+    /*
+     Setup hover mechanism.
+     We need this to be high performance, as there may be MANY cells to call this on, on creation and destruction.
+     Using native events to spare the overhead of jQuery's event binding, and even just the creation of the jQuery collection object.
+     */
+
+    /**
+     * @param {MouseEvent} evt
+     * @this {HTMLElement}
+     * */
+    var hoverMouseOverHandler = function (evt) {
+        evt = evt || event;
+        var relatedTarget = evt.fromElement || evt.relatedTarget;
+        if (relatedTarget == this || $.contains(this, relatedTarget)) return;
+        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
+        that._cellMouseOverEvent.call(that, this);
+    };
+
+    /**
+     * @param {MouseEvent} evt
+     * @this {HTMLElement}
+     * */
+    var hoverMouseOutHandler = function (evt) {
+        evt = evt || event;
+        var relatedTarget = evt.toElement || evt.relatedTarget;
+        if (relatedTarget == this || $.contains(this, relatedTarget)) return;
+        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
+        that._cellMouseOutEvent.call(that, this);
+    };
+
+    if ('addEventListener' in window) {
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * */
+        p._bindCellHoverIn = function (el) {
+            if (!el['__hoverIn']) {
+                el.addEventListener('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+            }
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * */
+        p._unbindCellHoverIn = function (el) {
+            if (el['__hoverIn']) {
+                el.removeEventListener('mouseover', el['__hoverIn']);
+                el['__hoverIn'] = null;
+            }
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * @returns {DGTable} self
+         * */
+        p._bindCellHoverOut = function (el) {
+            if (!el['__hoverOut']) {
+                el.addEventListener('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+            }
+            return this;
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * @returns {DGTable} self
+         * */
+        p._unbindCellHoverOut = function (el) {
+            if (el['__hoverOut']) {
+                el.removeEventListener('mouseout', el['__hoverOut']);
+                el['__hoverOut'] = null;
+            }
+            return this;
+        };
+
+    } else {
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * */
+        p._bindCellHoverIn = function (el) {
+            if (!el['__hoverIn']) {
+                el.attachEvent('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+            }
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * */
+        p._unbindCellHoverIn = function (el) {
+            if (el['__hoverIn']) {
+                el.detachEvent('mouseover', el['__hoverIn']);
+                el['__hoverIn'] = null;
+            }
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * */
+        p._bindCellHoverOut = function (el) {
+            if (!el['__hoverOut']) {
+                el.attachEvent('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+            }
+        };
+
+        /**
+         * @param {HTMLElement} el cell or header-cell
+         * @returns {DGTable} self
+         * */
+        p._unbindCellHoverOut = function (el) {
+            if (el['__hoverOut']) {
+                el.detachEvent('mouseout', el['__hoverOut']);
+                el['__hoverOut'] = null;
+            }
+            return this;
+        };
+
+    }
+};
+
+/**
+ * Add an event listener
+ * @public
+ * @expose
+ * @param {String} eventName
+ * @param {Function} callback
+ * @returns {DGTable}
+ */
+DGTable.prototype.on = function (eventName, callback) {
+    var that = this, events = that.p.events;
+
+    if (typeof callback !== 'function')
+        return that;
+
+    if (!events.hasOwnProperty(eventName))
+        events[eventName] = [];
+
+    events[eventName].push({
+        cb: callback,
+        once: false
+    });
+
+    return that;
+};
+
+/**
+ * Add an event listener for a one shot
+ * @public
+ * @expose
+ * @param {String} eventName
+ * @param {Function} callback
+ * @returns {DGTable}
+ */
+DGTable.prototype.once = function (eventName, callback) {
+    var that = this, events = that.p.events;
+
+    if (typeof callback !== 'function')
+        return that;
+
+    if (!events.hasOwnProperty(eventName))
+        events[eventName] = [];
+
+    events[eventName].push({
+        cb: callback,
+        once: true
+    });
+
+    return that;
+};
+
+/**
+ * Remove an event listener
+ * @public
+ * @expose
+ * @param {String} eventName
+ * @param {Function} callback
+ * @returns {DGTable}
+ */
+DGTable.prototype.off = function (eventName, callback) {
+    var that = this, events = that.p.events;
+
+    if (!events.hasOwnProperty(eventName))
+        return that;
+
+    var callbacks = events[eventName];
+    for (var i = 0; i < callbacks.length; i++) {
+        var item = callbacks[i];
+        if (callback && item.cb !== callback) continue;
+        callbacks.splice(i--, 1);
+    }
+
+    return that;
+};
+
+DGTable.prototype.trigger = function (eventName) {
+    var that = this, events = that.p.events;
+
+    if (events.hasOwnProperty(eventName)) {
+        var callbacks = events[eventName];
+        for (var i = 0; i < callbacks.length; i++) {
+            var item = callbacks[i];
+            if (item.once) {
+                callbacks.splice(i--, 1);
+            }
+            item.cb.apply(that, Array.prototype.slice.call(arguments, 1));
+        }
+    }
+
+    return that;
+};
+
+/**
+ * Detect column width mode
+ * @private
+ * @param {Number|String} width
+ * @param {Number} minWidth
+ * @returns {Object} parsed width
+ */
+DGTable.prototype._parseColumnWidth = function (width, minWidth) {
+
+    var widthSize = parseFloat(width),
+        widthMode = ColumnWidthMode.AUTO; // Default
+
+    if (widthSize > 0) {
+        // Well, it's sure is not AUTO, as we have a value
+
+        if (width == widthSize + '%') {
+            // It's a percentage!
+
+            widthMode = ColumnWidthMode.RELATIVE;
+            widthSize /= 100;
+        } else if (widthSize > 0 && widthSize < 1) {
+            // It's a decimal value, as a relative value!
+
+            widthMode = ColumnWidthMode.RELATIVE;
+        } else {
+            // It's an absolute size!
+
+            if (widthSize < minWidth) {
+                widthSize = minWidth;
+            }
+            widthMode = ColumnWidthMode.ABSOLUTE;
+        }
+    }
+
+    return {width: widthSize, mode: widthMode};
+};
+
+/**
+ * @private
+ * @param {COLUMN_OPTIONS} columnData
+ */
+DGTable.prototype._initColumnFromData = function(columnData) {
+
+    var parsedWidth = this._parseColumnWidth(columnData.width, columnData.ignoreMin ? 0 : this.o.minColumnWidth);
+
+    var col = {
+        name: columnData.name,
+        label: columnData.label === undefined ? columnData.name : columnData.label,
+        width: parsedWidth.width,
+        widthMode: parsedWidth.mode,
+        resizable: columnData.resizable === undefined ? true : columnData.resizable,
+        sortable: columnData.sortable === undefined ? true : columnData.sortable,
+        movable: columnData.movable === undefined ? true : columnData.movable,
+        visible: columnData.visible === undefined ? true : columnData.visible,
+        cellClasses: columnData.cellClasses === undefined ? this.o.cellClasses : columnData.cellClasses,
+        ignoreMin: columnData.ignoreMin === undefined ? false : !!columnData.ignoreMin
+    };
+
+    col.dataPath = columnData.dataPath === undefined ? col.name : columnData.dataPath;
+    col.comparePath = columnData.comparePath === undefined ? col.dataPath : columnData.comparePath;
+
+    if (typeof col.dataPath === 'string') {
+        col.dataPath = col.dataPath.split('.');
+    }
+    if (typeof col.comparePath === 'string') {
+        col.comparePath = col.comparePath.split('.');
+    }
+
+    return col;
+};
+
+/**
+ * Destroy, releasing all memory, events and DOM elements
+ * @public
+ * @expose
+ */
+DGTable.prototype.close = DGTable.prototype.remove = DGTable.prototype.destroy = function () {
+
+    var that = this,
+        p = that.p || {},
+        $el = that.$el;
+
+    if (that.__removed) {
+        return that;
+    }
+
+    if (p.$resizer) {
+        p.$resizer.remove();
+        p.$resizer = null;
+    }
+
+    if (p.$tbody) {
+        var trs = p.$tbody[0].childNodes;
+        for (var i = 0, len = trs.length; i < len; i++) {
+            that.trigger('rowdestroy', trs[i]);
+        }
+    }
+
+    // Using quotes for __super__ because Google Closure Compiler has a bug...
+    DGTable['__super__'].remove.apply(this, arguments);
+
+    this._destroyHeaderCells()._unbindCellEventsForTable();
+    if (p.$table) {
+        p.$table.empty();
+    }
+    if (p.$tbody) {
+        p.$tbody.empty();
+    }
+
+    if (p.workerListeners) {
+        for (var j = 0, worker; j < p.workerListeners.length; j++) {
+            worker = p.workerListeners[j];
+            worker.worker.removeEventListener('message', worker.listener, false);
+        }
+        p.workerListeners.length = 0;
+    }
+
+    p.rows.length = p.columns.length = 0;
+
+    if (p._deferredRender) {
+        clearTimeout(p._deferredRender);
+    }
+
+    // Cleanup
+    for (var prop in that) {
+        if (that.hasOwnProperty(prop)) {
+            that[prop] = null;
+        }
+    }
+
+    that.__removed = true;
+
+    if ($el) {
+        $el.remove();
+    }
+
+    return this;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._unbindCellEventsForTable = function() {
+    var that = this, p = that.p;
+    var i, rows, rowCount, rowToClean, j, cells, cellCount;
+    if (p.headerRow) {
+        for (i = 0, rows = p.headerRow.childNodes, rowCount = rows.length; i < rowCount; i++) {
+            rowToClean = rows[i];
+            for (j = 0, cells = rowToClean.childNodes, cellCount = cells.length; j < cellCount; j++) {
+                p._unbindCellHoverIn(cells[j]);
+            }
+        }
+    }
+    if (p.tbody) {
+        for (i = 0, rows = p.tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
+            this._unbindCellEventsForRow(rows[i]);
+        }
+    }
+    return this;
+};
+
+/**
+ * @private
+ * @param {HTMLElement} rowToClean
+ * @returns {DGTable} self
+ */
+DGTable.prototype._unbindCellEventsForRow = function(rowToClean) {
+    var that = this, p = that.p;
+    for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
+        p._unbindCellHoverIn(cells[i]);
+    }
+    return this;
+};
+
+/**
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.render = function () {
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (!this.el.offsetParent) {
+        if (!p._deferredRender) {
+            p._deferredRender = setTimeout(function () {
+                p._deferredRender = null;
+                if (!that.__removed && that.el.offsetParent) {
+                    that.render();
+                }
+            });
+        }
+
+        return that;
+    }
+
+    var renderedRows, rowCount;
+
+    if (p.tableSkeletonNeedsRendering === true) {
+        p.tableSkeletonNeedsRendering = false;
+
+        if (o.width == DGTable.Width.AUTO) {
+            // We need to do this to return to the specified widths instead. The arrows added to the column widths...
+            that._clearSortArrows();
+        }
+
+        var lastScrollTop = p.table ? p.table.scrollTop : 0,
+            lastScrollLeft = p.table ? p.table.scrollLeft : 0;
+
+        that.tableWidthChanged(true, false) // Take this chance to calculate required column widths
+            ._renderSkeleton(); // Actual render
+
+        if (!o.virtualTable) {
+            var rows = p.filteredRows || p.rows;
+            rowCount = rows.length;
+            renderedRows = that.renderRows(0, rowCount - 1);
+            p.$tbody.html('').append(renderedRows);
+            that._updateLastCellWidthFromScrollbar(true);
+        } else {
+            that._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
+        }
+
+        p.table.scrollTop = lastScrollTop;
+        p.table.scrollLeft = lastScrollLeft;
+        p.header.scrollLeft = lastScrollLeft;
+
+        this._updateTableWidth(true);
+
+        // Show sort arrows
+        for (var i = 0; i < p.rows.sortColumn.length; i++) {
+            this._showSortArrow(p.rows.sortColumn[i].column, p.rows.sortColumn[i].descending);
+        }
+        if (o.adjustColumnWidthForSortArrow && p.rows.sortColumn.length) {
+            this.tableWidthChanged(true);
+        } else if (!o.virtualTable) {
+            this.tableWidthChanged();
+        }
+
+        this.trigger('renderskeleton');
+
+        if (o.virtualTable) {
+            p.$table.on('scroll', bind(this._onVirtualTableScrolled, this));
+            this.render();
+        }
+
+    } else if (o.virtualTable) {
+        rowCount = (p.filteredRows || p.rows).length;
+        var scrollTop = p.table.scrollTop;
+        var firstVisible = Math.floor((scrollTop - p.virtualRowHeightFirst) / p.virtualRowHeight) + 1 - o.rowsBufferSize;
+        var lastVisible = Math.ceil(((scrollTop - p.virtualRowHeightFirst + p.visibleHeight) / p.virtualRowHeight)) + o.rowsBufferSize;
+        if (firstVisible < 0) firstVisible = 0;
+        if (lastVisible >= rowCount) {
+            lastVisible = rowCount - 1;
+        }
+
+        var oldFirstVisible = -1, oldLastVisible = -1;
+        var tbodyChildNodes = p.tbody.childNodes;
+        if (tbodyChildNodes.length) {
+            oldFirstVisible = tbodyChildNodes[0]['rowIndex'];
+            oldLastVisible = tbodyChildNodes[tbodyChildNodes.length - 1]['rowIndex'];
+        }
+
+        var countToRemove;
+
+        if (oldFirstVisible !== -1 && oldFirstVisible < firstVisible) {
+            countToRemove = Math.min(oldLastVisible + 1, firstVisible) - oldFirstVisible;
+            for (var i = 0; i < countToRemove; i++) {
+                that.trigger('rowdestroy', tbodyChildNodes[0]);
+                that._unbindCellEventsForRow(tbodyChildNodes[0]);
+                p.tbody.removeChild(tbodyChildNodes[0]);
+            }
+            oldFirstVisible += countToRemove;
+            if (oldFirstVisible > oldLastVisible) {
+                oldFirstVisible = oldLastVisible = -1;
+            }
+        } else if (oldLastVisible !== -1 && oldLastVisible > lastVisible) {
+            countToRemove = oldLastVisible - Math.max(oldFirstVisible - 1, lastVisible);
+            for (var i = 0; i < countToRemove; i++) {
+                that.trigger('rowdestroy', tbodyChildNodes[tbodyChildNodes.length - 1]);
+                that._unbindCellEventsForRow(tbodyChildNodes[tbodyChildNodes.length - 1]);
+                p.tbody.removeChild(tbodyChildNodes[tbodyChildNodes.length - 1]);
+            }
+            if (oldLastVisible < oldFirstVisible) {
+                oldFirstVisible = oldLastVisible = -1;
+            }
+        }
+
+        if (firstVisible < oldFirstVisible) {
+            renderedRows = that.renderRows(firstVisible, Math.min(lastVisible, oldFirstVisible - 1));
+            p.$tbody.prepend(renderedRows);
+        }
+        if (lastVisible > oldLastVisible || oldLastVisible === -1) {
+            renderedRows = that.renderRows(oldLastVisible === -1 ? firstVisible : oldLastVisible + 1, lastVisible);
+            p.$tbody.append(renderedRows);
+        }
+    }
+    this.trigger('render');
+    return this;
+};
+
+/**
+ * Forces a full render of the table
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.clearAndRender = function () {
+    var p = this.p;
+    p.tableSkeletonNeedsRendering = true;
+    return this.render();
+};
+
+/**
+ * Render rows
+ * @private
+ * @param {Number} first first row to render
+ * @param {Number} last last row to render
+ * @returns {DocumentFragment} fragment containing all rendered rows
+ */
+DGTable.prototype.renderRows = function (first, last) {
+
+    var that = this,
+        o = that.o,
+        p = that.p,
+        tableClassName = o.tableClassName,
+        rowClassName = tableClassName + '-row',
+        cellClassName = tableClassName + '-cell',
+        rows = p.filteredRows || p.rows,
+        isDataFiltered = !!p.filteredRows,
+        allowCellPreview = o.allowCellPreview,
+        visibleColumns = p.visibleColumns,
+        cellFormatter = o.cellFormatter,
+        isVirtual = o.virtualTable,
+        virtualRowHeightFirst = p.virtualRowHeightFirst,
+        virtualRowHeight = p.virtualRowHeight,
+        top,
+        physicalRowIndex,
+        dataPath,
+        dataPathIndex,
+        colValue;
+
+    var colCount = visibleColumns.length;
+    for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
+        column = visibleColumns[colIndex];
+        column._finalWidth = (column.actualWidthConsideringScrollbarWidth || column.actualWidth);
+    }
+
+    var bodyFragment = document.createDocumentFragment();
+
+    var isRtl = this._isTableRtl(),
+        virtualRowXAttr = isRtl ? 'right' : 'left';
+
+    for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner, content;
+         i < rowCount && i <= last;
+         i++) {
+
+        rowData = rows[i];
+        physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
+
+        row = createElement('div');
+        row.className = rowClassName;
+        row['rowIndex'] = i;
+        row['physicalRowIndex'] = physicalRowIndex;
+
+        for (colIndex = 0; colIndex < colCount; colIndex++) {
+            column = visibleColumns[colIndex];
+            cell = createElement('div');
+            cell['columnName'] = column.name;
+            cell.setAttribute('data-column', column.name);
+            cell.className = cellClassName;
+            cell.style.width = column._finalWidth + 'px';
+            if (column.cellClasses) cell.className += ' ' + column.cellClasses;
+            if (allowCellPreview) {
+                p._bindCellHoverIn(cell);
+            }
+            cellInner = cell.appendChild(createElement('div'));
+
+            dataPath = column.dataPath;
+            colValue = rowData[dataPath[0]];
+            for (dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+                colValue = colValue && colValue[dataPath[dataPathIndex]];
+            }
+
+            content = cellFormatter(colValue, column.name, rowData);
+            if (content === undefined) {
+                content = '';
+            }
+            cellInner.innerHTML = content;
+            row.appendChild(cell);
+        }
+
+        if (isVirtual) {
+            top = i > 0 ? virtualRowHeightFirst + (i - 1) * virtualRowHeight : 0;
+            row.style.position = 'absolute';
+            row.style[virtualRowXAttr] = 0;
+            row.style.top = top + 'px';
+        }
+
+        bodyFragment.appendChild(row);
+
+        that.trigger('rowcreate', i, physicalRowIndex, row, rowData);
+    }
+
+    return bodyFragment;
+};
+
+/**
+ * Calculate virtual table height for scrollbar
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._calculateVirtualHeight = function () {
+    var p = this.p;
+
+    if (p.tbody) {
+        var rowCount = (p.filteredRows || p.rows).length;
+        var height = p.virtualRowHeight * rowCount;
+        if (rowCount) {
+            height += (p.virtualRowHeightFirst - p.virtualRowHeight);
+            height += (p.virtualRowHeightLast - p.virtualRowHeight);
+        }
+        // At least 1 pixel - to show scrollers correctly.
+        if (height < 1) {
+            height = 1;
+        }
+        p.tbody.style.height = height + 'px';
+    }
+    return this;
+};
+
+/**
+ * Calculate the size required for the table body width (which is the row's width)
+ * @private
+ * @returns {Number} calculated width
+ */
+DGTable.prototype._calculateTbodyWidth = function () {
+    var that = this,
+        p = that.p,
+        tableClassName = that.o.tableClassName,
+        rowClassName = tableClassName + '-row',
+        cellClassName = tableClassName + '-cell',
+        visibleColumns = p.visibleColumns,
+        colCount = visibleColumns.length,
+        cell,
+        cellInner,
+        colIndex,
+        column;
+
+    var $row = $('<div>').addClass(rowClassName).css('float', 'left');
+
+    for (colIndex = 0; colIndex < colCount; colIndex++) {
+        column = visibleColumns[colIndex];
+        cell = createElement('div');
+        cell.className = cellClassName;
+        cell.style.width = column.actualWidth + 'px';
+        if (column.cellClasses) cell.className += ' ' + column.cellClasses;
+        cellInner = cell.appendChild(createElement('div'));
+        $row.append(cell);
+    }
+
+    var $thisWrapper = $('<div>')
+        .addClass(this.className)
+        .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', 'float': 'left', width: '1px', overflow: 'hidden' })
+        .append(
+            $('<div>').addClass(tableClassName).append(
+                $('<div>').addClass(tableClassName + '-body').css('width', 99999).append(
+                    $row
+                )
+            )
+        );
+
+    $thisWrapper.appendTo(document.body);
+
+    var fractionTest = $('<div style="border:1px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body);
+    var hasFractions = parseFloat(fractionTest.css('border-width'));
+    hasFractions = Math.round(hasFractions) != hasFractions;
+    fractionTest.remove();
+
+    var width = $row.outerWidth();
+    width -= p.scrollbarWidth || 0;
+
+    if (hasFractions) {
+        width ++;
+    }
+
+    $thisWrapper.remove();
+    return width;
+};
+
+/**
+ * Add a column to the table
+ * @public
+ * @expose
+ * @param {COLUMN_OPTIONS} columnData column properties
+ * @param {String|Number} [before=-1] column name or order to be inserted before
+ * @returns {DGTable} self
+ */
+DGTable.prototype.addColumn = function (columnData, before) {
+    var that = this, p = that;
+    var columns = p.columns;
+
+    if (columnData && !columns.get(columnData.name)) {
+        var beforeColumn = null;
+        if (before !== undefined) {
+            beforeColumn = columns.get(before) || columns.getByOrder(before);
+        }
+
+        var column = this._initColumnFromData(columnData);
+        column.order = beforeColumn ? beforeColumn.order : (columns.getMaxOrder() + 1);
+
+        for (var i = columns.getMaxOrder(), to = column.order, col; i >= to ; i--) {
+            col = columns.getByOrder(i);
+            if (col) {
+                col.order++;
+            }
+        }
+
+        columns.push(column);
+        columns.normalizeOrder();
+
+        p.tableSkeletonNeedsRendering = true;
+        p.visibleColumns = columns.getVisibleColumns();
+        this._ensureVisibleColumns();
+        this.render();
+
+        this.trigger('addcolumn', column.name);
+    }
+    return this;
+};
+
+/**
+ * Remove a column from the table
+ * @public
+ * @expose
+ * @param {String} column column name
+ * @returns {DGTable} self
+ */
+DGTable.prototype.removeColumn = function (column) {
+    var that = this, p = that.p;
+    var columns = p.columns;
+
+    var colIdx = columns.indexOf(column);
+    if (colIdx > -1) {
+        columns.splice(colIdx, 1);
+        columns.normalizeOrder();
+
+        p.visibleColumns = columns.getVisibleColumns();
+        this._ensureVisibleColumns().clearAndRender();
+
+        this.trigger('removecolumn', column);
+    }
+    return this;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {String} column Name of the column to filter on
+ * @param {String} filter Check specified column for existence of this string
+ * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
+ * @returns {DGTable} self
+ */
+DGTable.prototype.filter = function (column, filter, caseSensitive) {
+    var that = this, p = that.p;
+
+    var col = p.columns.get(column);
+    if (col) {
+        var hasFilter = !!p.filteredRows;
+        if (p.filteredRows) {
+            p.filteredRows = null; // Release array memory
+        }
+        p.filteredRows = p.rows.filteredCollection(column, filter, caseSensitive);
+        if (hasFilter || p.filteredRows) {
+            this.clearAndRender();
+            this.trigger('filter', column, filter, caseSensitive);
+        }
+    }
+    return this;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._refilter = function() {
+    var that = this, p = that.p;
+
+    if (p.filteredRows) {
+        p.filteredRows = null; // Release memory
+        p.filteredRows = p.rows.filteredCollection(p.rows.filterColumn, p.rows.filterString, p.rows.filterCaseSensitive);
+    }
+    return this;
+};
+
+/**
+ * Set a new label to a column
+ * @public
+ * @expose
+ * @param {String} column Name of the column
+ * @param {String} label New label for the column
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setColumnLabel = function (column, label) {
+    var that = this, p = that.p;
+
+    var col = p.columns.get(column);
+    if (col) {
+        col.label = label === undefined ? col.name : label;
+
+        if (col.element) {
+            for (var i = 0; i < col.element[0].firstChild.childNodes.length; i++) {
+                var node = col.element[0].firstChild.childNodes[i];
+                if(node.nodeType === 3) {
+                    node.textContent = col.label;
+                    break;
+                }
+            }
+        }
+    }
+    return this;
+};
+
+/**
+ * Move a column to a new position
+ * @public
+ * @expose
+ * @param {String|Number} src Name or position of the column to be moved
+ * @param {String|Number} dest Name of the column currently in the desired position, or the position itself
+ * @returns {DGTable} self
+ */
+DGTable.prototype.moveColumn = function (src, dest) {
+    var that = this,
+        o = that.o,
+        p = that.p,
+        columns = p.columns,
+        col, destCol;
+
+    if (typeof src === 'string') {
+        col = columns.get(src);
+    } else if (typeof src === 'number') {
+        col = p.visibleColumns[src];
+    }
+    if (typeof dest === 'string') {
+        destCol = columns.get(dest);
+    } else if (typeof dest === 'number') {
+        destCol = p.visibleColumns[dest];
+    }
+
+    if (col && destCol && src !== dest) {
+        var srcOrder = col.order, destOrder = destCol.order;
+
+        p.visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
+        this._ensureVisibleColumns();
+
+        if (o.virtualTable) {
+            this.clearAndRender()
+                ._updateLastCellWidthFromScrollbar(true);
+        } else {
+            var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
+            var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
+                fromPos = srcOrder;
+            headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
+
+            var srcWidth = p.visibleColumns[srcOrder];
+            srcWidth = (srcWidth.actualWidthConsideringScrollbarWidth || srcWidth.actualWidth) + 'px';
+            var destWidth = p.visibleColumns[destOrder];
+            destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
+
+            var tbodyChildren = p.$tbody[0].childNodes;
+            for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+                row = tbodyChildren[i];
+                if (row.nodeType !== 1) continue;
+                row.insertBefore(row.childNodes[fromPos], row.childNodes[beforePos]);
+                row.childNodes[destOrder].firstChild.style.width = destWidth;
+                row.childNodes[srcOrder].firstChild.style.width = srcWidth;
+            }
+        }
+
+        this.trigger('movecolumn', col.name, srcOrder, destOrder);
+    }
+    return this;
+};
+
+/**
+ * Sort the table
+ * @public
+ * @expose
+ * @param {String} column Name of the column to sort on
+ * @param {Boolean=} descending Sort in descending order
+ * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
+ * @returns {DGTable} self
+ */
+DGTable.prototype.sort = function (column, descending, add) {
+    var that = this,
+        o = that.o,
+        p = that.p,
+        columns = p.columns,
+        col = columns.get(column), i;
+
+    if (col) {
+        var currentSort = p.rows.sortColumn;
+
+        if (currentSort.length && currentSort[currentSort.length - 1].column == column) {
+            // Recognize current descending mode, if currently sorting by this column
+            descending = descending === undefined ? !currentSort[currentSort.length - 1].descending : descending;
+        }
+
+        if (add) { // Add the sort to current sort stack
+
+            for (i = 0; i < currentSort.length; i++) {
+                if (currentSort[i].column == col.name) {
+                    if (i < currentSort.length - 1) {
+                        currentSort.length = 0;
+                    } else {
+                        currentSort.splice(currentSort.length - 1, 1);
+                    }
+                    break;
+                }
+            }
+            if ((o.sortableColumns > 0 /* allow manual sort when disabled */ && currentSort.length >= o.sortableColumns) || currentSort.length >= p.visibleColumns.length) {
+                currentSort.length = 0;
+            }
+
+        } else { // Sort only by this column
+            currentSort.length = 0;
+        }
+
+        // Default to ascending
+        descending = descending === undefined ? false : descending;
+
+        // Set the required column in the front of the stack
+        currentSort.push({
+            column: col.name,
+            comparePath: col.comparePath,
+            descending: !!descending
+        });
+
+        this._clearSortArrows();
+        for (i = 0; i < currentSort.length; i++) {
+            this._showSortArrow(currentSort[i].column, currentSort[i].descending);
+        }
+        if (o.adjustColumnWidthForSortArrow && !o._tableSkeletonNeedsRendering) {
+            this.tableWidthChanged(true);
+        }
+
+        if (o.virtualTable) {
+            while (p.tbody && p.tbody.firstChild) {
+                this.trigger('rowdestroy', p.tbody.firstChild);
+                this._unbindCellEventsForRow(p.tbody.firstChild);
+                p.tbody.removeChild(p.tbody.firstChild);
+            }
+        } else {
+            p.tableSkeletonNeedsRendering = true;
+        }
+
+        p.rows.sortColumn = currentSort;
+        p.rows.sort(!!p.filteredRows);
+        this._refilter();
+
+        // Build output for event, with option names that will survive compilers
+        var sorts = [];
+        for (i = 0; i < currentSort.length; i++) {
+            sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+        }
+        this.trigger('sort', sorts);
+    }
+    return this;
+};
+
+/**
+ * Re-sort the table using current sort specifiers
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.resort = function () {
+    var that = this,
+        p = that.p;
+
+    var currentSort = p.rows.sortColumn;
+    if (currentSort.length) {
+        p.rows.sortColumn = currentSort;
+        p.rows.sort(!!p.filteredRows);
+        this._refilter();
+
+        // Build output for event, with option names that will survive compilers
+        var sorts = [];
+        for (var i = 0; i < currentSort.length; i++) {
+            sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+        }
+        this.trigger('sort', sorts);
+    }
+    return this;
+};
+
+/**
+ * Make sure there's at least one column visible
+ * @private
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype._ensureVisibleColumns = function () {
+    var that = this,
+        p = that.p;
+
+    if (p.visibleColumns.length === 0 && p.columns.length) {
+        p.columns[0].visible = true;
+        p.visibleColumns.push(p.columns[0]);
+        this.trigger('showcolumn', p.columns[0].name);
+    }
+    return this;
+};
+
+/**
+ * Show or hide a column
+ * @public
+ * @expose
+ * @param {String} column Unique column name
+ * @param {Boolean} visible New visibility mode for the column
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setColumnVisible = function (column, visible) {
+    var that = this, p = that.p;
+
+    var col = p.columns.get(column);
+
+    //noinspection PointlessBooleanExpressionJS
+    visible = !!visible;
+
+    if (col && !!col.visible != visible) {
+        col.visible = visible;
+        p.visibleColumns = p.columns.getVisibleColumns();
+        this.trigger(visible ? 'showcolumn' : 'hidecolumn', column);
+        this._ensureVisibleColumns();
+        this.clearAndRender();
+    }
+    return this;
+};
+
+/**
+ * Get the visibility mode of a column
+ * @public
+ * @expose
+ * @returns {Boolean} true if visible
+ */
+DGTable.prototype.isColumnVisible = function (column) {
+    var that = this, p = that.p;
+    var col = p.columns.get(column);
+    if (col) {
+        return col.visible;
+    }
+    return false;
+};
+
+/**
+ * Globally set the minimum column width
+ * @public
+ * @expose
+ * @param {Number} minColumnWidth Minimum column width
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setMinColumnWidth = function (minColumnWidth) {
+    var o = this.o;
+    minColumnWidth = Math.max(minColumnWidth, 0);
+    if (o.minColumnWidth != minColumnWidth) {
+        o.minColumnWidth = minColumnWidth;
+        this.tableWidthChanged(true);
+    }
+    return this;
+};
+
+/**
+ * Get the current minimum column width
+ * @public
+ * @expose
+ * @returns {Number} Minimum column width
+ */
+DGTable.prototype.getMinColumnWidth = function () {
+    return this.o.minColumnWidth;
+};
+
+/**
+ * Set the limit on concurrent columns sorted
+ * @public
+ * @expose
+ * @param {Number} sortableColumns How many sortable columns to allow?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setSortableColumns = function (sortableColumns) {
+    var o = this.o;
+    if (o.sortableColumns != sortableColumns) {
+        o.sortableColumns = sortableColumns;
+        if (p.$table) {
+            var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
+            for (var i = 0; i < headerCell.length; i++) {
+                $(headerCell[0])[(o.sortableColumns > 0 && p.visibleColumns[i].sortable) ? 'addClass' : 'removeClass']('sortable');
+            }
+        }
+    }
+    return this;
+};
+
+/**
+ * Get the limit on concurrent columns sorted
+ * @public
+ * @expose
+ * @returns {Number} How many sortable columns are allowed?
+ */
+DGTable.prototype.getSortableColumns = function () {
+    return this.o.sortableColumns;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {Boolean?} movableColumns=true are the columns movable?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setMovableColumns = function (movableColumns) {
+    var o = this.o;
+    //noinspection PointlessBooleanExpressionJS
+    movableColumns = movableColumns === undefined ? true : !!movableColumns;
+    if (o.movableColumns != movableColumns) {
+        o.movableColumns = movableColumns;
+    }
+    return this;
+};
+
+/**
+ * @public
+ * @expose
+ * @returns {Boolean} are the columns movable?
+ */
+DGTable.prototype.getMovableColumns = function () {
+    return this.o.movableColumns;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {Boolean} resizableColumns=true are the columns resizable?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setResizableColumns = function (resizableColumns) {
+    var o = this.o;
+    //noinspection PointlessBooleanExpressionJS
+    resizableColumns = resizableColumns === undefined ? true : !!resizableColumns;
+    if (o.resizableColumns != resizableColumns) {
+        o.resizableColumns = resizableColumns;
+    }
+    return this;
+};
+
+/**
+ * @public
+ * @expose
+ * @returns {Boolean} are the columns resizable?
+ */
+DGTable.prototype.getResizableColumns = function () {
+    return this.o.resizableColumns;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {{function(string,boolean):{function(a:*,b:*):boolean}}} comparatorCallback a callback function that returns the comparator for a specific column
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setComparatorCallback = function (comparatorCallback) {
+    var o = this.o;
+    if (o.onComparatorRequired != comparatorCallback) {
+        o.onComparatorRequired = comparatorCallback;
+    }
+    return this;
+};
+
+/**
+ * Set a new width to a column
+ * @public
+ * @expose
+ * @param {String} column name of the column to resize
+ * @param {Number|String} width new column as pixels, or relative size (0.5, 50%)
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setColumnWidth = function (column, width) {
+
+    var that = this, p = that.p;
+
+    var col = p.columns.get(column);
+
+    var parsedWidth = this._parseColumnWidth(width, col.ignoreMin ? 0 : this.o.minColumnWidth);
+
+    if (col) {
+        var oldWidth = this._serializeColumnWidth(col);
+
+        col.width = parsedWidth.width;
+        col.widthMode = parsedWidth.mode;
+
+        var newWidth = this._serializeColumnWidth(col);
+
+        if (oldWidth != newWidth) {
+            this.tableWidthChanged(true); // Calculate actual sizes
+        }
+
+        this.trigger('columnwidth', col.name, oldWidth, newWidth);
+    }
+    return this;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {String} column name of the column
+ * @returns {String|null} the serialized width of the specified column, or null if column not found
+ */
+DGTable.prototype.getColumnWidth = function (column) {
+    var that = this, p = that.p;
+
+    var col = p.columns.get(column);
+    if (col) {
+        return this._serializeColumnWidth(col);
+    }
+    return null;
+};
+
+/**
+ * @public
+ * @expose
+ * @param {String} column name of the column
+ * @returns {SERIALIZED_COLUMN|null} configuration for all columns
+ */
+DGTable.prototype.getColumnConfig = function (column) {
+    var that = this, p = that.p;
+    var col = p.columns.get(column);
+    if (col) {
+        return {
+            'order': col.order,
+            'width': this._serializeColumnWidth(col),
+            'visible': col.visible,
+            'label': col.label
+        };
+    }
+    return null;
+};
+
+/**
+ * Returns a config object for the columns, to allow saving configurations for next time...
+ * @public
+ * @expose
+ * @returns {Object} configuration for all columns
+ */
+DGTable.prototype.getColumnsConfig = function () {
+    var that = this, p = that.p;
+
+    var config = {};
+    for (var i = 0; i < p.columns.length; i++) {
+        config[p.columns[i].name] = this.getColumnConfig(p.columns[i].name);
+    }
+    return config;
+};
+
+/**
+ * Returns an array of the currently sorted columns
+ * @public
+ * @expose
+ * @returns {Array.<SERIALIZED_COLUMN_SORT>} configuration for all columns
+ */
+DGTable.prototype.getSortedColumns = function () {
+    var that = this, p = that.p;
+
+    var sorted = [];
+    for (var i = 0, sort; i < p.rows.sortColumn.length; i++) {
+        sort = p.rows.sortColumn[i];
+        sorted.push({column: sort.column, descending: sort.descending});
+    }
+    return sorted;
+};
+
+/**
+ * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+ * @public
+ * @expose
+ * @param {Number} row - index of the row
+ * @param {String} columnName - name of the column
+ * @returns {String} HTML string for the specified cell
+ */
+DGTable.prototype.getHtmlForCell = function (row, columnName) {
+    var that = this, p = that.p;
+
+    if (row < 0 || row > p.rows.length - 1) return null;
+    var column = p.columns.get(columnName);
+    if (!column) return null;
+    var rowData = p.rows[row];
+
+    var dataPath = column.dataPath;
+    var colValue = rowData[dataPath[0]];
+    for (var dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+        colValue = colValue[dataPath[dataPathIndex]];
+    }
+
+    var content = this.o.cellFormatter(colValue, column.name, rowData);
+    if (content === undefined) {
+        content = '';
+    }
+    return content;
+};
+
+/**
+ * Returns the row data for a specific row
+ * @public
+ * @expose
+ * @param {Number} row index of the row
+ * @returns {Object} Row data
+ */
+DGTable.prototype.getDataForRow = function (row) {
+    var that = this, p = that.p;
+
+    if (row < 0 || row > p.rows.length - 1) return null;
+    return p.rows[row];
+};
+
+/**
+ * Gets the number of rows
+ * @public
+ * @expose
+ * @returns {Number} Row count
+ */
+DGTable.prototype.getRowCount = function () {
+    var that = this, p = that.p;
+    return p.rows ? p.rows.length : 0;
+};
+
+/**
+ * Returns the row data for a specific row
+ * @public
+ * @expose
+ * @param {Number} row index of the filtered row
+ * @returns {Object} Row data
+ */
+DGTable.prototype.getDataForFilteredRow = function (row) {
+    var that = this, p = that.p;
+    if (row < 0 || row > (p.filteredRows || p.rows).length - 1) return null;
+    return (p.filteredRows || p.rows)[row];
+};
+
+/**
+ * Returns DOM element of the header row
+ * @public
+ * @expose
+ * @returns {Element} Row element
+ */
+DGTable.prototype.getHeaderRowElement = function () {
+    return this.p.headerRow;
+};
+
+/**
+ * @private
+ * @param {Element} el
+ * @returns {Number} width
+ */
+DGTable.prototype._horizontalPadding = function(el) {
+    return ((parseFloat($.css(el, 'padding-left')) || 0) +
+    (parseFloat($.css(el, 'padding-right')) || 0));
+};
+
+/**
+ * @private
+ * @param {Element} el
+ * @returns {Number} width
+ */
+DGTable.prototype._horizontalBorderWidth = function(el) {
+    return ((parseFloat($.css(el, 'border-left')) || 0) +
+    (parseFloat($.css(el, 'border-right')) || 0));
+};
+
+/**
+ * @private
+ * @returns {Number} width
+ */
+DGTable.prototype._calculateWidthAvailableForColumns = function() {
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    // Changing display mode briefly, to prevent taking in account the  parent's scrollbar width when we are the cause for it
+    var oldDisplay, lastScrollTop, lastScrollLeft;
+    if (p.$table) {
+        lastScrollTop = p.table ? p.table.scrollTop : 0;
+        lastScrollLeft = p.table ? p.table.scrollLeft : 0;
+
+        if (o.virtualTable) {
+            oldDisplay = p.$table[0].style.display;
+            p.$table[0].style.display = 'none';
+        }
+    }
+    var detectedWidth = this.$el.width();
+    if (p.$table) {
+        if (o.virtualTable) {
+            p.$table[0].style.display = oldDisplay;
+        }
+
+        p.table.scrollTop = lastScrollTop;
+        p.table.scrollLeft = lastScrollLeft;
+        p.header.scrollLeft = lastScrollLeft;
+    }
+
+    var $thisWrapper, $header, $headerRow;
+    var tableClassName = o.tableClassName;
+
+    if (!p.$table) {
+
+        $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
+        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
+        $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
+        for (var i = 0; i < p.visibleColumns.length; i++) {
+            $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
+        }
+        $thisWrapper.appendTo(document.body);
+    } else {
+        $headerRow = p.$headerRow;
+    }
+
+    detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
+    var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
+    for (var i = 0, $cell, $div, cellBorderBox; i < $cells.length; i++) {
+        $div = $($cells[i].firstChild);
+        $cell = $($cells[i]);
+
+        cellBorderBox = $cell.css('boxSizing') === 'border-box';
+        detectedWidth -=
+            (parseFloat($cell.css('border-right-width')) || 0) +
+            (parseFloat($cell.css('border-left-width')) || 0) +
+            (cellBorderBox ? 0 : this._horizontalPadding($cell[0])); // CELL's padding
+    }
+
+    if ($thisWrapper) {
+        $thisWrapper.remove();
+    }
+
+    return detectedWidth;
+};
+
+/**
+ * Notify the table that its width has changed
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.tableWidthChanged = (function () {
+
+    var getTextWidth = function(text) {
+        var tableClassName = this.o.tableClassName;
+
+        var $cell, $tableWrapper = $('<div>').addClass(this.$el).append(
+            $('<div>').addClass(tableClassName + '-header').append(
+                $('<div>').addClass(tableClassName + '-header-row').append(
+                    $cell = $('<div>').addClass(tableClassName + '-header-cell').append(
+                        $('<div>').text(text)
+                    )
+                )
+            )
+        ).css({'position': 'absolute', top: '-9999px', 'visibility': 'hidden'});
+        $tableWrapper.appendTo(document.body);
+        var width = $cell.width();
+        $tableWrapper.remove();
+        return width;
+    };
+
+    var lastDetectedWidth = null;
+
+    /**
+     * @public
+     * @expose
+     * @param {Boolean} [forceUpdate=false]
+     * @param {Boolean} [renderColumns=true]
+     * @returns {DGTable} self
+     */
+    return function(forceUpdate, renderColumns) {
+
+        var that = this,
+            o = that.o,
+            p = that.p,
+            detectedWidth = this._calculateWidthAvailableForColumns(),
+            sizeLeft = detectedWidth,
+            relatives = 0;
+
+        renderColumns = renderColumns === undefined || renderColumns;
+
+        var tableWidthBeforeCalculations = 0;
+
+        if (!p.tbody) {
+            renderColumns = false;
+        }
+
+        if (renderColumns) {
+            tableWidthBeforeCalculations = parseFloat(p.tbody.style.minWidth) || 0;
+        }
+
+        if (sizeLeft != lastDetectedWidth || forceUpdate) {
+            lastDetectedWidth = detectedWidth;
+
+            var width, absWidthTotal = 0, changedColumnIndexes = [], i, col, totalRelativePercentage = 0;
+
+            for (i = 0; i < p.columns.length; i++) {
+                p.columns[i].actualWidthConsideringScrollbarWidth = null;
+            }
+
+            for (i = 0; i < p.visibleColumns.length; i++) {
+                col = p.visibleColumns[i];
+                if (col.widthMode === ColumnWidthMode.ABSOLUTE) {
+                    width = col.width;
+                    width += col.arrowProposedWidth || 0; // Sort-arrow width
+                    if (!col.ignoreMin && width < o.minColumnWidth) {
+                        width = o.minColumnWidth;
+                    }
+                    sizeLeft -= width;
+                    absWidthTotal += width;
+
+                    // Update actualWidth
+                    if (width !== col.actualWidth) {
+                        col.actualWidth = width;
+                        changedColumnIndexes.push(i);
+                    }
+                } else if (col.widthMode === ColumnWidthMode.AUTO) {
+                    width = getTextWidth.call(this, col.label) + 20;
+                    width += col.arrowProposedWidth || 0; // Sort-arrow width
+                    if (!col.ignoreMin && width < o.minColumnWidth) {
+                        width = o.minColumnWidth;
+                    }
+                    sizeLeft -= width;
+                    absWidthTotal += width;
+
+                    // Update actualWidth
+                    if (width !== col.actualWidth) {
+                        col.actualWidth = width;
+                        if (!o.convertColumnWidthsToRelative) {
+                            changedColumnIndexes.push(i);
+                        }
+                    }
+                } else if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                    totalRelativePercentage += col.width;
+                    relatives++;
+                }
+            }
+
+            // Normalize relative sizes if needed
+            if (o.convertColumnWidthsToRelative) {
+                for (i = 0; i < p.visibleColumns.length; i++) {
+                    col = p.visibleColumns[i];
+                    if (col.widthMode === ColumnWidthMode.AUTO) {
+                        col.widthMode = ColumnWidthMode.RELATIVE;
+                        sizeLeft += col.actualWidth;
+                        col.width = col.actualWidth / absWidthTotal;
+                        totalRelativePercentage += col.width;
+                        relatives++;
+                    }
+                }
+            }
+
+            // Normalize relative sizes if needed
+            if (relatives && ((totalRelativePercentage < 1 && o.relativeWidthGrowsToFillWidth) ||
+                (totalRelativePercentage > 1 && o.relativeWidthShrinksToFillWidth))) {
+                for (i = 0; i < p.visibleColumns.length; i++) {
+                    col = p.visibleColumns[i];
+                    if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                        col.width /= totalRelativePercentage;
+                    }
+                }
+            }
+
+            detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
+
+            var minColumnWidthRelative = (o.minColumnWidth / detectedWidth);
+            if (isNaN(minColumnWidthRelative)) {
+                minColumnWidthRelative = 0;
+            }
+            if (minColumnWidthRelative > 0) {
+                var extraRelative = 0, delta;
+
+                // First pass - make sure they are all constrained to the minimum width
+                for (i = 0; i < p.visibleColumns.length; i++) {
+                    col = p.visibleColumns[i];
+                    if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                        if (!col.ignoreMin && col.width < minColumnWidthRelative) {
+                            extraRelative += minColumnWidthRelative - col.width;
+                            col.width = minColumnWidthRelative;
+                        }
+                    }
+                }
+
+                // Second pass - try to take the extra width out of the other columns to compensate
+                for (i = 0; i < p.visibleColumns.length; i++) {
+                    col = p.visibleColumns[i];
+                    if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                        if (!col.ignoreMin && col.width > minColumnWidthRelative) {
+                            if (extraRelative > 0) {
+                                delta = Math.min(extraRelative, col.width - minColumnWidthRelative);
+                                col.width -= delta;
+                                extraRelative -= delta;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (i = 0; i < p.visibleColumns.length; i++) {
+                col = p.visibleColumns[i];
+                if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                    width = Math.round(detectedWidth * col.width);
+                    sizeLeft -= width;
+                    relatives--;
+
+                    // Take care of rounding errors
+                    if (relatives === 0 && sizeLeft === 1) { // Take care of rounding errors
+                        width++;
+                        sizeLeft--;
+                    }
+                    if (sizeLeft === -1) {
+                        width--;
+                        sizeLeft++;
+                    }
+
+                    // Update actualWidth
+                    if (width !== col.actualWidth) {
+                        col.actualWidth = width;
+                        changedColumnIndexes.push(i);
+                    }
+                }
+            }
+
+            p.visibleColumns[p.visibleColumns.length - 1].actualWidthConsideringScrollbarWidth =
+                p.visibleColumns[p.visibleColumns.length - 1].actualWidth - (p.scrollbarWidth || 0);
+
+            if (renderColumns) {
+                var tableWidth = this._calculateTbodyWidth();
+
+                if (tableWidthBeforeCalculations < tableWidth) {
+                    this._updateTableWidth(false);
+                }
+
+                for (i = 0; i < changedColumnIndexes.length; i++) {
+                    this._resizeColumnElements(changedColumnIndexes[i]);
+                }
+
+                if (tableWidthBeforeCalculations > tableWidth) {
+                    this._updateTableWidth(false);
+                }
+            }
+        }
+
+        return this;
+    };
+})();
+
+/**
+ * Notify the table that its height has changed
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.tableHeightChanged = function () {
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (!p.$table) {
+        return that;
+    }
+    var height = that.$el.innerHeight() - (parseFloat(p.$table.css('border-top-width')) || 0) - (parseFloat(p.$table.css('border-bottom-width')) || 0);
+    if (height != o.height) {
+        o.height = height;
+        if (p.tbody) {
+            // At least 1 pixel - to show scrollers correctly.
+            p.tbody.style.height = Math.max(o.height - p.$headerRow.outerHeight(), 1) + 'px';
+        }
+        if (o.virtualTable) {
+            that.clearAndRender();
+        }
+    }
+    return that;
+};
+
+/**
+ * Add rows to the table
+ * @public
+ * @expose
+ * @param {Object[]} data array of rows to add to the table
+ * @param {Boolean?} resort should resort all rows?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.addRows = function (data, resort) {
+    var that = this,
+        p = that.p;
+
+    if (data) {
+        p.rows.add(data);
+        if (that.o.virtualTable) {
+            while (p.tbody.firstChild) {
+                this.trigger('rowdestroy', p.tbody.firstChild);
+                this._unbindCellEventsForRow(p.tbody.firstChild);
+                p.tbody.removeChild(p.tbody.firstChild);
+            }
+
+            if (resort && p.rows.sortColumn.length) {
+                this.resort();
+            } else {
+                this._refilter();
+            }
+
+            this._calculateVirtualHeight() // Calculate virtual height
+                ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
+                ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+
+            this.render();
+        } else {
+            if (p.filteredRows) {
+                var filteredCount = p.filteredRows.length;
+                this._refilter();
+                if (!p.filteredRows || p.filteredRows.length != filteredCount) {
+                    this.clearAndRender();
+                }
+            } else if (p.$tbody) {
+                var firstRow = p.rows.length - data.length,
+                    lastRow = firstRow + data.length - 1;
+
+                var renderedRows = that.renderRows(firstRow, lastRow);
+                p.tbody.appendChild(renderedRows);
+                that._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
+                    ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
+            }
+        }
+        this.trigger('addrows', data.length, false);
+    }
+    return this;
+};
+
+/**
+ * Removes a row from the table
+ * @public
+ * @expose
+ * @param {Number} physicalRowIndex index
+ * @param {Boolean=true} render
+ * @returns {DGTable} self
+ */
+DGTable.prototype.removeRow = function(physicalRowIndex, render) {
+    var that = this,
+        p = that.p;
+
+    if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
+
+    p.rows.splice(physicalRowIndex, 1);
+    render = (render === undefined) ? true : !!render;
+    if (p.filteredRows) {
+        this._refilter();
+        p.tableSkeletonNeedsRendering = true;
+        if (render) {
+            // Render the skeleton with all rows from scratch
+            this.render();
+        }
+    } else if (render) {
+        var childNodes = p.tbody.childNodes;
+        if (this.o.virtualTable) {
+            for (var i = 0; i < childNodes.length; i++) {
+                if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
+                    this.trigger('rowdestroy', childNodes[i]);
+                    this._unbindCellEventsForRow(childNodes[i]);
+                    p.tbody.removeChild(childNodes[i]);
+
+                    // Keep on destroying all rows further, and later render them all back.
+                    // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
+                    i--;
+                }
+            }
+            this._calculateVirtualHeight()
+                ._updateLastCellWidthFromScrollbar()
+                .render()
+                ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+        } else {
+            for (var i = 0; i < childNodes.length; i++) {
+                if (childNodes[i]['rowIndex'] === physicalRowIndex) {
+                    this.trigger('rowdestroy', childNodes[i]);
+                    this._unbindCellEventsForRow(childNodes[i]);
+                    p.tbody.removeChild(childNodes[i]);
+                    break;
+                }
+            }
+            this.render()
+                ._updateLastCellWidthFromScrollbar()
+                ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
+        }
+    }
+    return this;
+};
+
+/**
+ * Refreshes the row specified
+ * @public
+ * @expose
+ * @param {Number} physicalRowIndex index
+ * @returns {DGTable} self
+ */
+DGTable.prototype.refreshRow = function(physicalRowIndex) {
+    var that = this,
+        p = that.p;
+
+    if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
+
+    // Find out if the row is in the rendered dataset
+    var rowIndex;
+    if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+
+    if (rowIndex === -1) {
+        rowIndex = physicalRowIndex;
+    }
+
+    var childNodes = p.tbody.childNodes;
+
+    if (this.o.virtualTable) {
+        // Now make sure that the row actually rendered, as this is a virtual table
+        var isRowVisible = false;
+        for (var i = 0; i < childNodes.length; i++) {
+            if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                isRowVisible = true;
+                this.trigger('rowdestroy', childNodes[i]);
+                this._unbindCellEventsForRow(childNodes[i]);
+                p.tbody.removeChild(childNodes[i]);
+                break;
+            }
+        }
+        if (isRowVisible) {
+            var renderedRow = this.renderRows(rowIndex, rowIndex);
+            p.tbody.insertBefore(renderedRow, childNodes[i] || null);
+        }
+    } else {
+        this.trigger('rowdestroy', childNodes[rowIndex]);
+        this._unbindCellEventsForRow(childNodes[rowIndex]);
+        p.tbody.removeChild(childNodes[rowIndex]);
+        var renderedRow = this.renderRows(rowIndex, rowIndex);
+        p.tbody.insertBefore(renderedRow, childNodes[rowIndex] || null);
+    }
+
+    return this;
+};
+
+/**
+ * Get the DOM element for the specified row, if it exists
+ * @public
+ * @expose
+ * @param {Number} physicalRowIndex index
+ * @returns {Element?} row or null
+ */
+DGTable.prototype.getRowElement = function(physicalRowIndex) {
+    var that = this,
+        p = that.p;
+
+    if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return null;
+
+    // Find out if the row is in the rendered dataset
+    var rowIndex = -1;
+    if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+
+    if (rowIndex === -1) {
+        rowIndex = physicalRowIndex;
+    }
+
+    var childNodes = p.tbody.childNodes;
+
+    if (this.o.virtualTable) {
+        // Now make sure that the row actually rendered, as this is a virtual table
+        for (var i = 0; i < childNodes.length; i++) {
+            if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
+                return childNodes[i];
+            }
+        }
+    } else {
+        return childNodes[rowIndex];
+    }
+
+    return null;
+};
+
+/**
+ * Refreshes all virtual rows
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.refreshAllVirtualRows = function () {
+
+    var that = this,
+        p = that.p;
+
+    if (this.o.virtualTable) {
+        // Now make sure that the row actually rendered, as this is a virtual table
+        var rowsToRender = [];
+        var childNodes = p.tbody.childNodes;
+        for (var i = 0, rowCount = childNodes.length; i < rowCount; i++) {
+            rowsToRender.push(childNodes[i]['physicalRowIndex']);
+            this.trigger('rowdestroy', childNodes[i]);
+            this._unbindCellEventsForRow(childNodes[i]);
+            p.tbody.removeChild(childNodes[i]);
+            i--;
+            rowCount--;
+        }
+        for (var i = 0; i < rowsToRender.length; i++) {
+            var renderedRow = this.renderRows(rowsToRender[i], rowsToRender[i]);
+            p.tbody.appendChild(renderedRow);
+        }
+    }
+
+    return this;
+};
+
+/**
+ * Replace the whole dataset
+ * @public
+ * @expose
+ * @param {Object[]} data array of rows to add to the table
+ * @param {Boolean?} resort should resort all rows?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setRows = function (data, resort) {
+    var that = this,
+        p = that.p;
+
+    // this.scrollTop = this.$el.find('.table').scrollTop();
+    p.rows.reset(data);
+
+    if (resort && p.rows.sortColumn.length) {
+        this.resort();
+    } else {
+        this._refilter();
+    }
+
+    this.clearAndRender().trigger('addrows', data.length, true);
+
+    return this;
+};
+
+/**
+ * Creates a URL representing the data in the specified element.
+ * This uses the Blob or BlobBuilder of the modern browsers.
+ * The url can be used for a Web Worker.
+ * @public
+ * @expose
+ * @param {string} id Id of the element containing your data
+ * @returns {String|null} the url, or null if not supported
+ */
+DGTable.prototype.getUrlForElementContent = function (id) {
+    var blob,
+        el = document.getElementById(id);
+    if (el) {
+        var data = el.textContent;
+        if (typeof Blob === 'function') {
+            blob = new Blob([data]);
+        } else {
+            var BlobBuilder = global.BlobBuilder || global.WebKitBlobBuilder || global.MozBlobBuilder || global.MSBlobBuilder;
+            if (!BlobBuilder) {
+                return null;
+            }
+            var builder = new BlobBuilder();
+            builder.append(data);
+            blob = builder.getBlob();
+        }
+        return (global.URL || global.webkitURL).createObjectURL(blob);
+    }
+    return null;
+};
+
+/**
+ * @public
+ * @expose
+ * @returns {Boolean} A value indicating whether Web Workers are supported
+ */
+DGTable.prototype.isWorkerSupported = function() {
+    return global['Worker'] instanceof Function;
+};
+
+/**
+ * Creates a Web Worker for updating the table.
+ * @public
+ * @expose
+ * @param {string} url Url to the script for the Web Worker
+ * @param {Boolean=true} start if true, starts the Worker immediately
+ * @returns {Worker?} the Web Worker, or null if not supported
+ */
+DGTable.prototype.createWebWorker = function (url, start, resort) {
+    if (this.isWorkerSupported()) {
+        var that = this,
+            p = that.p;
+
+        var worker = new Worker(url);
+        var listener = function (evt) {
+            if (evt.data.append) {
+                that.addRows(evt.data.rows, resort);
+            } else {
+                that.setRows(evt.data.rows, resort);
+            }
+        };
+        worker.addEventListener('message', listener, false);
+        if (!p.workerListeners) {
+            p.workerListeners = [];
+        }
+        p.workerListeners.push({worker: worker, listener: listener});
+        if (start || start === undefined) {
+            worker.postMessage(null);
+        }
+        return worker;
+    }
+    return null;
+};
+
+/**
+ * Unbinds a Web Worker from the table, stopping updates.
+ * @public
+ * @expose
+ * @param {Worker} worker the Web Worker
+ * @returns {DGTable} self
+ */
+DGTable.prototype.unbindWebWorker = function (worker) {
+    var that = this,
+        p = that.p;
+
+    if (p.workerListeners) {
+        for (var j = 0; j < p.workerListeners.length; j++) {
+            if (p.workerListeners[j].worker == worker) {
+                worker.removeEventListener('message', p.workerListeners[j].listener, false);
+                p.workerListeners.splice(j, 1);
+                j--;
+            }
+        }
+    }
+
+    return this;
+};
+
+/**
+ * A synonym for hideCellPreview()
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.abortCellPreview = function() {
+    this.hideCellPreview();
+    return this;
+};
+
+/**
+ * Cancel a resize in progress
+ * @expose
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype.cancelColumnResize = function() {
+    var that = this,
+        p = that.p;
+
+    if (p.$resizer) {
+        p.$resizer.remove();
+        p.$resizer = null;
+        $(document).off('mousemove.dgtable', p.onMouseMoveResizeAreaBound)
+            .off('mouseup.dgtable', p.onEndDragColumnHeaderBound);
+    }
+
+    return this;
+};
+
+/**
+ * @param {jQuery_Event} event
+ */
+DGTable.prototype._onVirtualTableScrolled = function (event) {
+    this.render();
+};
+
+/**
+ * @param {jQuery_Event} event
+ */
+DGTable.prototype._onTableScrolledHorizontally = function (event) {
+    var that = this,
+        p = that.p;
+
+    p.header.scrollLeft = p.table.scrollLeft;
+};
+
+/**previousElementSibling
+ * Reverse-calculate the column to resize from mouse position
+ * @private
+ * @param {jQuery_Event} e jQuery mouse event
+ * @returns {String} name of the column which the mouse is over, or null if the mouse is not in resize position
+ */
+DGTable.prototype._getColumnByResizePosition = function (e) {
+
+    var that = this,
+        o = that.o,
+        p = that.p,
+        rtl = this._isTableRtl();
+
+    var $headerCell = $(e.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName),
+        headerCell = $headerCell[0];
+    if (headerCell['__cell']) {
+        headerCell = headerCell['__cell'];
+        $headerCell = $(headerCell);
+    }
+
+    var previousElementSibling = $headerCell[0].previousSibling;
+    while (previousElementSibling && previousElementSibling.nodeType != 1) {
+        previousElementSibling = previousElementSibling.previousSibling;
+    }
+
+    var firstCol = !previousElementSibling;
+
+    var mouseX = ((e.pageX != null ? e.pageX : e.originalEvent.pageX) || e.originalEvent.clientX) - $headerCell.offset().left;
+
+    if (rtl) {
+        if (!firstCol && $headerCell.outerWidth() - mouseX <= o.resizeAreaWidth / 2) {
+            return previousElementSibling['columnName'];
+        } else if (mouseX <= o.resizeAreaWidth / 2) {
+            return headerCell['columnName'];
+        }
+    } else {
+        if (!firstCol && mouseX <= o.resizeAreaWidth / 2) {
+            return previousElementSibling['columnName'];
+        } else if ($headerCell.outerWidth() - mouseX <= o.resizeAreaWidth / 2) {
+            return headerCell['columnName'];
+        }
+    }
+
+    return null;
+};
+
+/**
+ * @param {jQuery_Event} event
+ */
+DGTable.prototype._onTouchStartColumnHeader = function (event) {
+    var that = this,
+        p = that.p;
+
+    if (p.currentTouchId) return;
+
+    var startTouch = event.originalEvent.changedTouches[0];
+    p.currentTouchId = startTouch.identifier;
+
+    var $eventTarget = $(event.currentTarget);
+
+    var startPos = { x: startTouch.pageX, y: startTouch.pageY },
+        currentPos = startPos,
+        distanceTreshold = 9;
+
+    var unbind = function () {
+        p.currentTouchId = null;
+        $eventTarget.off('touchend').off('touchcancel');
+        clearTimeout(tapAndHoldTimeout);
+    };
+
+    var fakeEvent = function (name) {
+        var fakeEvent = $.Event(name);
+        var extendObjects = Array.prototype.slice.call(arguments, 1);
+        $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY', 'which'],
+            function () {
+                fakeEvent[this] = event[this];
+                for (var i = 0; i < extendObjects.length; i++) {
+                    if (extendObjects[i][this] != null) {
+                        fakeEvent[this] = extendObjects[i][this];
+                    }
+                }
+            });
+        return fakeEvent;
+    };
+
+    $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { 'which': 1 }));
+
+    var tapAndHoldTimeout = setTimeout(function () {
+        unbind();
+
+        // Prevent simulated mouse events after touchend
+        $eventTarget.one('touchend', function (event) {
+            event.preventDefault();
+            $eventTarget.off('touchend').off('touchcancel');
+        }).one('touchcancel', function (event) {
+            $eventTarget.off('touchend').off('touchcancel');
+        });
+
+        var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
+
+        if (distanceTravelled < distanceTreshold) {
+            that.cancelColumnResize();
+            $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3 }));
+        }
+
+    }, 500);
+
+    $eventTarget.on('touchend', function (event) {
+        var touch = find(event.originalEvent.changedTouches, function(touch){ return touch.identifier === p.currentTouchId; });
+        if (!touch) return;
+
+        unbind();
+
+        event.preventDefault(); // Prevent simulated mouse events
+
+        currentPos = { x: touch.pageX, y: touch.pageY };
+        var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
+
+        if (distanceTravelled < distanceTreshold || p.$resizer) {
+            $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1 }));
+            $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1 }));
+        }
+
+    }).on('touchcancel', function () {
+        unbind();
+    }).on('touchmove', function (event) {
+        var touch = find(event.originalEvent.changedTouches, function (touch) {
+            return touch.identifier === p.currentTouchId;
+        });
+        if (!touch) return;
+
+        // Keep track of current position, so we know if we need to cancel the tap-and-hold
+        currentPos = { x: touch.pageX, y: touch.pageY };
+
+        if (p.$resizer) {
+            event.preventDefault();
+
+            $eventTarget.trigger(fakeEvent('mousemove', touch));
+        }
+    });
+};
+
+/**
+ * @param {jQuery_Event} e event
+ */
+DGTable.prototype._onMouseDownColumnHeader = function (event) {
+    if (event.which !== 1) return this; // Only treat left-clicks
+
+    var that = this,
+        o = that.o,
+        p = that.p,
+        col = this._getColumnByResizePosition(event);
+
+    if (col) {
+        var column = p.columns.get(col);
+        if (!o.resizableColumns || !column || !column.resizable) {
+            return false;
+        }
+
+        var rtl = this._isTableRtl();
+
+        if (p.$resizer) {
+            $(p.$resizer).remove();
+        }
+        p.$resizer = $('<div></div>')
+            .addClass(o.resizerClassName)
+            .css({
+                'position': 'absolute',
+                'display': 'block',
+                'z-index': -1,
+                'visibility': 'hidden',
+                'width': '2px',
+                'background': '#000',
+                'opacity': 0.7
+            })
+            .appendTo(this.$el);
+
+        var selectedHeaderCell = column.element,
+            commonAncestor = p.$resizer.parent();
+
+        var posCol = selectedHeaderCell.offset(),
+            posRelative = commonAncestor.offset();
+        if (ieVersion === 8) {
+            posCol = selectedHeaderCell.offset(); // IE8 bug, first time it receives zeros...
+        }
+        posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
+        posRelative.top += parseFloat(commonAncestor.css('border-top-width')) || 0;
+        posCol.left -= posRelative.left;
+        posCol.top -= posRelative.top;
+        posCol.top -= parseFloat(selectedHeaderCell.css('border-top-width')) || 0;
+        var resizerWidth = p.$resizer.outerWidth();
+        if (rtl) {
+            posCol.left -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
+            posCol.left -= Math.ceil(resizerWidth / 2);
+        } else {
+            posCol.left += selectedHeaderCell.outerWidth();
+            posCol.left += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+            posCol.left -= Math.ceil(resizerWidth / 2);
+        }
+
+        p.$resizer
+            .css({
+                'z-index': '10',
+                'visibility': 'visible',
+                'left': posCol.left,
+                'top': posCol.top,
+                'height': this.$el.height()
+            })
+            [0]['columnName'] = selectedHeaderCell[0]['columnName'];
+        try { p.$resizer[0].style.zIndex = ''; } catch (err) { }
+
+        $(document).on('mousemove.dgtable', p.onMouseMoveResizeAreaBound);
+        $(document).on('mouseup.dgtable', p.onEndDragColumnHeaderBound);
+
+        event.preventDefault();
+    }
+};
+
+/**
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onMouseMoveColumnHeader = function (event) {
+
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (o.resizableColumns) {
+        var col = this._getColumnByResizePosition(event);
+        var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+        if (!col || !p.columns.get(col).resizable) {
+            headerCell.style.cursor = '';
+        } else {
+            headerCell.style.cursor = 'e-resize';
+        }
+    }
+};
+
+/**
+ * @param {jQuery_Event} event
+ */
+DGTable.prototype._onMouseUpColumnHeader = function (event) {
+    if (event.which === 3) {
+        var o = this.o;
+        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+        var bounds = $headerCell.offset();
+        bounds['width'] = $headerCell.outerWidth();
+        bounds['height'] = $headerCell.outerHeight();
+        this.trigger('headercontextmenu', $headerCell[0]['columnName'], event.pageX, event.pageY, bounds);
+    }
+    return this;
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onMouseLeaveColumnHeader = function (event) {
+    var o = this.o;
+    var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+    headerCell.style.cursor = '';
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onClickColumnHeader = function (event) {
+    if (!this._getColumnByResizePosition(event)) {
+
+        var that = this,
+            o = that.o,
+            p = that.p;
+
+        var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+        if (o.sortableColumns) {
+            var column = p.columns.get(headerCell['columnName']);
+            if (column && column.sortable) {
+                this.sort(headerCell['columnName'], undefined, true).render();
+            }
+        }
+    }
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onStartDragColumnHeader = function (event) {
+
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (o.movableColumns) {
+
+        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+        var column = p.columns.get($headerCell[0]['columnName']);
+        if (column && column.movable) {
+            $headerCell[0].style.opacity = 0.35;
+            p.dragId = Math.random() * 0x9999999; // Recognize this ID on drop
+            event.originalEvent.dataTransfer.setData('text', JSON.stringify({dragId: p.dragId, column: column.name}));
+        } else {
+            event.preventDefault();
+        }
+
+    } else {
+
+        event.preventDefault();
+
+    }
+
+    return undefined;
+};
+
+/**
+ * @private
+ * @param {MouseEvent} event event
+ */
+DGTable.prototype._onMouseMoveResizeArea = function (event) {
+
+    var that = this,
+        p = that.p;
+
+    var column = p.columns.get(p.$resizer[0]['columnName']);
+    var rtl = this._isTableRtl();
+
+    var selectedHeaderCell = column.element,
+        commonAncestor = p.$resizer.parent();
+    var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
+    posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
+    posCol.left -= posRelative.left;
+    var resizerWidth = p.$resizer.outerWidth();
+
+    var actualX = event.pageX - posRelative.left;
+    var minX = posCol.left;
+    if (rtl) {
+        minX += selectedHeaderCell.outerWidth();
+        minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+        minX -= Math.ceil(resizerWidth / 2);
+        minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
+        minX -= this._horizontalPadding(selectedHeaderCell[0]);
+        if (actualX > minX) {
+            actualX = minX;
+        }
+    } else {
+        minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+        minX -= Math.ceil(resizerWidth / 2);
+        minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
+        minX += this._horizontalPadding(selectedHeaderCell[0]);
+        if (actualX < minX) {
+            actualX = minX;
+        }
+    }
+
+    p.$resizer.css('left', actualX + 'px');
+};
+
+/**
+ * @private
+ * @param {Event} event event
+ */
+DGTable.prototype._onEndDragColumnHeader = function (event) {
+
+    var that = this,
+        p = that.p;
+
+    if (!p.$resizer) {
+        event.target.style.opacity = null;
+    } else {
+        $(document).off('mousemove.dgtable', p.onMouseMoveResizeAreaBound)
+            .off('mouseup.dgtable', p.onEndDragColumnHeaderBound);
+
+        var column = p.columns.get(p.$resizer[0]['columnName']);
+        var rtl = this._isTableRtl();
+
+        var selectedHeaderCell = column.element,
+            commonAncestor = p.$resizer.parent();
+        var posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
+        posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
+        posCol.left -= posRelative.left;
+        var resizerWidth = p.$resizer.outerWidth();
+
+        var actualX = event.pageX - posRelative.left;
+        var baseX = posCol.left, minX = posCol.left;
+        var width = 0;
+        if (rtl) {
+            actualX += this._horizontalPadding(selectedHeaderCell[0]);
+            baseX += selectedHeaderCell.outerWidth();
+            baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+            baseX -= Math.ceil(resizerWidth / 2);
+            minX = baseX;
+            minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
+            if (actualX > minX) {
+                actualX = minX;
+            }
+            width = baseX - actualX;
+        } else {
+            actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+            baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+            baseX -= Math.ceil(resizerWidth / 2);
+            minX = baseX;
+            minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
+            if (actualX < minX) {
+                actualX = minX;
+            }
+            width = actualX - baseX;
+        }
+
+        p.$resizer.remove();
+        p.$resizer = null;
+
+        var sizeToSet = width;
+
+        if (column.widthMode === ColumnWidthMode.RELATIVE) {
+            var detectedWidth = this._calculateWidthAvailableForColumns(),
+                sizeLeft = detectedWidth;
+
+            for (var i = 0, col; i < p.visibleColumns.length; i++) {
+                col = p.visibleColumns[i];
+                if (col.widthMode != ColumnWidthMode.RELATIVE) {
+                    sizeLeft -= col.actualWidth;
+                }
+            }
+
+            sizeToSet = width / sizeLeft;
+            sizeToSet *= 100;
+            sizeToSet += '%';
+        }
+
+        this.setColumnWidth(column.name, sizeToSet);
+    }
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onDragEnterColumnHeader = function (event) {
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (o.movableColumns) {
+        var dataTransferred = event.originalEvent.dataTransfer.getData('text');
+        if (dataTransferred) {
+            dataTransferred = JSON.parse(dataTransferred);
+        }
+        else {
+            dataTransferred = null; // WebKit does not provide the dataTransfer on dragenter?..
+        }
+
+        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+        if (!dataTransferred ||
+            (p.dragId == dataTransferred.dragId && $headerCell['columnName'] !== dataTransferred.column)) {
+
+            var column = p.columns.get($headerCell[0]['columnName']);
+            if (column && (column.movable || column != p.visibleColumns[0])) {
+                $($headerCell).addClass('drag-over');
+            }
+        }
+    }
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onDragOverColumnHeader = function (event) {
+    event.preventDefault();
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onDragLeaveColumnHeader = function (event) {
+    var o = this.o;
+    var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+    if ( ! $($headerCell[0].firstChild)
+            .has(event.originalEvent.relatedTarget).length ) {
+        $headerCell.removeClass('drag-over');
+    }
+};
+
+/**
+ * @private
+ * @param {jQuery_Event} event event
+ */
+DGTable.prototype._onDropColumnHeader = function (event) {
+    event.preventDefault();
+
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    var dataTransferred = JSON.parse(event.originalEvent.dataTransfer.getData('text'));
+    var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+    if (o.movableColumns && dataTransferred.dragId == p.dragId) {
+        var srcColName = dataTransferred.column,
+            destColName = $headerCell[0]['columnName'],
+            srcCol = p.columns.get(srcColName),
+            destCol = p.columns.get(destColName);
+        if (srcCol && destCol && srcCol.movable && (destCol.movable || destCol != p.visibleColumns[0])) {
+            this.moveColumn(srcColName, destColName);
+        }
+    }
+    $($headerCell).removeClass('drag-over');
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._clearSortArrows = function () {
+
+    var that = this,
+        p = that.p;
+
+    if (p.$table) {
+        var tableClassName = this.o.tableClassName;
+        var sortedColumns = p.$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
+        var arrows = sortedColumns.find('>div>.sort-arrow');
+        forEach(arrows, bind(function(arrow){
+            var col = p.columns.get(arrow.parentNode.parentNode['columnName']);
+            if (col) {
+                col.arrowProposedWidth = 0;
+            }
+        }, this));
+        arrows.remove();
+        sortedColumns.removeClass('sorted').removeClass('desc');
+    }
+    return this;
+};
+
+/**
+ * @private
+ * @param {String} column the name of the sort column
+ * @param {Boolean} descending table is sorted descending
+ * @returns {DGTable} self
+ */
+DGTable.prototype._showSortArrow = function (column, descending) {
+
+    var that = this,
+        p = that.p;
+
+    var col = p.columns.get(column);
+    var arrow = createElement('span');
+    arrow.className = 'sort-arrow';
+
+    if (col.element) {
+        col.element.addClass(descending ? 'sorted desc' : 'sorted');
+        col.element[0].firstChild.insertBefore(arrow, col.element[0].firstChild.firstChild);
+    }
+
+    if (col.widthMode != ColumnWidthMode.RELATIVE && this.o.adjustColumnWidthForSortArrow) {
+        col.arrowProposedWidth = arrow.scrollWidth + (parseFloat($(arrow).css('margin-right')) || 0) + (parseFloat($(arrow).css('margin-left')) || 0);
+    }
+
+    return this;
+};
+
+/**
+ * @private
+ * @param {Number} cellIndex index of the column in the DOM
+ * @returns {DGTable} self
+ */
+DGTable.prototype._resizeColumnElements = function (cellIndex) {
+
+    var that = this,
+        p = that.p;
+
+    var headerCells = p.$headerRow.find('div.' + this.o.tableClassName + '-header-cell');
+    var col = p.columns.get(headerCells[cellIndex]['columnName']);
+
+    if (col) {
+        headerCells[cellIndex].style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
+
+        var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
+        var tbodyChildren = p.$tbody[0].childNodes;
+        for (var i = 0, count = tbodyChildren.length, headerRow; i < count; i++) {
+            headerRow = tbodyChildren[i];
+            if (headerRow.nodeType !== 1) continue;
+            headerRow.childNodes[cellIndex].style.width = width;
+        }
+    }
+
+    return this;
+};
+
+/**
+ * @returns {DGTable} self
+ * */
+DGTable.prototype._destroyHeaderCells = function() {
+
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    if (p.$headerRow) {
+        this.trigger('headerrowdestroy', p.headerRow);
+        p.$headerRow.find('div.' + o.tableClassName + '-header-cell').remove();
+        p.$headerRow = null;
+        p.headerRow = null;
+    }
+    return this;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._renderSkeleton = function () {
+    var that = this,
+        p = that.p;
+
+    that._destroyHeaderCells();
+    p.currentTouchId = null;
+
+    var o = that.o,
+        allowCellPreview = o.allowCellPreview,
+        allowHeaderCellPreview = o.allowHeaderCellPreview;
+
+    var tableClassName = o.tableClassName,
+        headerCellClassName = tableClassName + '-header-cell',
+        header = createElement('div'),
+        $header = $(header),
+        headerRow = createElement('div'),
+        $headerRow = $(headerRow);
+
+    header.className = tableClassName + '-header';
+    headerRow.className = tableClassName + '-header-row';
+
+    var ieDragDropHandler;
+    if (hasIeDragAndDropBug) {
+        ieDragDropHandler = function(evt) {
+            evt.preventDefault();
+            this.dragDrop();
+            return false;
+        };
+    }
+
+    var preventDefault = function (event) { event.preventDefault(); };
+
+    for (var i = 0, column, cell, cellInside, $cell; i < p.visibleColumns.length; i++) {
+        column = p.visibleColumns[i];
+        if (column.visible) {
+            cell = createElement('div');
+            $cell = $(cell);
+            cell.draggable = true;
+            cell.className = headerCellClassName;
+            cell.style.width = column.actualWidth + 'px';
+            if (o.sortableColumns && column.sortable) {
+                cell.className += ' sortable';
+            }
+            cell['columnName'] = column.name;
+            cell.setAttribute('data-column', column.name);
+            cellInside = createElement('div');
+            cellInside.innerHTML = o.headerCellFormatter(column.label, column.name);
+            cell.appendChild(cellInside);
+            if (allowCellPreview && allowHeaderCellPreview) {
+                p._bindCellHoverIn(cell);
+            }
+            headerRow.appendChild(cell);
+
+            p.visibleColumns[i].element = $cell;
+
+            $cell.on('mousedown.dgtable', bind(that._onMouseDownColumnHeader, that))
+                .on('mousemove.dgtable', bind(that._onMouseMoveColumnHeader, that))
+                .on('mouseup.dgtable', bind(that._onMouseUpColumnHeader, that))
+                .on('mouseleave.dgtable', bind(that._onMouseLeaveColumnHeader, that))
+                .on('touchstart.dgtable', bind(that._onTouchStartColumnHeader, that))
+                .on('dragstart.dgtable', bind(that._onStartDragColumnHeader, that))
+                .on('click.dgtable', bind(that._onClickColumnHeader, that))
+                .on('contextmenu.dgtable', preventDefault);
+            $(cellInside)
+                .on('dragenter.dgtable', bind(that._onDragEnterColumnHeader, that))
+                .on('dragover.dgtable', bind(that._onDragOverColumnHeader, that))
+                .on('dragleave.dgtable', bind(that._onDragLeaveColumnHeader, that))
+                .on('drop.dgtable', bind(that._onDropColumnHeader, that));
+
+            if (hasIeDragAndDropBug) {
+                $cell.on('selectstart.dgtable', bind(ieDragDropHandler, cell));
+            }
+
+            // Disable these to allow our own context menu events without interruption
+            $cell.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+        }
+    }
+
+    if (p.$header) {
+        p.$header.remove();
+    }
+    p.$header = $header;
+    p.header = header;
+    p.$headerRow = $headerRow;
+    p.headerRow = headerRow;
+    $headerRow.appendTo(p.$header);
+    $header.prependTo(this.$el);
+
+    this.trigger('headerrowcreate', headerRow);
+
+    if (o.width == DGTable.Width.SCROLL) {
+        this.el.style.overflow = 'hidden';
+    } else {
+        this.el.style.overflow = '';
+    }
+
+    if (p.$table && o.virtualTable) {
+        p.$table.remove();
+        if (p.$tbody) {
+            var rows = p.$tbody[0].childNodes;
+            for (var i = 0, len = rows.length; i < len; i++) {
+                that.trigger('rowdestroy', rows[i]);
+                that._unbindCellEventsForRow(rows[i]);
+            }
+        }
+        p.$table = p.table = p.$tbody = p.tbody = null;
+    }
+
+    relativizeElement(that.$el);
+
+    if (!o.height && o.virtualTable) {
+        o.height = this.$el.innerHeight();
+    }
+
+    // Calculate virtual row heights
+    if (o.virtualTable && !p.virtualRowHeight) {
+        var createDummyRow = function() {
+            var row = createElement('div'),
+                cell = row.appendChild(createElement('div')),
+                cellInner = cell.appendChild(createElement('div'));
+            row.className = tableClassName + '-row';
+            cell.className = tableClassName + '-cell';
+            cellInner.innerHTML = '0';
+            row.style.visibility = 'hidden';
+            row.style.position = 'absolute';
+            return row;
+        };
+
+        var $dummyTbody, $dummyWrapper = $('<div>')
+            .addClass(this.className)
+            .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' })
+            .append(
+                $('<div>').addClass(tableClassName).append(
+                    $dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)
+                )
+            );
+
+        $dummyWrapper.appendTo(document.body);
+
+        var row1 = createDummyRow(), row2 = createDummyRow(), row3 = createDummyRow();
+        $dummyTbody.append(row1, row2, row3);
+
+        p.virtualRowHeightFirst = $(row1).outerHeight();
+        p.virtualRowHeight = $(row2).outerHeight();
+        p.virtualRowHeightLast = $(row3).outerHeight();
+        p.virtualRowHeightMin = Math.min(Math.min(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
+        p.virtualRowHeightMax = Math.max(Math.max(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
+
+        $dummyWrapper.remove();
+    }
+
+    // Create table skeleton
+    if (!p.$table) {
+
+        var fragment = document.createDocumentFragment();
+        var table = createElement('div');
+        var $table = $(table);
+        table.className = o.tableClassName;
+
+        if (o.virtualTable) {
+            table.className += ' virtual';
+        }
+
+        var tableHeight = (o.height - $headerRow.outerHeight());
+        if ($table.css('box-sizing') !== 'border-box') {
+            tableHeight -= parseFloat($table.css('border-top-width')) || 0;
+            tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
+            tableHeight -= parseFloat($table.css('padding-top')) || 0;
+            tableHeight -= parseFloat($table.css('padding-bottom')) || 0;
+        }
+        p.visibleHeight = tableHeight;
+        table.style.height = o.height ? tableHeight + 'px' : 'auto';
+        table.style.display = 'block';
+        table.style.overflowY = 'auto';
+        table.style.overflowX = o.width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
+        fragment.appendChild(table);
+
+        var tbody = createElement('div');
+        var $tbody = $(tbody);
+        tbody.className = o.tableClassName + '-body';
+        p.table = table;
+        p.tbody = tbody;
+        p.$table = $table;
+        p.$tbody = $tbody;
+
+        if (o.virtualTable) {
+            p.virtualVisibleRows = Math.ceil(p.visibleHeight / p.virtualRowHeightMin);
+        }
+
+        that._calculateVirtualHeight();
+
+        relativizeElement($tbody);
+        relativizeElement($table);
+
+        table.appendChild(tbody);
+        that.el.appendChild(fragment);
+    }
+
+    return that;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._updateLastCellWidthFromScrollbar = function(force) {
+
+    var that = this,
+        p = that.p;
+
+    // Calculate scrollbar's width and reduce from lat column's width
+    var scrollbarWidth = p.table.offsetWidth - p.table.clientWidth;
+    if (scrollbarWidth != p.scrollbarWidth || force) {
+        p.scrollbarWidth = scrollbarWidth;
+        for (var i = 0; i < p.columns.length; i++) {
+            p.columns[i].actualWidthConsideringScrollbarWidth = null;
+        }
+
+        if (p.scrollbarWidth > 0) {
+            var lastColIndex = p.visibleColumns.length - 1;
+            p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = p.visibleColumns[lastColIndex].actualWidth - p.scrollbarWidth;
+            var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px';
+            var tbodyChildren = p.tbody.childNodes;
+            for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+                row = tbodyChildren[i];
+                if (row.nodeType !== 1) continue;
+                row.childNodes[lastColIndex].style.width = lastColWidth;
+            }
+
+            p.headerRow.childNodes[lastColIndex].style.width = lastColWidth;
+        }
+    }
+    return this;
+};
+
+/**
+ * Explicitly set the width of the table based on the sum of the column widths
+ * @private
+ * @param {boolean} parentSizeMayHaveChanged Parent size may have changed, treat rendering accordingly
+ * @returns {DGTable} self
+ */
+DGTable.prototype._updateTableWidth = function (parentSizeMayHaveChanged) {
+    var that = this,
+        o = that.o,
+        p = that.p,
+        width = this._calculateTbodyWidth();
+
+    p.tbody.style.minWidth = width + 'px';
+    p.headerRow.style.minWidth = (width + (p.scrollbarWidth || 0)) + 'px';
+
+    p.$table.off('scroll', p.onTableScrolledHorizontallyBound);
+
+    if (o.width == DGTable.Width.AUTO) {
+        // Update wrapper element's size to full contain the table body
+        this.$el.width(p.$table.width(p.$tbody.outerWidth()).outerWidth());
+    } else if (o.width == DGTable.Width.SCROLL) {
+
+        if (parentSizeMayHaveChanged) {
+            var lastScrollTop = p.table ? p.table.scrollTop : 0,
+                lastScrollLeft = p.table ? p.table.scrollLeft : 0;
+
+            // BUGFIX: Relayout before recording the widths
+            webkitRenderBugfix(this.el);
+
+            p.table.scrollTop = lastScrollTop;
+            p.table.scrollLeft = lastScrollLeft;
+            p.header.scrollLeft = lastScrollLeft;
+        }
+
+        p.$table.on('scroll', p.onTableScrolledHorizontallyBound);
+    }
+
+    return this;
+};
+
+/**
+ * @private
+ * @returns {Boolean}
+ */
+DGTable.prototype._isTableRtl = function() {
+    return this.p.$table.css('direction') === 'rtl';
+};
+
+/**
+ * @private
+ * @param {Object} column column object
+ * @returns {String}
+ */
+DGTable.prototype._serializeColumnWidth = function(column) {
+    return column.widthMode === ColumnWidthMode.AUTO ? 'auto' :
+        column.widthMode === ColumnWidthMode.RELATIVE ? column.width * 100 + '%' :
+            column.width;
+};
+
+/**
+ * @private
+ * @param {HTMLElement} el
+ */
+DGTable.prototype._cellMouseOverEvent = function(el) {
+    var that = this,
+        o = that.o,
+        p = that.p;
+
+    p.abortCellPreview = false;
+
+    var elInner = el.firstChild;
+
+    if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
+        (elInner.scrollHeight - elInner.clientHeight > 1)) {
+
+        that.hideCellPreview();
+
+        var $el = $(el), $elInner = $(elInner);
+        var div = createElement('div'), $div = $(div);
+        div.innerHTML = el.innerHTML;
+        div.className = o.cellPreviewClassName;
+
+        var isHeaderCell = $el.hasClass(o.tableClassName + '-header-cell');
+        if (isHeaderCell) {
+            div.className += ' header';
+            if ($el.hasClass('sortable')) {
+                div.className += ' sortable';
+            }
+
+            div.draggable = true;
+
+            $(div).on('mousedown', bind(that._onMouseDownColumnHeader, that))
+                .on('mousemove', bind(that._onMouseMoveColumnHeader, that))
+                .on('mouseup', bind(that._onMouseUpColumnHeader, that))
+                .on('mouseleave', bind(that._onMouseLeaveColumnHeader, that))
+                .on('touchstart', bind(that._onTouchStartColumnHeader, that))
+                .on('dragstart', bind(that._onStartDragColumnHeader, that))
+                .on('click', bind(that._onClickColumnHeader, that))
+                .on('contextmenu.dgtable', function (event) { event.preventDefault(); });
+            $(div.firstChild)
+                .on('dragenter', bind(that._onDragEnterColumnHeader, that))
+                .on('dragover', bind(that._onDragOverColumnHeader, that))
+                .on('dragleave', bind(that._onDragLeaveColumnHeader, that))
+                .on('drop', bind(that._onDropColumnHeader, that));
+
+            if (hasIeDragAndDropBug) {
+                $(div).on('selectstart', bind(function(evt) {
+                    evt.preventDefault();
+                    this.dragDrop();
+                    return false;
+                }, div));
+            }
+        }
+
+        var paddingL = parseFloat($el.css('padding-left')) || 0,
+            paddingR = parseFloat($el.css('padding-right')) || 0,
+            paddingT = parseFloat($el.css('padding-top')) || 0,
+            paddingB = parseFloat($el.css('padding-bottom')) || 0;
+
+        var requiredWidth = elInner.scrollWidth + el.clientWidth - elInner.offsetWidth;
+
+        var borderBox = $el.css('boxSizing') === 'border-box';
+        if (borderBox) {
+            requiredWidth -= parseFloat($(el).css('border-left-width')) || 0;
+            requiredWidth -= parseFloat($(el).css('border-right-width')) || 0;
+            $div.css('box-sizing', 'border-box');
+        } else {
+            requiredWidth -= paddingL + paddingR;
+            $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
+        }
+
+        if (!p.transparentBgColor1) {
+            // Detect browser's transparent spec
+            var tempDiv = document.createElement('div');
+            tempDiv.style.backgroundColor = 'transparent';
+            p.transparentBgColor1 = $(tempDiv).css('background-color');
+            tempDiv.style.backgroundColor = 'rgba(0,0,0,0)';
+            p.transparentBgColor2 = $(tempDiv).css('background-color');
+        }
+
+        var css = {
+            'box-sizing': 'content-box',
+            width: requiredWidth + 'px',
+            'min-height': $el.height() + 'px',
+            'padding-left': paddingL,
+            'padding-right': paddingR,
+            'padding-top': paddingT,
+            'padding-bottom': paddingB,
+            overflow: 'hidden',
+            position: 'absolute',
+            zIndex: '-1',
+            left: '0',
+            top: '0',
+            cursor: 'default'
+        };
+
+        if (css) {
+            var bgColor = $(el).css('background-color');
+            if (bgColor === p.transparentBgColor1 || bgColor === p.transparentBgColor2) {
+                bgColor = $(el.parentNode).css('background-color');
+            }
+            if (bgColor === p.transparentBgColor1 || bgColor === p.transparentBgColor2) {
+                bgColor = '#fff';
+            }
+            css['background-color'] = bgColor;
+        }
+
+        $div.css(css);
+
+        that.el.appendChild(div);
+
+        $(div.firstChild).css({
+            'direction': $elInner.css('direction'),
+            'white-space': $elInner.css('white-space')
+        });
+
+        if (isHeaderCell) {
+            // Disable these to allow our own context menu events without interruption
+            $div.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+        }
+
+        div['rowIndex'] = el.parentNode['rowIndex'];
+        var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
+        div['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
+
+        that.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : p.rows[physicalRowIndex]);
+        if (p.abortCellPreview) {
+            $div.remove();
+            return;
+        }
+
+        var $parent = that.$el;
+        var $scrollParent = $parent[0] === window ? $(document) : $parent;
+
+        var offset = $el.offset();
+        var parentOffset = $parent.offset();
+        var rtl = $el.css('float') === 'right';
+        var prop = rtl ? 'right' : 'left';
+
+        // Handle RTL, go from the other side
+        if (rtl) {
+            var windowWidth = $(window).width();
+            offset.right = windowWidth - (offset.left + $el.outerWidth());
+            parentOffset.right = windowWidth - (parentOffset.left + $parent.outerWidth());
+        }
+
+        // If the parent has borders, then it would offset the offset...
+        offset.left -= parseFloat($parent.css('border-left-width')) || 0;
+        offset.right -= parseFloat($parent.css('border-right-width')) || 0;
+        offset.top -= parseFloat($parent.css('border-top-width')) || 0;
+
+        // Handle border widths of the element being offset
+        offset[prop] += parseFloat($(el).css('border-' + prop + '-width')) || 0;
+        offset.top += parseFloat($(el).css('border-top-width')) || parseFloat($(el).css('border-bottom-width')) || 0;
+
+        // Subtract offsets to get offset relative to parent
+        offset.left -= parentOffset.left;
+        offset.right -= parentOffset.right;
+        offset.top -= parentOffset.top;
+
+        // Constrain horizontally
+        var minHorz = 0,
+            maxHorz = $parent - $div.outerWidth();
+        offset[prop] = offset[prop] < minHorz ?
+            minHorz :
+            (offset[prop] > maxHorz ? maxHorz : offset[prop]);
+
+        // Constrain vertically
+        var totalHeight = $el.outerHeight();
+        var maxTop = $scrollParent.scrollTop() + $parent.innerHeight() - totalHeight;
+        if (offset.top > maxTop) {
+            offset.top = Math.max(0, maxTop);
+        }
+
+        // Apply css to preview cell
+        var previewCss = {
+            top: offset.top,
+            'z-index': 9999
+        };
+        previewCss[prop] = offset[prop];
+
+        $div.css(previewCss);
+
+        div['__cell'] = el;
+        p.$cellPreviewEl = $div;
+        el['__previewEl'] = div;
+
+        p._bindCellHoverOut(el);
+        p._bindCellHoverOut(div);
+
+        $div.on('mousewheel', function (event) {
+            var originalEvent = event.originalEvent;
+            var xy = originalEvent.wheelDelta || -originalEvent.detail,
+                x = originalEvent.wheelDeltaX || (originalEvent.axis == 1 ? xy : 0),
+                y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
+
+            if (xy) {
+                that.hideCellPreview();
+            }
+
+            if (y && p.table.scrollHeight > p.table.clientHeight) {
+                var scrollTop = (y * -1) + p.$table.scrollTop();
+                p.$table.scrollTop(scrollTop);
+            }
+
+            if (x && p.table.scrollWidth > p.table.clientWidth) {
+                var scrollLeft = (x * -1) + p.$table.scrollLeft();
+                p.$table.scrollLeft(scrollLeft);
+            }
+        });
+    }
+};
+
+/**
+ * @private
+ * @param {HTMLElement} el
+ */
+DGTable.prototype._cellMouseOutEvent = function(el) {
+    this.hideCellPreview();
+};
+
+/**
+ * Hides the current cell preview,
+ * or prevents the one that is currently trying to show (in the 'cellpreview' event)
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.hideCellPreview = function() {
+    var that = this, p = that.p;
+    if (p.$cellPreviewEl) {
+        var div = p.$cellPreviewEl[0];
+        p.$cellPreviewEl.remove();
+        p._unbindCellHoverOut(div['__cell']);
+        p._unbindCellHoverOut(div);
+
+        div['__cell']['__previewEl'] = null;
+        div['__cell'] = null;
+
+        this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
+
+        p.$cellPreviewEl = null;
+    }
+    p.abortCellPreview = false;
+    return this;
+};
+
+// It's a shame the Google Closure Compiler does not support exposing a nested @param
+
+/**
+ * @typedef {Object} SERIALIZED_COLUMN
+ * @property {Number|null|undefined} [order=0]
+ * @property {String|null|undefined} [width='auto']
+ * @property {Boolean|null|undefined} [visible=true]
+ * */
+
+/**
+ * @typedef {Object} SERIALIZED_COLUMN_SORT
+ * @property {String|null|undefined} [column='']
+ * @property {Boolean|null|undefined} [descending=false]
+ * */
+
+/**
+ * @enum {ColumnWidthMode|number|undefined}
+ * @const
+ * @typedef {ColumnWidthMode}
+ */
+var ColumnWidthMode = {
+    /** @const*/ AUTO: 0,
+    /** @const*/ ABSOLUTE: 1,
+    /** @const*/ RELATIVE: 2
+};
+
+/**
+ * @enum {DGTable.Width|String|undefined}
+ * @const
+ * @typedef {DGTable.Width}
+ */
+DGTable.Width = {
+    /** @const*/ NONE: 'none',
+    /** @const*/ AUTO: 'auto',
+    /** @const*/ SCROLL: 'scroll'
+};
+
+/**
+ * @expose
+ * @typedef {Object} COLUMN_SORT_OPTIONS
+ * @property {String|null|undefined} column
+ * @property {Boolean|null|undefined} [descending=false]
+ * */
+
+/**
+ * @expose
+ * @typedef {Object} COLUMN_OPTIONS
+ * @property {String|null|undefined} width
+ * @property {String|null|undefined} name
+ * @property {String|null|undefined} label
+ * @property {String|null|undefined} dataPath - defaults to `name`
+ * @property {String|null|undefined} comparePath - defaults to `dataPath`
+ * @property {Number|String|null|undefined} comparePath
+ * @property {Boolean|null|undefined} [resizable=true]
+ * @property {Boolean|null|undefined} [movable=true]
+ * @property {Boolean|null|undefined} [sortable=true]
+ * @property {Boolean|null|undefined} [visible=true]
+ * @property {String|null|undefined} [cellClasses]
+ * @property {Boolean|null|undefined} [ignoreMin=false]
+ * */
+
+/**
+ * @typedef {Object} DGTable.Options
+ * @property {COLUMN_OPTIONS[]} [columns]
+ * @property {Number} [height]
+ * @property {DGTable.Width} [width]
+ * @property {Boolean|null|undefined} [virtualTable=true]
+ * @property {Boolean|null|undefined} [resizableColumns=true]
+ * @property {Boolean|null|undefined} [movableColumns=true]
+ * @property {Number|null|undefined} [sortableColumns=1]
+ * @property {Boolean|null|undefined} [adjustColumnWidthForSortArrow=true]
+ * @property {Boolean|null|undefined} [relativeWidthGrowsToFillWidth=true]
+ * @property {Boolean|null|undefined} [relativeWidthShrinksToFillWidth=false]
+ * @property {Boolean|null|undefined} [convertColumnWidthsToRelative=false]
+ * @property {String|null|undefined} [cellClasses]
+ * @property {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} [sortColumn]
+ * @property {Function|null|undefined} [cellFormatter=null]
+ * @property {Function|null|undefined} [headerCellFormatter=null]
+ * @property {Number|null|undefined} [rowsBufferSize=10]
+ * @property {Number|null|undefined} [minColumnWidth=35]
+ * @property {Number|null|undefined} [resizeAreaWidth=8]
+ * @property {{function(string,boolean):{function(a:*,b:*):boolean}}} [onComparatorRequired]
+ * @property {String|null|undefined} [resizerClassName=undefined]
+ * @property {String|null|undefined} [tableClassName=undefined]
+ * @property {Boolean|null|undefined} [allowCellPreview=true]
+ * @property {Boolean|null|undefined} [allowHeaderCellPreview=true]
+ * @property {String|null|undefined} [cellPreviewClassName=undefined]
+ * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
+ * @property {String|null|undefined} [className=undefined]
+ * */
+
+/**
+ * @typedef {{
+     *  currentTarget: Element,
+     *  data: Object.<string, *>,
+     *  delegateTarget: Element,
+     *  isDefaultPrevented: Boolean,
+     *  isImmediatePropagationStopped: Boolean,
+     *  isPropagationStopped: Boolean,
+     *  namespace: string,
+     *  originalEvent: MouseEvent|TouchEvent|Event,
+     *  pageX: Number,
+     *  pageY: Number,
+     *  preventDefault: Function,
+     *  props: Object.<string, *>,
+     *  relatedTarget: Element,
+     *  result: *,
+     *  stopImmediatePropagation: Function,
+     *  stopPropagation: Function,
+     *  target: Element,
+     *  timeStamp: Number,
+     *  type: string,
+     *  which: Number
+     * }} jQuery_Event
+ * */
+
+if (!$.controls) {
+    $.controls = {};
+}
+
+$.controls.dgtable = DGTable;
+
+export default DGTable
