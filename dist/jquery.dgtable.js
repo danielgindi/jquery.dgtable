@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.1
+ * jquery.dgtable 0.5.2
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -122,7 +122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.1';
+	DGTable.VERSION = '0.5.2';
 
 	/**
 	 * @public
@@ -2186,7 +2186,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
 
 	    // Find out if the row is in the rendered dataset
-	    var rowIndex;
+	    var rowIndex = -1;
 	    if (p.filteredRows && (rowIndex = (0, _util.indexOf)(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
 
 	    if (rowIndex === -1) {
