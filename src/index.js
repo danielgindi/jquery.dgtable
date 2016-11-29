@@ -2118,7 +2118,7 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
     if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
 
     // Find out if the row is in the rendered dataset
-    var rowIndex;
+    var rowIndex = -1;
     if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
 
     if (rowIndex === -1) {
