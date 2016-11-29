@@ -1,6 +1,6 @@
 /*!
- * DGTable.js 0.5.0
- * git://github.com/danielgindi/DGTable.js.git
+ * jquery.dgtable 0.5.1
+ * git://github.com/danielgindi/jquery.dgtable.git
  */
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -122,7 +122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.0';
+	DGTable.VERSION = '0.5.1';
 
 	/**
 	 * @public
@@ -191,117 +191,117 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /**
 	     * @private
 	     * @field {Boolean} virtualTable */
-	    o.virtualTable = o.virtualTable === undefined ? true : !!o.virtualTable;
+	    o.virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
 
 	    /**
 	     * @private
 	     * @field {Number} rowsBufferSize */
-	    o.rowsBufferSize = o.rowsBufferSize || 3;
+	    o.rowsBufferSize = options.rowsBufferSize || 3;
 
 	    /**
 	     * @private
 	     * @field {Number} minColumnWidth */
-	    o.minColumnWidth = Math.max(o.minColumnWidth || 35, 0);
+	    o.minColumnWidth = Math.max(options.minColumnWidth || 35, 0);
 
 	    /**
 	     * @private
 	     * @field {Number} resizeAreaWidth */
-	    o.resizeAreaWidth = o.resizeAreaWidth || 8;
+	    o.resizeAreaWidth = options.resizeAreaWidth || 8;
 
 	    /**
 	     * @private
 	     * @field {Boolean} resizableColumns */
-	    o.resizableColumns = o.resizableColumns === undefined ? true : !!o.resizableColumns;
+	    o.resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
 
 	    /**
 	     * @private
 	     * @field {Boolean} movableColumns */
-	    o.movableColumns = o.movableColumns === undefined ? true : !!o.movableColumns;
+	    o.movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
 
 	    /**
 	     * @private
 	     * @field {Number} sortableColumns */
-	    o.sortableColumns = o.sortableColumns === undefined ? 1 : parseInt(o.sortableColumns, 10) || 1;
+	    o.sortableColumns = options.sortableColumns === undefined ? 1 : parseInt(options.sortableColumns, 10) || 1;
 
 	    /**
 	     * @private
 	     * @field {Boolean} adjustColumnWidthForSortArrow */
-	    o.adjustColumnWidthForSortArrow = o.adjustColumnWidthForSortArrow === undefined ? true : !!o.adjustColumnWidthForSortArrow;
+	    o.adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
 
 	    /**
 	     * @private
 	     * @field {Boolean} convertColumnWidthsToRelative */
-	    o.convertColumnWidthsToRelative = o.convertColumnWidthsToRelative === undefined ? false : !!o.convertColumnWidthsToRelative;
+	    o.convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
 
 	    /**
 	     * @private
 	     * @field {String} cellClasses */
-	    o.cellClasses = o.cellClasses === undefined ? '' : o.cellClasses;
+	    o.cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
 	    /**
 	     * @private
 	     * @field {String} resizerClassName */
-	    o.resizerClassName = o.resizerClassName === undefined ? 'dgtable-resize' : o.resizerClassName;
+	    o.resizerClassName = options.resizerClassName === undefined ? 'dgtable-resize' : options.resizerClassName;
 
 	    /**
 	     * @private
 	     * @field {String} tableClassName */
-	    o.tableClassName = o.tableClassName === undefined ? 'dgtable' : o.tableClassName;
+	    o.tableClassName = options.tableClassName === undefined ? 'dgtable' : options.tableClassName;
 
 	    /**
 	     * @private
 	     * @field {Boolean} allowCellPreview */
-	    o.allowCellPreview = o.allowCellPreview === undefined ? true : o.allowCellPreview;
+	    o.allowCellPreview = options.allowCellPreview === undefined ? true : options.allowCellPreview;
 
 	    /**
 	     * @private
 	     * @field {Boolean} allowHeaderCellPreview */
-	    o.allowHeaderCellPreview = o.allowHeaderCellPreview === undefined ? true : o.allowHeaderCellPreview;
+	    o.allowHeaderCellPreview = options.allowHeaderCellPreview === undefined ? true : options.allowHeaderCellPreview;
 
 	    /**
 	     * @private
 	     * @field {String} cellPreviewClassName */
-	    o.cellPreviewClassName = o.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : o.cellPreviewClassName;
+	    o.cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
 
 	    /**
 	     * @private
 	     * @field {Boolean} cellPreviewAutoBackground */
-	    o.cellPreviewAutoBackground = o.cellPreviewAutoBackground === undefined ? true : o.cellPreviewAutoBackground;
+	    o.cellPreviewAutoBackground = options.cellPreviewAutoBackground === undefined ? true : options.cellPreviewAutoBackground;
 
 	    /**
 	     * @private
 	     * @field {Function(String,Boolean)Function(a,b)Boolean} onComparatorRequired */
-	    o.onComparatorRequired = o.onComparatorRequired === undefined ? null : o.onComparatorRequired;
-	    if (!o.onComparatorRequired && typeof o['comparatorCallback'] === 'function') {
-	        o.onComparatorRequired = o['comparatorCallback'];
+	    o.onComparatorRequired = options.onComparatorRequired === undefined ? null : options.onComparatorRequired;
+	    if (!o.onComparatorRequired && typeof options['comparatorCallback'] === 'function') {
+	        o.onComparatorRequired = options['comparatorCallback'];
 	    }
 
 	    /**
 	     * @private
 	     * @field {Boolean} width */
-	    o.width = o.width === undefined ? DGTable.Width.NONE : o.width;
+	    o.width = options.width === undefined ? DGTable.Width.NONE : options.width;
 
 	    /**
 	     * @private
 	     * @field {Boolean} relativeWidthGrowsToFillWidth */
-	    o.relativeWidthGrowsToFillWidth = o.relativeWidthGrowsToFillWidth === undefined ? true : !!o.relativeWidthGrowsToFillWidth;
+	    o.relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
 
 	    /**
 	     * @private
 	     * @field {Boolean} relativeWidthShrinksToFillWidth */
-	    o.relativeWidthShrinksToFillWidth = o.relativeWidthShrinksToFillWidth === undefined ? false : !!o.relativeWidthShrinksToFillWidth;
+	    o.relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
 	    /**
 	     * @private
 	     * @field {Function} cellFormatter */
-	    o.cellFormatter = o.cellFormatter || function (val) {
+	    o.cellFormatter = options.cellFormatter || function (val) {
 	        return val;
 	    };
 
 	    /**
 	     * @private
 	     * @field {Function} headerCellFormatter */
-	    o.headerCellFormatter = o.headerCellFormatter || function (val) {
+	    o.headerCellFormatter = options.headerCellFormatter || function (val) {
 	        return val;
 	    };
 
@@ -334,9 +334,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var sortColumns = [];
 
-	    if (o.sortColumn) {
+	    if (options.sortColumn) {
 
-	        var tmpSortColumns = o.sortColumn;
+	        var tmpSortColumns = options.sortColumn;
 
 	        if (tmpSortColumns && (typeof tmpSortColumns === 'undefined' ? 'undefined' : _typeof(tmpSortColumns)) !== 'object') {
 	            tmpSortColumns = [tmpSortColumns];
