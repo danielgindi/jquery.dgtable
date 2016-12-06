@@ -41,9 +41,12 @@ module.exports = function( grunt ) {
                             sourceMap: false
                             , presets: ['es2015']
                             , plugins: [
-                                'transform-es3-property-literals'
-                                , 'transform-es3-member-expression-literals'
+                                'transform-es3-member-expression-literals'
+                                , 'transform-es3-property-literals'
+                                , 'transform-merge-sibling-variables'
                                 , 'transform-object-assign'
+                                , 'transform-property-literals'
+                                , 'transform-remove-debugger'
                                 , 'transform-es2015-modules-commonjs'
                             ]
                             , compact: false
@@ -158,7 +161,7 @@ module.exports = function( grunt ) {
 
     grunt.registerTask( 'compile-with-closure', [ 'closure-compiler', 'add-map-directive', 'clean-source-map-paths' ] );
 
-    grunt.registerTask( 'build', [ 'webpack', 'replace', 'uglify', 'header' ] );
+    grunt.registerTask( 'build', [ 'webpack:dist', 'replace:dist', 'uglify:dist', 'header:dist' ] );
 
     grunt.registerTask( 'default', [ 'build' ] );
 
