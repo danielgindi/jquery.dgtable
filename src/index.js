@@ -4,7 +4,7 @@ import jQuery from 'jquery';
 import { bind, indexOf, contains, find, forEach } from './util';
 import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
-import * as CssUtil from './css_util';
+import CssUtil from './css_util';
 
 const $ = jQuery;
 
@@ -84,7 +84,7 @@ DGTable.prototype.initialize = function (options) {
      * @public
      * @expose
      * */
-    var $el = that.$el = $('<div>').addClass(o.className || 'dgtable-wrapper');
+    var $el = that.$el = $('<div>').addClass(options.className || 'dgtable-wrapper');
 
     /**
      * @public
@@ -972,7 +972,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
     }
 
     var $thisWrapper = $('<div>')
-        .addClass(this.className)
+        .addClass(that.el.className)
         .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', 'float': 'left', width: '1px', overflow: 'hidden' })
         .append(
             $('<div>').addClass(tableClassName).append(
@@ -1707,7 +1707,7 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
         }
     }
 
-    var detectedWidth = CssUtil.contentWidth(this.$el);
+    var detectedWidth = CssUtil.width(this.$el);
 
     if (p.$table) {
         if (o.virtualTable) {
@@ -1724,7 +1724,7 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
 
     if (!p.$table) {
 
-        $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
+        $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
         $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
         $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
         for (var i = 0; i < p.visibleColumns.length; i++) {
@@ -1736,16 +1736,18 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
     }
 
     detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
+
     var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
-    for (var i = 0, $cell, $div, cellBorderBox; i < $cells.length; i++) {
-        $div = $($cells[i].firstChild);
+    for (var i = 0, $cell; i < $cells.length; i++) {
         $cell = $($cells[i]);
 
-        cellBorderBox = $cell.css('boxSizing') === 'border-box';
-        detectedWidth -=
-            (parseFloat($cell.css('border-right-width')) || 0) +
-            (parseFloat($cell.css('border-left-width')) || 0) +
-            (cellBorderBox ? 0 : this._horizontalPadding($cell[0])); // CELL's padding
+        var isBoxing = $cell.css('boxSizing') === 'border-box';
+        if (!isBoxing) {
+            detectedWidth -=
+                (parseFloat($cell.css('border-right-width')) || 0) +
+                (parseFloat($cell.css('border-left-width')) || 0) +
+                (this._horizontalPadding($cell[0])); // CELL's padding
+        }
     }
 
     if ($thisWrapper) {
@@ -1777,7 +1779,7 @@ DGTable.prototype.tableWidthChanged = (function () {
         ).css({'position': 'absolute', top: '-9999px', 'visibility': 'hidden'});
         $tableWrapper.appendTo(document.body);
 
-        var width = CssUtil.contentWidth($cell);
+        var width = CssUtil.width($cell);
 
         $tableWrapper.remove();
 
@@ -2614,7 +2616,7 @@ DGTable.prototype._onMouseDownColumnHeader = function (event) {
                 'visibility': 'visible',
                 'left': posCol.left,
                 'top': posCol.top,
-                'height': CssUtil.contentHeight(this.$el)
+                'height': CssUtil.height(this.$el)
             })
             [0]['columnName'] = selectedHeaderCell[0]['columnName'];
         try { p.$resizer[0].style.zIndex = ''; } catch (err) { }
@@ -2741,23 +2743,34 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
     posCol.left -= posRelative.left;
     var resizerWidth = CssUtil.outerWidth(p.$resizer);
-
+    
+    var isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
+    
     var actualX = event.pageX - posRelative.left;
     var minX = posCol.left;
+
+    minX -= Math.ceil(resizerWidth / 2);
+
     if (rtl) {
         minX += CssUtil.outerWidth(selectedHeaderCell);
-        minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-        minX -= Math.ceil(resizerWidth / 2);
         minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
-        minX -= this._horizontalPadding(selectedHeaderCell[0]);
+
+        if (!isBoxing) {
+            minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
+            minX -= this._horizontalPadding(selectedHeaderCell[0]);
+        }
+
         if (actualX > minX) {
             actualX = minX;
         }
     } else {
-        minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-        minX -= Math.ceil(resizerWidth / 2);
         minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
-        minX += this._horizontalPadding(selectedHeaderCell[0]);
+        
+        if (!isBoxing) {
+            minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+            minX += this._horizontalPadding(selectedHeaderCell[0]);
+        }
+
         if (actualX < minX) {
             actualX = minX;
         }
@@ -2773,6 +2786,7 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
 DGTable.prototype._onEndDragColumnHeader = function (event) {
 
     var that = this,
+        o = that.o,
         p = that.p;
 
     if (!p.$resizer) {
@@ -2790,50 +2804,91 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
         posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
         posCol.left -= posRelative.left;
         var resizerWidth = CssUtil.outerWidth(p.$resizer);
+        
+        var isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
 
         var actualX = event.pageX - posRelative.left;
         var baseX = posCol.left, minX = posCol.left;
         var width = 0;
+
+        baseX -= Math.ceil(resizerWidth / 2);
+
         if (rtl) {
-            actualX += this._horizontalPadding(selectedHeaderCell[0]);
+
+            if (!isBoxing) {
+                actualX += this._horizontalPadding(selectedHeaderCell[0]);
+                actualX += parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
+                actualX += parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
+            }
+
             baseX += CssUtil.outerWidth(selectedHeaderCell);
-            baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-            baseX -= Math.ceil(resizerWidth / 2);
-            minX = baseX;
-            minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
+            
+            minX = baseX - (column.ignoreMin ? 0 : this.o.minColumnWidth);
             if (actualX > minX) {
                 actualX = minX;
             }
+
             width = baseX - actualX;
         } else {
-            actualX -= this._horizontalPadding(selectedHeaderCell[0]);
-            baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-            baseX -= Math.ceil(resizerWidth / 2);
-            minX = baseX;
-            minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
+
+            if (!isBoxing) {
+                actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+                actualX -= parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
+                actualX -= parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
+            }
+
+            minX = baseX + (column.ignoreMin ? 0 : this.o.minColumnWidth);
             if (actualX < minX) {
                 actualX = minX;
             }
+
             width = actualX - baseX;
         }
-
+        
         p.$resizer.remove();
         p.$resizer = null;
 
         var sizeToSet = width;
 
         if (column.widthMode === ColumnWidthMode.RELATIVE) {
-            var detectedWidth = this._calculateWidthAvailableForColumns(),
-                sizeLeft = detectedWidth;
+            var detectedWidth = this._calculateWidthAvailableForColumns();
+
+            var sizeLeft = detectedWidth;
+            //sizeLeft -= p.table.offsetWidth - p.table.clientWidth;
+
+            var totalRelativePercentage = 0;
+            var relatives = 0;
 
             for (var i = 0, col; i < p.visibleColumns.length; i++) {
                 col = p.visibleColumns[i];
-                if (col.widthMode != ColumnWidthMode.RELATIVE) {
+                if (col.name === column.name) continue;
+
+                if (col.widthMode == ColumnWidthMode.RELATIVE) {
+                    totalRelativePercentage += col.width;
+                    relatives++;
+                } else {
                     sizeLeft -= col.actualWidth;
                 }
             }
 
             sizeToSet = width / sizeLeft;
+
+            if (relatives > 0) {
+                // When there's more than one relative overall,
+                //   we can do relative enlarging/shrinking.
+                // Otherwise, we can end up having a 0 width.
+
+            var unNormalizedSizeToSet = sizeToSet / ((1 - sizeToSet) / totalRelativePercentage);
+
+            totalRelativePercentage += sizeToSet;
+
+            // Account for relative widths scaling later
+            if ((totalRelativePercentage < 1 && o.relativeWidthGrowsToFillWidth) ||
+                (totalRelativePercentage > 1 && o.relativeWidthShrinksToFillWidth)) {
+                sizeToSet = unNormalizedSizeToSet;
+            }
+            }
+            
             sizeToSet *= 100;
             sizeToSet += '%';
         }
@@ -3149,7 +3204,7 @@ DGTable.prototype._renderSkeleton = function () {
         };
 
         var $dummyTbody, $dummyWrapper = $('<div>')
-            .addClass(this.className)
+            .addClass(that.el.className)
             .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' })
             .append(
                 $('<div>').addClass(tableClassName).append(
@@ -3275,11 +3330,10 @@ DGTable.prototype._updateTableWidth = function (parentSizeMayHaveChanged) {
 
     if (o.width == DGTable.Width.AUTO) {
         // Update wrapper element's size to fully contain the table body
-        this.$el.width(
-            CssUtil.outerWidth(
-                p.$table.width(CssUtil.outerWidth(p.$tbody))
-            )
-        );
+
+        CssUtil.width(p.$table, CssUtil.outerWidth(p.$tbody));
+        CssUtil.width(this.$el, CssUtil.outerWidth(p.$table));
+
     } else if (o.width == DGTable.Width.SCROLL) {
 
         if (parentSizeMayHaveChanged) {
@@ -3379,16 +3433,14 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             paddingT = parseFloat($el.css('padding-top')) || 0,
             paddingB = parseFloat($el.css('padding-bottom')) || 0;
 
-        var requiredWidth = elInner.scrollWidth + el.clientWidth - elInner.offsetWidth;
+        var requiredWidth = elInner.scrollWidth + (el.clientWidth - elInner.offsetWidth);
 
-        var borderBox = $el.css('boxSizing') === 'border-box';
+        var borderBox = $el.css('box-sizing') === 'border-box';
         if (borderBox) {
-            requiredWidth -= parseFloat($(el).css('border-left-width')) || 0;
-            requiredWidth -= parseFloat($(el).css('border-right-width')) || 0;
             $div.css('box-sizing', 'border-box');
         } else {
             requiredWidth -= paddingL + paddingR;
-            $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
+            $div.css('margin-top', parseFloat($(el).css('border-top-width')) || 0);
         }
 
         if (!p.transparentBgColor1) {
@@ -3401,19 +3453,19 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         }
 
         var css = {
-            'box-sizing': 'content-box',
-            width: requiredWidth + 'px',
-            'min-height': CssUtil.contentHeight($el) + 'px',
+            'box-sizing': borderBox ? 'border-box' : 'content-box',
+            'width': requiredWidth,
+            'min-height': CssUtil.height($el),
             'padding-left': paddingL,
             'padding-right': paddingR,
             'padding-top': paddingT,
             'padding-bottom': paddingB,
-            overflow: 'hidden',
-            position: 'absolute',
-            zIndex: '-1',
-            left: '0',
-            top: '0',
-            cursor: 'default'
+            'overflow': 'hidden',
+            'position': 'absolute',
+            'z-index': '-1',
+            'left': '0',
+            'top': '0',
+            'cursor': 'default'
         };
 
         if (css) {
@@ -3438,14 +3490,28 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
         if (isHeaderCell) {
             // Disable these to allow our own context menu events without interruption
-            $div.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+            $div.css({
+                '-webkit-touch-callout': 'none',
+                '-webkit-user-select': 'none',
+                '-moz-user-select': 'none',
+                '-ms-user-select': 'none',
+                '-o-user-select': 'none',
+                'user-select': 'none'
+            });
         }
 
         div['rowIndex'] = el.parentNode['rowIndex'];
         var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
         div['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
 
-        that.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : p.rows[physicalRowIndex]);
+        that.trigger(
+            'cellpreview',
+            div.firstChild,
+            physicalRowIndex == null ? null : physicalRowIndex,
+            div['columnName'],
+            physicalRowIndex == null ? null : p.rows[physicalRowIndex]
+        );
+
         if (p.abortCellPreview) {
             $div.remove();
             return;

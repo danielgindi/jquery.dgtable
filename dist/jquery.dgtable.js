@@ -67,28 +67,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-	var _jquery = __webpack_require__(1);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _util = __webpack_require__(2);
-
-	var _row_collection = __webpack_require__(3);
-
-	var _row_collection2 = _interopRequireDefault(_row_collection);
-
-	var _column_collection = __webpack_require__(4);
-
-	var _column_collection2 = _interopRequireDefault(_column_collection);
+	var _jquery = __webpack_require__(1),
+	    _jquery2 = _interopRequireDefault(_jquery),
+	    _util = __webpack_require__(2),
+	    _row_collection = __webpack_require__(3),
+	    _row_collection2 = _interopRequireDefault(_row_collection),
+	    _column_collection = __webpack_require__(4),
+	    _column_collection2 = _interopRequireDefault(_column_collection),
+	    _css_util = __webpack_require__(5),
+	    _css_util2 = _interopRequireDefault(_css_util);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var $ = _jquery2['default'];
-
-	var userAgent = navigator.userAgent;
-	var ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
-	var hasIeDragAndDropBug = ieVersion && ieVersion < 10;
-	var createElement = (0, _util.bind)(document.createElement, document);
+	var $ = _jquery2['default'],
+	    userAgent = navigator.userAgent,
+	    ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null,
+	    hasIeDragAndDropBug = ieVersion && ieVersion < 10,
+	    createElement = (0, _util.bind)(document.createElement, document);
 
 	function webkitRenderBugfix(el) {
 	    // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars 
@@ -145,12 +140,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @private
 	     * @type {DGTable.Options}
 	     * */
-	    var o = that.o = {};
+	    var o = that.o = {},
+	        p = that.p = {};
 
 	    /**
 	     * @private
 	     * This is for encapsulating private data */
-	    var p = that.p = {};
+
 
 	    /** This is for encapsulating event callback */
 	    p.events = {};
@@ -309,10 +305,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @field {Number} height */
 	    o.height = options.height;
 
-	    var i, len, col, column, columnData, order;
+	    var i,
+	        len,
+	        col,
+	        column,
+	        columnData,
+	        order,
+	        columns = new _column_collection2['default']();
 
 	    // Prepare columns
-	    var columns = new _column_collection2['default']();
+
 	    for (i = 0, order = 0; i < options.columns.length; i++) {
 	        columnData = options.columns[i];
 	        column = this._initColumnFromData(columnData);
@@ -387,19 +389,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (relatedTarget == this || $.contains(this, relatedTarget)) return;
 	        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
 	        that._cellMouseOverEvent.call(that, this);
-	    };
-
-	    /**
-	     * @param {MouseEvent} evt
-	     * @this {HTMLElement}
-	     * */
-	    var hoverMouseOutHandler = function hoverMouseOutHandler(evt) {
+	    },
+	        hoverMouseOutHandler = function hoverMouseOutHandler(evt) {
 	        evt = evt || event;
 	        var relatedTarget = evt.toElement || evt.relatedTarget;
 	        if (relatedTarget == this || $.contains(this, relatedTarget)) return;
 	        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
 	        that._cellMouseOutEvent.call(that, this);
 	    };
+
+	    /**
+	     * @param {MouseEvent} evt
+	     * @this {HTMLElement}
+	     * */
+
 
 	    if ('addEventListener' in window) {
 
@@ -621,9 +624,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype._initColumnFromData = function (columnData) {
 
-	    var parsedWidth = this._parseColumnWidth(columnData.width, columnData.ignoreMin ? 0 : this.o.minColumnWidth);
-
-	    var col = {
+	    var parsedWidth = this._parseColumnWidth(columnData.width, columnData.ignoreMin ? 0 : this.o.minColumnWidth),
+	        col = {
 	        name: columnData.name,
 	        label: columnData.label === undefined ? columnData.name : columnData.label,
 	        width: parsedWidth.width,
@@ -723,8 +725,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype._unbindCellEventsForTable = function () {
 	    var that = this,
-	        p = that.p;
-	    var i, rows, rowCount, rowToClean, j, cells, cellCount;
+	        p = that.p,
+	        i,
+	        rows,
+	        rowCount,
+	        rowToClean,
+	        j,
+	        cells,
+	        cellCount;
+
 	    if (p.headerRow) {
 	        for (i = 0, rows = p.headerRow.childNodes, rowCount = rows.length; i < rowCount; i++) {
 	            rowToClean = rows[i];
@@ -828,17 +837,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    } else if (o.virtualTable) {
 	        rowCount = (p.filteredRows || p.rows).length;
-	        var scrollTop = p.table.scrollTop;
-	        var firstVisible = Math.floor((scrollTop - p.virtualRowHeightFirst) / p.virtualRowHeight) + 1 - o.rowsBufferSize;
-	        var lastVisible = Math.ceil((scrollTop - p.virtualRowHeightFirst + p.visibleHeight) / p.virtualRowHeight) + o.rowsBufferSize;
+	        var scrollTop = p.table.scrollTop,
+	            firstVisible = Math.floor((scrollTop - p.virtualRowHeightFirst) / p.virtualRowHeight) + 1 - o.rowsBufferSize,
+	            lastVisible = Math.ceil((scrollTop - p.virtualRowHeightFirst + p.visibleHeight) / p.virtualRowHeight) + o.rowsBufferSize;
+
 	        if (firstVisible < 0) firstVisible = 0;
 	        if (lastVisible >= rowCount) {
 	            lastVisible = rowCount - 1;
 	        }
 
 	        var oldFirstVisible = -1,
-	            oldLastVisible = -1;
-	        var tbodyChildNodes = p.tbody.childNodes;
+	            oldLastVisible = -1,
+	            tbodyChildNodes = p.tbody.childNodes;
+
 	        if (tbodyChildNodes.length) {
 	            oldFirstVisible = tbodyChildNodes[0]['rowIndex'];
 	            oldLastVisible = tbodyChildNodes[tbodyChildNodes.length - 1]['rowIndex'];
@@ -921,17 +932,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        physicalRowIndex,
 	        dataPath,
 	        dataPathIndex,
-	        colValue;
+	        colValue,
+	        colCount = visibleColumns.length;
 
-	    var colCount = visibleColumns.length;
 	    for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
 	        column = visibleColumns[colIndex];
 	        column._finalWidth = column.actualWidthConsideringScrollbarWidth || column.actualWidth;
 	    }
 
-	    var bodyFragment = document.createDocumentFragment();
-
-	    var isRtl = this._isTableRtl(),
+	    var bodyFragment = document.createDocumentFragment(),
+	        isRtl = this._isTableRtl(),
 	        virtualRowXAttr = isRtl ? 'right' : 'left';
 
 	    for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner, content; i < rowCount && i <= last; i++) {
@@ -995,8 +1005,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var p = this.p;
 
 	    if (p.tbody) {
-	        var rowCount = (p.filteredRows || p.rows).length;
-	        var height = p.virtualRowHeight * rowCount;
+	        var rowCount = (p.filteredRows || p.rows).length,
+	            height = p.virtualRowHeight * rowCount;
+
 	        if (rowCount) {
 	            height += p.virtualRowHeightFirst - p.virtualRowHeight;
 	            height += p.virtualRowHeightLast - p.virtualRowHeight;
@@ -1026,9 +1037,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cell,
 	        cellInner,
 	        colIndex,
-	        column;
-
-	    var $row = $('<div>').addClass(rowClassName).css('float', 'left');
+	        column,
+	        $row = $('<div>').addClass(rowClassName).css('float', 'left');
 
 	    for (colIndex = 0; colIndex < colCount; colIndex++) {
 	        column = visibleColumns[colIndex];
@@ -1040,16 +1050,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        $row.append(cell);
 	    }
 
-	    var $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', 'float': 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
+	    var $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
 
 	    $thisWrapper.appendTo(document.body);
 
-	    var fractionTest = $('<div style="border:1px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body);
-	    var hasFractions = parseFloat(fractionTest.css('border-width'));
+	    var fractionTest = $('<div style="border:1px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body),
+	        hasFractions = parseFloat(fractionTest.css('border-width'));
+
 	    hasFractions = Math.round(hasFractions) != hasFractions;
 	    fractionTest.remove();
 
-	    var width = $row.outerWidth();
+	    var width = _css_util2['default'].outerWidth($row);
 	    width -= p.scrollbarWidth || 0;
 
 	    if (hasFractions) {
@@ -1070,8 +1081,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.addColumn = function (columnData, before) {
 	    var that = this,
-	        p = that;
-	    var columns = p.columns;
+	        p = that,
+	        columns = p.columns;
+
 
 	    if (columnData && !columns.get(columnData.name)) {
 	        var beforeColumn = null;
@@ -1111,10 +1123,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.removeColumn = function (column) {
 	    var that = this,
-	        p = that.p;
-	    var columns = p.columns;
+	        p = that.p,
+	        columns = p.columns,
+	        colIdx = columns.indexOf(column);
 
-	    var colIdx = columns.indexOf(column);
 	    if (colIdx > -1) {
 	        columns.splice(colIdx, 1);
 	        columns.normalizeOrder();
@@ -1137,9 +1149,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.filter = function (column, filter, caseSensitive) {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        col = p.columns.get(column);
 
-	    var col = p.columns.get(column);
 	    if (col) {
 	        var hasFilter = !!p.filteredRows;
 	        if (p.filteredRows) {
@@ -1179,9 +1191,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.setColumnLabel = function (column, label) {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        col = p.columns.get(column);
 
-	    var col = p.columns.get(column);
 	    if (col) {
 	        col.label = label === undefined ? col.name : label;
 
@@ -1235,9 +1247,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (o.virtualTable) {
 	            this.clearAndRender()._updateLastCellWidthFromScrollbar(true);
 	        } else {
-	            var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
-	            var beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
+	            var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell'),
+	                beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
 	                fromPos = srcOrder;
+
 	            headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
 
 	            var srcWidth = p.visibleColumns[srcOrder];
@@ -1341,7 +1354,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Build output for event, with option names that will survive compilers
 	        var sorts = [];
 	        for (i = 0; i < currentSort.length; i++) {
-	            sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+	            sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
 	        }
 	        this.trigger('sort', sorts);
 	    }
@@ -1356,9 +1369,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.resort = function () {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        currentSort = p.rows.sortColumn;
 
-	    var currentSort = p.rows.sortColumn;
 	    if (currentSort.length) {
 	        p.rows.sortColumn = currentSort;
 	        p.rows.sort(!!p.filteredRows);
@@ -1367,7 +1380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Build output for event, with option names that will survive compilers
 	        var sorts = [];
 	        for (var i = 0; i < currentSort.length; i++) {
-	            sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+	            sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
 	        }
 	        this.trigger('sort', sorts);
 	    }
@@ -1402,9 +1415,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.setColumnVisible = function (column, visible) {
 	    var that = this,
-	        p = that.p;
-
-	    var col = p.columns.get(column);
+	        p = that.p,
+	        col = p.columns.get(column);
 
 	    //noinspection PointlessBooleanExpressionJS
 	    visible = !!visible;
@@ -1427,8 +1439,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.isColumnVisible = function (column) {
 	    var that = this,
-	        p = that.p;
-	    var col = p.columns.get(column);
+	        p = that.p,
+	        col = p.columns.get(column);
+
 	    if (col) {
 	        return col.visible;
 	    }
@@ -1568,11 +1581,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype.setColumnWidth = function (column, width) {
 
 	    var that = this,
-	        p = that.p;
-
-	    var col = p.columns.get(column);
-
-	    var parsedWidth = this._parseColumnWidth(width, col.ignoreMin ? 0 : this.o.minColumnWidth);
+	        p = that.p,
+	        col = p.columns.get(column),
+	        parsedWidth = this._parseColumnWidth(width, col.ignoreMin ? 0 : this.o.minColumnWidth);
 
 	    if (col) {
 	        var oldWidth = this._serializeColumnWidth(col);
@@ -1599,9 +1610,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.getColumnWidth = function (column) {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        col = p.columns.get(column);
 
-	    var col = p.columns.get(column);
 	    if (col) {
 	        return this._serializeColumnWidth(col);
 	    }
@@ -1616,14 +1627,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.getColumnConfig = function (column) {
 	    var that = this,
-	        p = that.p;
-	    var col = p.columns.get(column);
+	        p = that.p,
+	        col = p.columns.get(column);
+
 	    if (col) {
 	        return {
-	            'order': col.order,
-	            'width': this._serializeColumnWidth(col),
-	            'visible': col.visible,
-	            'label': col.label
+	            order: col.order,
+	            width: this._serializeColumnWidth(col),
+	            visible: col.visible,
+	            label: col.label
 	        };
 	    }
 	    return null;
@@ -1637,9 +1649,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.getColumnsConfig = function () {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        config = {};
 
-	    var config = {};
 	    for (var i = 0; i < p.columns.length; i++) {
 	        config[p.columns[i].name] = this.getColumnConfig(p.columns[i].name);
 	    }
@@ -1654,9 +1666,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.getSortedColumns = function () {
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        sorted = [];
 
-	    var sorted = [];
 	    for (var i = 0, sort; i < p.rows.sortColumn.length; i++) {
 	        sort = p.rows.sortColumn[i];
 	        sorted.push({ column: sort.column, descending: sort.descending });
@@ -1679,10 +1691,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (row < 0 || row > p.rows.length - 1) return null;
 	    var column = p.columns.get(columnName);
 	    if (!column) return null;
-	    var rowData = p.rows[row];
+	    var rowData = p.rows[row],
+	        dataPath = column.dataPath,
+	        colValue = rowData[dataPath[0]];
 
-	    var dataPath = column.dataPath;
-	    var colValue = rowData[dataPath[0]];
 	    for (var dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
 	        colValue = colValue[dataPath[dataPathIndex]];
 	    }
@@ -1770,10 +1782,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._calculateWidthAvailableForColumns = function () {
 	    var that = this,
 	        o = that.o,
-	        p = that.p;
+	        p = that.p,
+	        oldDisplay,
+	        lastScrollTop,
+	        lastScrollLeft;
 
 	    // Changing display mode briefly, to prevent taking in account the  parent's scrollbar width when we are the cause for it
-	    var oldDisplay, lastScrollTop, lastScrollLeft;
+
 	    if (p.$table) {
 	        lastScrollTop = p.table ? p.table.scrollTop : 0;
 	        lastScrollLeft = p.table ? p.table.scrollLeft : 0;
@@ -1783,7 +1798,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            p.$table[0].style.display = 'none';
 	        }
 	    }
-	    var detectedWidth = this.$el.width();
+
+	    var detectedWidth = _css_util2['default'].width(this.$el);
+
 	    if (p.$table) {
 	        if (o.virtualTable) {
 	            p.$table[0].style.display = oldDisplay;
@@ -1794,12 +1811,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.header.scrollLeft = lastScrollLeft;
 	    }
 
-	    var $thisWrapper, $header, $headerRow;
-	    var tableClassName = o.tableClassName;
+	    var $thisWrapper,
+	        $header,
+	        $headerRow,
+	        tableClassName = o.tableClassName;
+
 
 	    if (!p.$table) {
 
-	        $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
+	        $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' });
 	        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
 	        $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
 	        for (var i = 0; i < p.visibleColumns.length; i++) {
@@ -1811,13 +1831,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
+
 	    var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
-	    for (var i = 0, $cell, $div, cellBorderBox; i < $cells.length; i++) {
+	    for (var i = 0, $cell, $div; i < $cells.length; i++) {
 	        $div = $($cells[i].firstChild);
 	        $cell = $($cells[i]);
 
-	        cellBorderBox = $cell.css('boxSizing') === 'border-box';
-	        detectedWidth -= (parseFloat($cell.css('border-right-width')) || 0) + (parseFloat($cell.css('border-left-width')) || 0) + (cellBorderBox ? 0 : this._horizontalPadding($cell[0])); // CELL's padding
+	        var isBoxing = $cell.css('boxSizing') === 'border-box';
+	        if (!isBoxing) {
+	            detectedWidth -= (parseFloat($cell.css('border-right-width')) || 0) + (parseFloat($cell.css('border-left-width')) || 0) + this._horizontalPadding($cell[0]); // CELL's padding
+	        }
 	    }
 
 	    if ($thisWrapper) {
@@ -1836,17 +1859,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype.tableWidthChanged = function () {
 
 	    var getTextWidth = function getTextWidth(text) {
-	        var tableClassName = this.o.tableClassName;
+	        var tableClassName = this.o.tableClassName,
+	            $cell,
+	            $tableWrapper = $('<div>').addClass(this.$el).append($('<div>').addClass(tableClassName + '-header').append($('<div>').addClass(tableClassName + '-header-row').append($cell = $('<div>').addClass(tableClassName + '-header-cell').append($('<div>').text(text))))).css({ position: 'absolute', top: '-9999px', visibility: 'hidden' });
 
-	        var $cell,
-	            $tableWrapper = $('<div>').addClass(this.$el).append($('<div>').addClass(tableClassName + '-header').append($('<div>').addClass(tableClassName + '-header-row').append($cell = $('<div>').addClass(tableClassName + '-header-cell').append($('<div>').text(text))))).css({ 'position': 'absolute', top: '-9999px', 'visibility': 'hidden' });
 	        $tableWrapper.appendTo(document.body);
-	        var width = $cell.width();
-	        $tableWrapper.remove();
-	        return width;
-	    };
 
-	    var lastDetectedWidth = null;
+	        var width = _css_util2['default'].width($cell);
+
+	        $tableWrapper.remove();
+
+	        return width;
+	    },
+	        lastDetectedWidth = null;
 
 	    /**
 	     * @public
@@ -2051,17 +2076,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!p.$table) {
 	        return that;
 	    }
-	    var height = that.$el.innerHeight() - (parseFloat(p.$table.css('border-top-width')) || 0) - (parseFloat(p.$table.css('border-bottom-width')) || 0);
+
+	    var height = _css_util2['default'].innerHeight(that.$el) - (parseFloat(p.$table.css('border-top-width')) || 0) // Subtract top border of inner element
+	    - (parseFloat(p.$table.css('border-bottom-width')) || 0); // Subtract bottom border of inner element
+
 	    if (height != o.height) {
+
 	        o.height = height;
+
 	        if (p.tbody) {
 	            // At least 1 pixel - to show scrollers correctly.
-	            p.tbody.style.height = Math.max(o.height - p.$headerRow.outerHeight(), 1) + 'px';
+	            p.tbody.style.height = Math.max(o.height - _css_util2['default'].outerHeight(p.$headerRow), 1) + 'px';
 	        }
+
 	        if (o.virtualTable) {
 	            that.clearAndRender();
 	        }
 	    }
+
 	    return that;
 	};
 
@@ -2106,9 +2138,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            } else if (p.$tbody) {
 	                var firstRow = p.rows.length - data.length,
-	                    lastRow = firstRow + data.length - 1;
+	                    lastRow = firstRow + data.length - 1,
+	                    renderedRows = that.renderRows(firstRow, lastRow);
 
-	                var renderedRows = that.renderRows(firstRow, lastRow);
 	                p.tbody.appendChild(renderedRows);
 	                that._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
 	                ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
@@ -2272,8 +2304,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (this.o.virtualTable) {
 	        // Now make sure that the row actually rendered, as this is a virtual table
-	        var rowsToRender = [];
-	        var childNodes = p.tbody.childNodes;
+	        var rowsToRender = [],
+	            childNodes = p.tbody.childNodes;
+
 	        for (var i = 0, rowCount = childNodes.length; i < rowCount; i++) {
 	            rowsToRender.push(childNodes[i]['physicalRowIndex']);
 	            this.trigger('rowdestroy', childNodes[i]);
@@ -2367,16 +2400,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype.createWebWorker = function (url, start, resort) {
 	    if (this.isWorkerSupported()) {
 	        var that = this,
-	            p = that.p;
-
-	        var worker = new Worker(url);
-	        var listener = function listener(evt) {
+	            p = that.p,
+	            worker = new Worker(url),
+	            listener = function listener(evt) {
 	            if (evt.data.append) {
 	                that.addRows(evt.data.rows, resort);
 	            } else {
 	                that.setRows(evt.data.rows, resort);
 	            }
 	        };
+
 	        worker.addEventListener('message', listener, false);
 	        if (!p.workerListeners) {
 	            p.workerListeners = [];
@@ -2472,10 +2505,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var that = this,
 	        o = that.o,
 	        p = that.p,
-	        rtl = this._isTableRtl();
-
-	    var $headerCell = $(e.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName),
+	        rtl = this._isTableRtl(),
+	        $headerCell = $(e.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName),
 	        headerCell = $headerCell[0];
+
 	    if (headerCell['__cell']) {
 	        headerCell = headerCell['__cell'];
 	        $headerCell = $(headerCell);
@@ -2486,12 +2519,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        previousElementSibling = previousElementSibling.previousSibling;
 	    }
 
-	    var firstCol = !previousElementSibling;
-
-	    var mouseX = ((e.pageX != null ? e.pageX : e.originalEvent.pageX) || e.originalEvent.clientX) - $headerCell.offset().left;
+	    var firstCol = !previousElementSibling,
+	        mouseX = ((e.pageX != null ? e.pageX : e.originalEvent.pageX) || e.originalEvent.clientX) - $headerCell.offset().left;
 
 	    if (rtl) {
-	        if (!firstCol && $headerCell.outerWidth() - mouseX <= o.resizeAreaWidth / 2) {
+	        if (!firstCol && _css_util2['default'].outerWidth($headerCell) - mouseX <= o.resizeAreaWidth / 2) {
 	            return previousElementSibling['columnName'];
 	        } else if (mouseX <= o.resizeAreaWidth / 2) {
 	            return headerCell['columnName'];
@@ -2499,7 +2531,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	        if (!firstCol && mouseX <= o.resizeAreaWidth / 2) {
 	            return previousElementSibling['columnName'];
-	        } else if ($headerCell.outerWidth() - mouseX <= o.resizeAreaWidth / 2) {
+	        } else if (_css_util2['default'].outerWidth($headerCell) - mouseX <= o.resizeAreaWidth / 2) {
 	            return headerCell['columnName'];
 	        }
 	    }
@@ -2519,21 +2551,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var startTouch = event.originalEvent.changedTouches[0];
 	    p.currentTouchId = startTouch.identifier;
 
-	    var $eventTarget = $(event.currentTarget);
-
-	    var startPos = { x: startTouch.pageX, y: startTouch.pageY },
+	    var $eventTarget = $(event.currentTarget),
+	        startPos = { x: startTouch.pageX, y: startTouch.pageY },
 	        currentPos = startPos,
-	        distanceTreshold = 9;
-
-	    var unbind = function unbind() {
+	        distanceTreshold = 9,
+	        unbind = function unbind() {
 	        p.currentTouchId = null;
 	        $eventTarget.off('touchend').off('touchcancel');
 	        clearTimeout(tapAndHoldTimeout);
-	    };
+	    },
+	        fakeEvent = function fakeEvent(name) {
+	        var fakeEvent = $.Event(name),
+	            extendObjects = Array.prototype.slice.call(arguments, 1);
 
-	    var fakeEvent = function fakeEvent(name) {
-	        var fakeEvent = $.Event(name);
-	        var extendObjects = Array.prototype.slice.call(arguments, 1);
 	        $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY', 'which'], function () {
 	            fakeEvent[this] = event[this];
 	            for (var i = 0; i < extendObjects.length; i++) {
@@ -2545,7 +2575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return fakeEvent;
 	    };
 
-	    $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { 'which': 1 }));
+	    $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { which: 1 }));
 
 	    var tapAndHoldTimeout = setTimeout(function () {
 	        unbind();
@@ -2562,7 +2592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (distanceTravelled < distanceTreshold) {
 	            that.cancelColumnResize();
-	            $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3 }));
+	            $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { which: 3 }));
 	        }
 	    }, 500);
 
@@ -2580,8 +2610,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
 	        if (distanceTravelled < distanceTreshold || p.$resizer) {
-	            $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1 }));
-	            $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1 }));
+	            $eventTarget.trigger(fakeEvent('mouseup', touch, { which: 1 }));
+	            $eventTarget.trigger(fakeEvent('click', touch, { which: 1 }));
 	        }
 	    }).on('touchcancel', function () {
 	        unbind();
@@ -2625,20 +2655,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            $(p.$resizer).remove();
 	        }
 	        p.$resizer = $('<div></div>').addClass(o.resizerClassName).css({
-	            'position': 'absolute',
-	            'display': 'block',
+	            position: 'absolute',
+	            display: 'block',
 	            'z-index': -1,
-	            'visibility': 'hidden',
-	            'width': '2px',
-	            'background': '#000',
-	            'opacity': 0.7
+	            visibility: 'hidden',
+	            width: '2px',
+	            background: '#000',
+	            opacity: 0.7
 	        }).appendTo(this.$el);
 
 	        var selectedHeaderCell = column.element,
-	            commonAncestor = p.$resizer.parent();
-
-	        var posCol = selectedHeaderCell.offset(),
+	            commonAncestor = p.$resizer.parent(),
+	            posCol = selectedHeaderCell.offset(),
 	            posRelative = commonAncestor.offset();
+
 	        if (ieVersion === 8) {
 	            posCol = selectedHeaderCell.offset(); // IE8 bug, first time it receives zeros...
 	        }
@@ -2647,22 +2677,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	        posCol.left -= posRelative.left;
 	        posCol.top -= posRelative.top;
 	        posCol.top -= parseFloat(selectedHeaderCell.css('border-top-width')) || 0;
-	        var resizerWidth = p.$resizer.outerWidth();
+	        var resizerWidth = _css_util2['default'].outerWidth(p.$resizer);
 	        if (rtl) {
 	            posCol.left -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
 	            posCol.left -= Math.ceil(resizerWidth / 2);
 	        } else {
-	            posCol.left += selectedHeaderCell.outerWidth();
+	            posCol.left += _css_util2['default'].outerWidth(selectedHeaderCell);
 	            posCol.left += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
 	            posCol.left -= Math.ceil(resizerWidth / 2);
 	        }
 
 	        p.$resizer.css({
 	            'z-index': '10',
-	            'visibility': 'visible',
-	            'left': posCol.left,
-	            'top': posCol.top,
-	            'height': this.$el.height()
+	            visibility: 'visible',
+	            left: posCol.left,
+	            top: posCol.top,
+	            height: _css_util2['default'].height(this.$el)
 	        })[0]['columnName'] = selectedHeaderCell[0]['columnName'];
 	        try {
 	            p.$resizer[0].style.zIndex = '';
@@ -2685,8 +2715,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (o.resizableColumns) {
-	        var col = this._getColumnByResizePosition(event);
-	        var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+	        var col = this._getColumnByResizePosition(event),
+	            headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+
 	        if (!col || !p.columns.get(col).resizable) {
 	            headerCell.style.cursor = '';
 	        } else {
@@ -2700,11 +2731,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype._onMouseUpColumnHeader = function (event) {
 	    if (event.which === 3) {
-	        var o = this.o;
-	        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
-	        var bounds = $headerCell.offset();
-	        bounds['width'] = $headerCell.outerWidth();
-	        bounds['height'] = $headerCell.outerHeight();
+	        var o = this.o,
+	            $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName),
+	            bounds = $headerCell.offset();
+
+	        bounds['width'] = _css_util2['default'].outerWidth($headerCell);
+	        bounds['height'] = _css_util2['default'].outerHeight($headerCell);
 	        this.trigger('headercontextmenu', $headerCell[0]['columnName'], event.pageX, event.pageY, bounds);
 	    }
 	    return this;
@@ -2715,8 +2747,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {jQuery_Event} event event
 	 */
 	DGTable.prototype._onMouseLeaveColumnHeader = function (event) {
-	    var o = this.o;
-	    var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+	    var o = this.o,
+	        headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
+
 	    headerCell.style.cursor = '';
 	};
 
@@ -2729,9 +2762,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var that = this,
 	            o = that.o,
-	            p = that.p;
+	            p = that.p,
+	            headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
 
-	        var headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
 	        if (o.sortableColumns) {
 	            var column = p.columns.get(headerCell['columnName']);
 	            if (column && column.sortable) {
@@ -2753,8 +2786,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (o.movableColumns) {
 
-	        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
-	        var column = p.columns.get($headerCell[0]['columnName']);
+	        var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName),
+	            column = p.columns.get($headerCell[0]['columnName']);
+
 	        if (column && column.movable) {
 	            $headerCell[0].style.opacity = 0.35;
 	            p.dragId = Math.random() * 0x9999999; // Recognize this ID on drop
@@ -2777,35 +2811,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._onMouseMoveResizeArea = function (event) {
 
 	    var that = this,
-	        p = that.p;
-
-	    var column = p.columns.get(p.$resizer[0]['columnName']);
-	    var rtl = this._isTableRtl();
-
-	    var selectedHeaderCell = column.element,
-	        commonAncestor = p.$resizer.parent();
-	    var posCol = selectedHeaderCell.offset(),
+	        p = that.p,
+	        column = p.columns.get(p.$resizer[0]['columnName']),
+	        rtl = this._isTableRtl(),
+	        selectedHeaderCell = column.element,
+	        commonAncestor = p.$resizer.parent(),
+	        posCol = selectedHeaderCell.offset(),
 	        posRelative = commonAncestor.offset();
+
 	    posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
 	    posCol.left -= posRelative.left;
-	    var resizerWidth = p.$resizer.outerWidth();
+	    var resizerWidth = _css_util2['default'].outerWidth(p.$resizer),
+	        isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box',
+	        actualX = event.pageX - posRelative.left,
+	        minX = posCol.left;
 
-	    var actualX = event.pageX - posRelative.left;
-	    var minX = posCol.left;
+	    minX -= Math.ceil(resizerWidth / 2);
+
 	    if (rtl) {
-	        minX += selectedHeaderCell.outerWidth();
-	        minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-	        minX -= Math.ceil(resizerWidth / 2);
+	        minX += _css_util2['default'].outerWidth(selectedHeaderCell);
 	        minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
-	        minX -= this._horizontalPadding(selectedHeaderCell[0]);
+
+	        if (!isBoxing) {
+	            minX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
+	            minX -= this._horizontalPadding(selectedHeaderCell[0]);
+	        }
+
 	        if (actualX > minX) {
 	            actualX = minX;
 	        }
 	    } else {
-	        minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-	        minX -= Math.ceil(resizerWidth / 2);
 	        minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
-	        minX += this._horizontalPadding(selectedHeaderCell[0]);
+
+	        if (!isBoxing) {
+	            minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+	            minX += this._horizontalPadding(selectedHeaderCell[0]);
+	        }
+
 	        if (actualX < minX) {
 	            actualX = minX;
 	        }
@@ -2828,41 +2870,52 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	        $(document).off('mousemove.dgtable', p.onMouseMoveResizeAreaBound).off('mouseup.dgtable', p.onEndDragColumnHeaderBound);
 
-	        var column = p.columns.get(p.$resizer[0]['columnName']);
-	        var rtl = this._isTableRtl();
-
-	        var selectedHeaderCell = column.element,
-	            commonAncestor = p.$resizer.parent();
-	        var posCol = selectedHeaderCell.offset(),
+	        var column = p.columns.get(p.$resizer[0]['columnName']),
+	            rtl = this._isTableRtl(),
+	            selectedHeaderCell = column.element,
+	            commonAncestor = p.$resizer.parent(),
+	            posCol = selectedHeaderCell.offset(),
 	            posRelative = commonAncestor.offset();
+
 	        posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
 	        posCol.left -= posRelative.left;
-	        var resizerWidth = p.$resizer.outerWidth();
+	        var resizerWidth = _css_util2['default'].outerWidth(p.$resizer),
+	            isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box',
+	            actualX = event.pageX - posRelative.left,
+	            baseX = posCol.left,
+	            minX = posCol.left,
+	            width = 0;
 
-	        var actualX = event.pageX - posRelative.left;
-	        var baseX = posCol.left,
-	            minX = posCol.left;
-	        var width = 0;
+	        baseX -= Math.ceil(resizerWidth / 2);
+
 	        if (rtl) {
-	            actualX += this._horizontalPadding(selectedHeaderCell[0]);
-	            baseX += selectedHeaderCell.outerWidth();
-	            baseX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-	            baseX -= Math.ceil(resizerWidth / 2);
+
+	            if (!isBoxing) {
+	                actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+	                actualX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
+	            }
+
+	            baseX += _css_util2['default'].outerWidth(selectedHeaderCell);
 	            minX = baseX;
 	            minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
 	            if (actualX > minX) {
 	                actualX = minX;
 	            }
+
 	            width = baseX - actualX;
 	        } else {
-	            actualX -= this._horizontalPadding(selectedHeaderCell[0]);
-	            baseX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
-	            baseX -= Math.ceil(resizerWidth / 2);
+
+	            if (!isBoxing) {
+	                actualX += this._horizontalPadding(selectedHeaderCell[0]);
+	                actualX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+	            }
+
 	            minX = baseX;
 	            minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
 	            if (actualX < minX) {
 	                actualX = minX;
 	            }
+
 	            width = actualX - baseX;
 	        }
 
@@ -2932,8 +2985,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {jQuery_Event} event event
 	 */
 	DGTable.prototype._onDragLeaveColumnHeader = function (event) {
-	    var o = this.o;
-	    var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+	    var o = this.o,
+	        $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
+
 	    if (!$($headerCell[0].firstChild).has(event.originalEvent.relatedTarget).length) {
 	        $headerCell.removeClass('drag-over');
 	    }
@@ -2948,10 +3002,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var that = this,
 	        o = that.o,
-	        p = that.p;
+	        p = that.p,
+	        dataTransferred = JSON.parse(event.originalEvent.dataTransfer.getData('text')),
+	        $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
 
-	    var dataTransferred = JSON.parse(event.originalEvent.dataTransfer.getData('text'));
-	    var $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
 	    if (o.movableColumns && dataTransferred.dragId == p.dragId) {
 	        var srcColName = dataTransferred.column,
 	            destColName = $headerCell[0]['columnName'],
@@ -2974,9 +3028,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (p.$table) {
-	        var tableClassName = this.o.tableClassName;
-	        var sortedColumns = p.$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
-	        var arrows = sortedColumns.find('>div>.sort-arrow');
+	        var tableClassName = this.o.tableClassName,
+	            sortedColumns = p.$headerRow.find('>div.' + tableClassName + '-header-cell.sorted'),
+	            arrows = sortedColumns.find('>div>.sort-arrow');
+
 	        (0, _util.forEach)(arrows, (0, _util.bind)(function (arrow) {
 	            var col = p.columns.get(arrow.parentNode.parentNode['columnName']);
 	            if (col) {
@@ -2998,10 +3053,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._showSortArrow = function (column, descending) {
 
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        col = p.columns.get(column),
+	        arrow = createElement('span');
 
-	    var col = p.columns.get(column);
-	    var arrow = createElement('span');
 	    arrow.className = 'sort-arrow';
 
 	    if (col.element) {
@@ -3024,16 +3079,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._resizeColumnElements = function (cellIndex) {
 
 	    var that = this,
-	        p = that.p;
-
-	    var headerCells = p.$headerRow.find('div.' + this.o.tableClassName + '-header-cell');
-	    var col = p.columns.get(headerCells[cellIndex]['columnName']);
+	        p = that.p,
+	        headerCells = p.$headerRow.find('div.' + this.o.tableClassName + '-header-cell'),
+	        col = p.columns.get(headerCells[cellIndex]['columnName']);
 
 	    if (col) {
 	        headerCells[cellIndex].style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
 
-	        var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
-	        var tbodyChildren = p.$tbody[0].childNodes;
+	        var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px',
+	            tbodyChildren = p.$tbody[0].childNodes;
+
 	        for (var i = 0, count = tbodyChildren.length, headerRow; i < count; i++) {
 	            headerRow = tbodyChildren[i];
 	            if (headerRow.nodeType !== 1) continue;
@@ -3075,9 +3130,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var o = that.o,
 	        allowCellPreview = o.allowCellPreview,
-	        allowHeaderCellPreview = o.allowHeaderCellPreview;
-
-	    var tableClassName = o.tableClassName,
+	        allowHeaderCellPreview = o.allowHeaderCellPreview,
+	        tableClassName = o.tableClassName,
 	        headerCellClassName = tableClassName + '-header-cell',
 	        header = createElement('div'),
 	        $header = $(header),
@@ -3168,7 +3222,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    relativizeElement(that.$el);
 
 	    if (!o.height && o.virtualTable) {
-	        o.height = this.$el.innerHeight();
+	        o.height = _css_util2['default'].innerHeight(this.$el);
 	    }
 
 	    // Calculate virtual row heights
@@ -3183,10 +3237,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            row.style.visibility = 'hidden';
 	            row.style.position = 'absolute';
 	            return row;
-	        };
-
-	        var $dummyTbody,
-	            $dummyWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
+	        },
+	            $dummyTbody,
+	            $dummyWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
 
 	        $dummyWrapper.appendTo(document.body);
 
@@ -3195,9 +3248,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            row3 = createDummyRow();
 	        $dummyTbody.append(row1, row2, row3);
 
-	        p.virtualRowHeightFirst = $(row1).outerHeight();
-	        p.virtualRowHeight = $(row2).outerHeight();
-	        p.virtualRowHeightLast = $(row3).outerHeight();
+	        p.virtualRowHeightFirst = _css_util2['default'].outerHeight(row1);
+	        p.virtualRowHeight = _css_util2['default'].outerHeight(row2);
+	        p.virtualRowHeightLast = _css_util2['default'].outerHeight(row3);
+
 	        p.virtualRowHeightMin = Math.min(Math.min(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
 	        p.virtualRowHeightMax = Math.max(Math.max(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
 
@@ -3207,16 +3261,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Create table skeleton
 	    if (!p.$table) {
 
-	        var fragment = document.createDocumentFragment();
-	        var table = createElement('div');
-	        var $table = $(table);
+	        var fragment = document.createDocumentFragment(),
+	            table = createElement('div'),
+	            $table = $(table);
+
 	        table.className = o.tableClassName;
 
 	        if (o.virtualTable) {
 	            table.className += ' virtual';
 	        }
 
-	        var tableHeight = o.height - $headerRow.outerHeight();
+	        var tableHeight = o.height - _css_util2['default'].outerHeight($headerRow);
 	        if ($table.css('box-sizing') !== 'border-box') {
 	            tableHeight -= parseFloat($table.css('border-top-width')) || 0;
 	            tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
@@ -3230,8 +3285,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        table.style.overflowX = o.width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
 	        fragment.appendChild(table);
 
-	        var tbody = createElement('div');
-	        var $tbody = $(tbody);
+	        var tbody = createElement('div'),
+	            $tbody = $(tbody);
+
 	        tbody.className = o.tableClassName + '-body';
 	        p.table = table;
 	        p.tbody = tbody;
@@ -3261,10 +3317,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._updateLastCellWidthFromScrollbar = function (force) {
 
 	    var that = this,
-	        p = that.p;
+	        p = that.p,
+	        scrollbarWidth = p.table.offsetWidth - p.table.clientWidth;
 
 	    // Calculate scrollbar's width and reduce from lat column's width
-	    var scrollbarWidth = p.table.offsetWidth - p.table.clientWidth;
+
 	    if (scrollbarWidth != p.scrollbarWidth || force) {
 	        p.scrollbarWidth = scrollbarWidth;
 	        for (var i = 0; i < p.columns.length; i++) {
@@ -3274,8 +3331,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (p.scrollbarWidth > 0) {
 	            var lastColIndex = p.visibleColumns.length - 1;
 	            p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = p.visibleColumns[lastColIndex].actualWidth - p.scrollbarWidth;
-	            var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px';
-	            var tbodyChildren = p.tbody.childNodes;
+	            var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px',
+	                tbodyChildren = p.tbody.childNodes;
+
 	            for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
 	                row = tbodyChildren[i];
 	                if (row.nodeType !== 1) continue;
@@ -3306,8 +3364,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    p.$table.off('scroll', p.onTableScrolledHorizontallyBound);
 
 	    if (o.width == DGTable.Width.AUTO) {
-	        // Update wrapper element's size to full contain the table body
-	        this.$el.width(p.$table.width(p.$tbody.outerWidth()).outerWidth());
+	        // Update wrapper element's size to fully contain the table body
+
+	        _css_util2['default'].width(p.$table, _css_util2['default'].outerWidth(p.$tbody));
+	        _css_util2['default'].width(this.$el, _css_util2['default'].outerWidth(p.$table));
 	    } else if (o.width == DGTable.Width.SCROLL) {
 
 	        if (parentSizeMayHaveChanged) {
@@ -3363,9 +3423,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        that.hideCellPreview();
 
 	        var $el = $(el),
-	            $elInner = $(elInner);
-	        var div = createElement('div'),
+	            $elInner = $(elInner),
+	            div = createElement('div'),
 	            $div = $(div);
+
 	        div.innerHTML = el.innerHTML;
 	        div.className = o.cellPreviewClassName;
 
@@ -3395,18 +3456,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var paddingL = parseFloat($el.css('padding-left')) || 0,
 	            paddingR = parseFloat($el.css('padding-right')) || 0,
 	            paddingT = parseFloat($el.css('padding-top')) || 0,
-	            paddingB = parseFloat($el.css('padding-bottom')) || 0;
+	            paddingB = parseFloat($el.css('padding-bottom')) || 0,
+	            requiredWidth = elInner.scrollWidth + (el.clientWidth - elInner.offsetWidth),
+	            borderBox = $el.css('box-sizing') === 'border-box';
 
-	        var requiredWidth = elInner.scrollWidth + el.clientWidth - elInner.offsetWidth;
-
-	        var borderBox = $el.css('boxSizing') === 'border-box';
 	        if (borderBox) {
-	            requiredWidth -= parseFloat($(el).css('border-left-width')) || 0;
-	            requiredWidth -= parseFloat($(el).css('border-right-width')) || 0;
 	            $div.css('box-sizing', 'border-box');
 	        } else {
 	            requiredWidth -= paddingL + paddingR;
-	            $div.css({ 'margin-top': parseFloat($(el).css('border-top-width')) || 0 });
+	            $div.css('margin-top', parseFloat($(el).css('border-top-width')) || 0);
 	        }
 
 	        if (!p.transparentBgColor1) {
@@ -3419,16 +3477,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var css = {
-	            'box-sizing': 'content-box',
-	            width: requiredWidth + 'px',
-	            'min-height': $el.height() + 'px',
+	            'box-sizing': borderBox ? 'border-box' : 'content-box',
+	            width: requiredWidth,
+	            'min-height': _css_util2['default'].height($el),
 	            'padding-left': paddingL,
 	            'padding-right': paddingR,
 	            'padding-top': paddingT,
 	            'padding-bottom': paddingB,
 	            overflow: 'hidden',
 	            position: 'absolute',
-	            zIndex: '-1',
+	            'z-index': '-1',
 	            left: '0',
 	            top: '0',
 	            cursor: 'default'
@@ -3450,13 +3508,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        that.el.appendChild(div);
 
 	        $(div.firstChild).css({
-	            'direction': $elInner.css('direction'),
+	            direction: $elInner.css('direction'),
 	            'white-space': $elInner.css('white-space')
 	        });
 
 	        if (isHeaderCell) {
 	            // Disable these to allow our own context menu events without interruption
-	            $div.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+	            $div.css({
+	                '-webkit-touch-callout': 'none',
+	                '-webkit-user-select': 'none',
+	                '-moz-user-select': 'none',
+	                '-ms-user-select': 'none',
+	                '-o-user-select': 'none',
+	                'user-select': 'none'
+	            });
 	        }
 
 	        div['rowIndex'] = el.parentNode['rowIndex'];
@@ -3464,24 +3529,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        div['columnName'] = p.visibleColumns[(0, _util.indexOf)(el.parentNode.childNodes, el)].name;
 
 	        that.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : p.rows[physicalRowIndex]);
+
 	        if (p.abortCellPreview) {
 	            $div.remove();
 	            return;
 	        }
 
-	        var $parent = that.$el;
-	        var $scrollParent = $parent[0] === window ? $(document) : $parent;
+	        var $parent = that.$el,
+	            $scrollParent = $parent[0] === window ? $(document) : $parent,
+	            offset = $el.offset(),
+	            parentOffset = $parent.offset(),
+	            rtl = $el.css('float') === 'right',
+	            prop = rtl ? 'right' : 'left';
 
-	        var offset = $el.offset();
-	        var parentOffset = $parent.offset();
-	        var rtl = $el.css('float') === 'right';
-	        var prop = rtl ? 'right' : 'left';
 
 	        // Handle RTL, go from the other side
 	        if (rtl) {
 	            var windowWidth = $(window).width();
-	            offset.right = windowWidth - (offset.left + $el.outerWidth());
-	            parentOffset.right = windowWidth - (parentOffset.left + $parent.outerWidth());
+	            offset.right = windowWidth - (offset.left + _css_util2['default'].outerWidth($el));
+	            parentOffset.right = windowWidth - (parentOffset.left + _css_util2['default'].outerWidth($parent));
 	        }
 
 	        // If the parent has borders, then it would offset the offset...
@@ -3500,12 +3566,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Constrain horizontally
 	        var minHorz = 0,
-	            maxHorz = $parent - $div.outerWidth();
+	            maxHorz = $parent - _css_util2['default'].outerWidth($div);
 	        offset[prop] = offset[prop] < minHorz ? minHorz : offset[prop] > maxHorz ? maxHorz : offset[prop];
 
 	        // Constrain vertically
-	        var totalHeight = $el.outerHeight();
-	        var maxTop = $scrollParent.scrollTop() + $parent.innerHeight() - totalHeight;
+	        var totalHeight = _css_util2['default'].outerHeight($el),
+	            maxTop = $scrollParent.scrollTop() + _css_util2['default'].innerHeight($parent) - totalHeight;
+
 	        if (offset.top > maxTop) {
 	            offset.top = Math.max(0, maxTop);
 	        }
@@ -3527,10 +3594,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p._bindCellHoverOut(div);
 
 	        $div.on('mousewheel', function (event) {
-	            var originalEvent = event.originalEvent;
-	            var xy = originalEvent.wheelDelta || -originalEvent.detail,
+	            var originalEvent = event.originalEvent,
+	                xy = originalEvent.wheelDelta || -originalEvent.detail,
 	                x = originalEvent.wheelDeltaX || (originalEvent.axis == 1 ? xy : 0),
 	                y = originalEvent.wheelDeltaY || (originalEvent.axis == 2 ? xy : 0);
+
 
 	            if (xy) {
 	                that.hideCellPreview();
@@ -3992,17 +4060,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	var nativeSort = RowCollection.prototype.sort;
 
 	function getDefaultComparator(column, descending) {
-	    var columnName = column.column;
-	    var comparePath = column.comparePath || columnName;
+	    var columnName = column.column,
+	        comparePath = column.comparePath || columnName;
+
 	    if (typeof comparePath === 'string') {
 	        comparePath = comparePath.split('.');
 	    }
 	    var pathLength = comparePath.length,
 	        hasPath = pathLength > 1,
-	        i;
-
-	    var lessVal = descending ? 1 : -1,
+	        i,
+	        lessVal = descending ? 1 : -1,
 	        moreVal = descending ? -1 : 1;
+
 	    return function (leftRow, rightRow) {
 	        var leftVal = leftRow[comparePath[0]],
 	            rightVal = rightRow[comparePath[0]];
@@ -4223,6 +4292,169 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	exports['default'] = ColumnCollection;
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _jquery = __webpack_require__(1),
+	    _jquery2 = _interopRequireDefault(_jquery);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var $ = _jquery2['default'],
+	    hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle,
+	    jQuerySupportsFractions = $ && $.fn.jquery >= '3',
+	    cssExpands = {
+	    width: ['Left', 'Right', 'Width'],
+	    height: ['Top', 'Bottom', 'Height']
+	},
+	    sizeKeys = ['width', 'height'],
+	    CssUtil = {},
+	    generateSizeFunction = function generateSizeFunction(key, cssExpand, inner, outer) {
+
+	    return function () {
+	        var el = arguments[0],
+	            value = arguments[1];
+
+
+	        if (el && !(el instanceof Element) && 'length' in el) {
+	            el = el[0];
+	        }
+
+	        if (!el) {
+	            return null;
+	        }
+
+	        var style = hasComputedStyle ? document.defaultView.getComputedStyle(el) : el.currentStyle,
+	            isBoxing = style['boxSizing'] === 'border-box',
+	            size,
+	            border,
+	            padding,
+	            includeMargins = outer && arguments[2] === true || arguments[1] === true;
+
+
+	        if (isBoxing || outer || inner) {
+	            border = parseFloat(style['border' + cssExpand[0] + 'Width'] || 0) + parseFloat(style['border' + cssExpand[1] + 'Width'] || 0);
+
+	            padding = parseFloat(style['padding' + cssExpand[0]] || 0) + parseFloat(style['padding' + cssExpand[1]] || 0);
+	        }
+
+	        var margin = includeMargins ? parseFloat(style['margin' + cssExpand[0]] || 0) + parseFloat(style['margin' + cssExpand[1]] || 0) : 0;
+
+	        if (value == undefined) {
+	            size = parseFloat(style[key]);
+
+	            if (isBoxing) {
+
+	                if (padding + border > size) {
+	                    size = padding + border;
+	                }
+
+	                if (outer) {
+	                    if (includeMargins) {
+	                        size += margin;
+	                    }
+	                } else if (inner) {
+	                    size -= border;
+	                } else {
+	                    size -= padding + border;
+	                }
+	            } else {
+
+	                if (outer) {
+	                    size += padding + border;
+
+	                    if (includeMargins) {
+	                        size += margin;
+	                    }
+	                } else if (inner) {
+	                    size += padding;
+	                }
+	            }
+
+	            return size;
+	        } else {
+	            value = value || 0;
+	            size = value;
+
+	            if (isBoxing) {
+
+	                if (outer) {
+	                    if (includeMargins) {
+	                        size -= margin;
+	                    }
+	                } else if (inner) {
+	                    size += border;
+	                } else {
+	                    size += padding + border;
+	                }
+	            } else {
+
+	                if (outer) {
+	                    size -= padding + border;
+
+	                    if (includeMargins) {
+	                        size -= margin;
+	                    }
+	                } else if (inner) {
+	                    size -= padding;
+	                }
+
+	                if (size < 0) {
+	                    size = 0;
+	                }
+	            }
+
+	            el.style[key] = size + 'px';
+
+	            return value;
+	        }
+	    };
+	};
+
+	for (var i = 0; i < sizeKeys.length; i++) {
+	    var key = sizeKeys[i],
+	        cssExpand = cssExpands[key];
+
+
+	    if (jQuerySupportsFractions) {
+
+	        CssUtil[key] = function (key) {
+	            return function () {
+	                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
+	            };
+	        }(key);
+
+	        CssUtil['inner' + cssExpand[2]] = function (key) {
+	            return function () {
+	                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
+	            };
+	        }('inner' + cssExpand[2]);
+
+	        CssUtil['outer' + cssExpand[2]] = function (key) {
+	            return function () {
+	                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
+	            };
+	        }('outer' + cssExpand[2]);
+	    } else {
+
+	        CssUtil[key] = generateSizeFunction(key, cssExpand, false, false);
+	        CssUtil['inner' + cssExpand[2]] = generateSizeFunction(key, cssExpand, true, false);
+	        CssUtil['outer' + cssExpand[2]] = generateSizeFunction(key, cssExpand, false, true);
+	    }
+	}
+
+	// Remove that huge function from memory
+	generateSizeFunction = null;
+
+	exports['default'] = CssUtil;
 
 /***/ }
 /******/ ])

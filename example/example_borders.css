@@ -3,10 +3,6 @@ body {
     padding: 30px;
 }
 
-.dgtable-wrapper * {
-    box-sizing: border-box;
-}
-
 .dgtable-wrapper {
     border: solid 1px #ccc;
 }
@@ -34,7 +30,7 @@ body {
 .dgtable-header-cell {
     float: left;
     padding: 4px;
-    height: 26px;
+    height: 18px;
     border-left: solid 1px #ccc;
     background: #ddd;
     font-size: 13px;
@@ -78,7 +74,6 @@ body {
 
 .dgtable-row:first-child {
     border-top: 0;
-    height: 29px;
 }
 
 .dgtable.virtual .dgtable-row {
@@ -88,8 +83,8 @@ body {
 
 .dgtable-cell {
     float: left;
-    padding: 4px 4px 4px;
-    height: 28px;
+    padding: 5px 4px 3px;
+    height: 20px;
     border-left: solid 1px #ccc;
     font-size: 16px;
     line-height: 19px;
