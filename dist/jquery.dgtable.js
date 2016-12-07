@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.2
+ * jquery.dgtable 0.5.3
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.2';
+	DGTable.VERSION = '0.5.3';
 
 	/**
 	 * @public
@@ -155,13 +155,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @public
 	     * @expose
 	     * */
-	    var $el = that.$el = $('<div>').addClass(o.className || 'dgtable-wrapper');
+	    that.el = options.el && options.el instanceof Element ? options.el : document.createElement('div');
 
 	    /**
 	     * @public
 	     * @expose
 	     * */
-	    that.el = that.$el[0];
+	    var $el = that.$el = $(that.el);
+
+	    if (that.el !== options.el) {
+	        $el.addClass(options.className || 'dgtable-wrapper');
+	    }
 
 	    // Set control data
 	    $el.data('control', that).data('dgtable', that);
@@ -181,8 +185,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @private
 	     * @field {Boolean} _tableSkeletonNeedsRendering */
 	    p.tableSkeletonNeedsRendering = true;
-
-	    options.columns = options.columns || [];
 
 	    /**
 	     * @private
@@ -305,35 +307,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @field {Number} height */
 	    o.height = options.height;
 
-	    var i,
-	        len,
-	        col,
-	        column,
-	        columnData,
-	        order,
-	        columns = new _column_collection2['default']();
-
 	    // Prepare columns
+	    that.setColumns(options.columns || [], false);
 
-	    for (i = 0, order = 0; i < options.columns.length; i++) {
-	        columnData = options.columns[i];
-	        column = this._initColumnFromData(columnData);
-	        if (columnData.order !== undefined) {
-	            if (columnData.order > order) {
-	                order = columnData.order + 1;
-	            }
-	            column.order = columnData.order;
-	        } else {
-	            column.order = order++;
-	        }
-	        columns.push(column);
-	    }
-	    columns.normalizeOrder();
-
-	    p.columns = columns;
-	    p.visibleColumns = columns.getVisibleColumns();
-	    this._ensureVisibleColumns();
-
+	    // Set sorting columns
 	    var sortColumns = [];
 
 	    if (options.sortColumn) {
@@ -346,12 +323,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (tmpSortColumns instanceof Array || (typeof tmpSortColumns === 'undefined' ? 'undefined' : _typeof(tmpSortColumns)) === 'object') {
 
-	            for (i = 0, len = tmpSortColumns.length, column; i < len; i++) {
+	            for (var i = 0, len = tmpSortColumns.length; i < len; i++) {
 	                var sortColumn = tmpSortColumns[i];
 	                if (typeof sortColumn === 'string') {
 	                    sortColumn = { column: sortColumn, descending: false };
 	                }
-	                col = p.columns.get(sortColumn.column);
+	                var col = p.columns.get(sortColumn.column);
 	                sortColumns.push({
 	                    column: sortColumn.column,
 	                    comparePath: col.comparePath,
@@ -362,7 +339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /** @field {RowCollection} _rows */
-	    p.rows = new _row_collection2['default']({ sortColumn: sortColumns, columns: this.columns });
+	    p.rows = new _row_collection2['default']({ sortColumn: sortColumns });
 	    p.rows.onComparatorRequired = function (column, descending) {
 	        if (o.onComparatorRequired) {
 	            return o.onComparatorRequired(column, descending);
@@ -897,12 +874,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Forces a full render of the table
 	 * @public
 	 * @expose
+	 * @param {Boolean=true} render - Should render now?
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.clearAndRender = function () {
+	DGTable.prototype.clearAndRender = function (render) {
 	    var p = this.p;
+
 	    p.tableSkeletonNeedsRendering = true;
-	    return this.render();
+
+	    if (render === undefined || render) {
+	        this.render();
+	    }
+
+	    return this;
 	};
 
 	/**
@@ -1050,7 +1034,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        $row.append(cell);
 	    }
 
-	    var $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
+	    var $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
 
 	    $thisWrapper.appendTo(document.body);
 
@@ -1072,14 +1056,57 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
+	 * Sets the columns of the table
+	 * @public
+	 * @expose
+	 * @param {COLUMN_OPTIONS[]} columns - Column definitions array
+	 * @param {Boolean=true} render - Should render now?
+	 * @returns {DGTable} self
+	 */
+	DGTable.prototype.setColumns = function (columns, render) {
+	    var that = this,
+	        p = that.p;
+
+	    columns = columns || [];
+
+	    var normalizedCols = new _column_collection2['default']();
+	    for (var i = 0, order = 0; i < columns.length; i++) {
+
+	        var columnData = columns[i],
+	            normalizedColumn = that._initColumnFromData(columnData);
+
+
+	        if (columnData.order !== undefined) {
+	            if (columnData.order > order) {
+	                order = columnData.order + 1;
+	            }
+	            normalizedColumn.order = columnData.order;
+	        } else {
+	            normalizedColumn.order = order++;
+	        }
+
+	        normalizedCols.push(normalizedColumn);
+	    }
+	    normalizedCols.normalizeOrder();
+
+	    p.columns = normalizedCols;
+	    p.visibleColumns = normalizedCols.getVisibleColumns();
+
+	    that._ensureVisibleColumns().clearAndRender(render);
+
+	    return that;
+	};
+
+	/**
 	 * Add a column to the table
 	 * @public
 	 * @expose
 	 * @param {COLUMN_OPTIONS} columnData column properties
 	 * @param {String|Number} [before=-1] column name or order to be inserted before
+	 * @param {Boolean=true} render - Should render now?
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.addColumn = function (columnData, before) {
+	DGTable.prototype.addColumn = function (columnData, before, render) {
 	    var that = this,
 	        p = that,
 	        columns = p.columns;
@@ -1104,10 +1131,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        columns.push(column);
 	        columns.normalizeOrder();
 
-	        p.tableSkeletonNeedsRendering = true;
 	        p.visibleColumns = columns.getVisibleColumns();
-	        this._ensureVisibleColumns();
-	        this.render();
+	        this._ensureVisibleColumns().clearAndRender(render);
 
 	        this.trigger('addcolumn', column.name);
 	    }
@@ -1119,9 +1144,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @public
 	 * @expose
 	 * @param {String} column column name
+	 * @param {Boolean=true} render - Should render now?
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.removeColumn = function (column) {
+	DGTable.prototype.removeColumn = function (column, render) {
 	    var that = this,
 	        p = that.p,
 	        columns = p.columns,
@@ -1132,7 +1158,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        columns.normalizeOrder();
 
 	        p.visibleColumns = columns.getVisibleColumns();
-	        this._ensureVisibleColumns().clearAndRender();
+	        this._ensureVisibleColumns().clearAndRender(render);
 
 	        this.trigger('removecolumn', column);
 	    }
@@ -1811,30 +1837,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.header.scrollLeft = lastScrollLeft;
 	    }
 
-	    var $thisWrapper,
-	        $header,
-	        $headerRow,
-	        tableClassName = o.tableClassName;
-
-
-	    if (!p.$table) {
-
-	        $thisWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' });
-	        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
+	    var tableClassName = o.tableClassName,
+	        $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' }),
+	        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper),
 	        $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
-	        for (var i = 0; i < p.visibleColumns.length; i++) {
-	            $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
-	        }
-	        $thisWrapper.appendTo(document.body);
-	    } else {
-	        $headerRow = p.$headerRow;
+
+	    for (var i = 0; i < p.visibleColumns.length; i++) {
+	        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
 	    }
+	    $thisWrapper.appendTo(document.body);
 
 	    detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
 
 	    var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
-	    for (var i = 0, $cell, $div; i < $cells.length; i++) {
-	        $div = $($cells[i].firstChild);
+	    for (var i = 0, $cell; i < $cells.length; i++) {
 	        $cell = $($cells[i]);
 
 	        var isBoxing = $cell.css('boxSizing') === 'border-box';
@@ -2039,7 +2055,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
-	            p.visibleColumns[p.visibleColumns.length - 1].actualWidthConsideringScrollbarWidth = p.visibleColumns[p.visibleColumns.length - 1].actualWidth - (p.scrollbarWidth || 0);
+	            if (p.visibleColumns.length) {
+	                // (There should always be at least 1 column visible, but just in case)
+	                p.visibleColumns[p.visibleColumns.length - 1].actualWidthConsideringScrollbarWidth = p.visibleColumns[p.visibleColumns.length - 1].actualWidth - (p.scrollbarWidth || 0);
+	            }
 
 	            if (renderColumns) {
 	                var tableWidth = this._calculateTbodyWidth();
@@ -2863,6 +2882,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._onEndDragColumnHeader = function (event) {
 
 	    var that = this,
+	        o = that.o,
 	        p = that.p;
 
 	    if (!p.$resizer) {
@@ -2891,13 +2911,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (rtl) {
 
 	            if (!isBoxing) {
-	                actualX -= this._horizontalPadding(selectedHeaderCell[0]);
-	                actualX -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
+	                actualX += this._horizontalPadding(selectedHeaderCell[0]);
+	                actualX += parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
+	                actualX += parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
 	            }
 
 	            baseX += _css_util2['default'].outerWidth(selectedHeaderCell);
-	            minX = baseX;
-	            minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
+
+	            minX = baseX - (column.ignoreMin ? 0 : this.o.minColumnWidth);
 	            if (actualX > minX) {
 	                actualX = minX;
 	            }
@@ -2906,12 +2927,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 
 	            if (!isBoxing) {
-	                actualX += this._horizontalPadding(selectedHeaderCell[0]);
-	                actualX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
+	                actualX -= this._horizontalPadding(selectedHeaderCell[0]);
+	                actualX -= parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
+	                actualX -= parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
 	            }
 
-	            minX = baseX;
-	            minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
+	            minX = baseX + (column.ignoreMin ? 0 : this.o.minColumnWidth);
 	            if (actualX < minX) {
 	                actualX = minX;
 	            }
@@ -2926,16 +2947,40 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (column.widthMode === ColumnWidthMode.RELATIVE) {
 	            var detectedWidth = this._calculateWidthAvailableForColumns(),
-	                sizeLeft = detectedWidth;
+	                sizeLeft = detectedWidth,
+	                totalRelativePercentage = 0,
+	                relatives = 0;
+	            //sizeLeft -= p.table.offsetWidth - p.table.clientWidth;
 
 	            for (var i = 0, col; i < p.visibleColumns.length; i++) {
 	                col = p.visibleColumns[i];
-	                if (col.widthMode != ColumnWidthMode.RELATIVE) {
+	                if (col.name === column.name) continue;
+
+	                if (col.widthMode == ColumnWidthMode.RELATIVE) {
+	                    totalRelativePercentage += col.width;
+	                    relatives++;
+	                } else {
 	                    sizeLeft -= col.actualWidth;
 	                }
 	            }
 
 	            sizeToSet = width / sizeLeft;
+
+	            if (relatives > 0) {
+	                // When there's more than one relative overall,
+	                //   we can do relative enlarging/shrinking.
+	                // Otherwise, we can end up having a 0 width.
+
+	                var unNormalizedSizeToSet = sizeToSet / ((1 - sizeToSet) / totalRelativePercentage);
+
+	                totalRelativePercentage += sizeToSet;
+
+	                // Account for relative widths scaling later
+	                if (totalRelativePercentage < 1 && o.relativeWidthGrowsToFillWidth || totalRelativePercentage > 1 && o.relativeWidthShrinksToFillWidth) {
+	                    sizeToSet = unNormalizedSizeToSet;
+	                }
+	            }
+
 	            sizeToSet *= 100;
 	            sizeToSet += '%';
 	        }
@@ -3239,7 +3284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return row;
 	        },
 	            $dummyTbody,
-	            $dummyWrapper = $('<div>').addClass(this.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
+	            $dummyWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
 
 	        $dummyWrapper.appendTo(document.body);
 
@@ -3328,8 +3373,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            p.columns[i].actualWidthConsideringScrollbarWidth = null;
 	        }
 
-	        if (p.scrollbarWidth > 0) {
+	        if (p.scrollbarWidth > 0 && p.visibleColumns.length > 0) {
+	            // (There should always be at least 1 column visible, but just in case)
 	            var lastColIndex = p.visibleColumns.length - 1;
+
 	            p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = p.visibleColumns[lastColIndex].actualWidth - p.scrollbarWidth;
 	            var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px',
 	                tbodyChildren = p.tbody.childNodes;
@@ -3740,6 +3787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {Boolean|null|undefined} [allowHeaderCellPreview=true]
 	 * @property {String|null|undefined} [cellPreviewClassName=undefined]
 	 * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
+	 * @property {Element|null|undefined} [el=undefined]
 	 * @property {String|null|undefined} [className=undefined]
 	 * */
 
