@@ -84,13 +84,17 @@ DGTable.prototype.initialize = function (options) {
      * @public
      * @expose
      * */
-    var $el = that.$el = $('<div>').addClass(options.className || 'dgtable-wrapper');
+    that.el = (options.el && options.el instanceof Element) ? options.el : document.createElement('div');
 
     /**
      * @public
      * @expose
      * */
-    that.el = that.$el[0];
+    var $el = that.$el = $(that.el);
+    
+    if (that.el !== options.el) {
+        $el.addClass(options.className || 'dgtable-wrapper');
+    }
 
     // Set control data
     $el
@@ -3747,6 +3751,7 @@ DGTable.Width = {
  * @property {Boolean|null|undefined} [allowHeaderCellPreview=true]
  * @property {String|null|undefined} [cellPreviewClassName=undefined]
  * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
+ * @property {Element|null|undefined} [el=undefined]
  * @property {String|null|undefined} [className=undefined]
  * */
 

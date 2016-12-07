@@ -99,6 +99,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **cellPreviewAutoBackground**: `Boolean=true` When set, the preview cell will receive its background automatically from the cell.
 * **cellPreviewClassName**: `String='dgtable-cell-preview'` Class name for the cell preview element
 * **className**: `String='dgtable-wrapper'` Element class name.
+* **el**: `Element?` Optional element to take over
 
 #### Events triggered by DGTable:
 
