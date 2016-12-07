@@ -162,12 +162,13 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `once(eventName, {Function?} callback)`: Adds a one-shot event listener
 * `off(eventName, {Function?} callback)`: Removes an event listener
 * `render()`: Renders the view. Should be called after adding to the DOM, and when the viewport has changed and the table has no knowledge of it.
-* `clearAndRender`: Forces a full render of the table
-* `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1) {DGTable}`: Add a column to the table
+* `clearAndRender({Boolean} render = true)`: Forces a full render of the table
+* `setColumns({COLUMN_OPTIONS[]} columns, {Boolean} render = true) {DGTable}`: Sets the table columns
+* `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1, {Boolean} render = true) {DGTable}`: Add a column to the table
   * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
   * **before**: Column name or order to be inserted before.
   * *returns* Self, to allow for call chaining.
-* `removeColumn({String} column) {DGTable}`: Remove a column from the table
+* `removeColumn({String} column, {Boolean} render = true) {DGTable}`: Remove a column from the table
   * **column**: Column name
   * *returns* Self, to allow for call chaining.
 * `filter({String} column, {String} filter, {Boolean} caseSensitive=false) {DGTable}`: Remove a column from the table

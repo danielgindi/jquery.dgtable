@@ -236,29 +236,10 @@ DGTable.prototype.initialize = function (options) {
      * @field {Number} height */
     o.height = options.height;
 
-    var i, len, col, column, columnData, order;
-
     // Prepare columns
-    var columns = new ColumnCollection();
-    for (i = 0, order = 0; i < options.columns.length; i++) {
-        columnData = options.columns[i];
-        column = this._initColumnFromData(columnData);
-        if (columnData.order !== undefined) {
-            if (columnData.order > order) {
-                order = columnData.order + 1;
-            }
-            column.order = columnData.order;
-        } else {
-            column.order = order++;
-        }
-        columns.push(column);
-    }
-    columns.normalizeOrder();
+    that.setColumns(options.columns);
 
-    p.columns = columns;
-    p.visibleColumns = columns.getVisibleColumns();
-    this._ensureVisibleColumns();
-
+    // Set sorting columns
     var sortColumns = [];
 
     if (options.sortColumn) {
@@ -272,12 +253,12 @@ DGTable.prototype.initialize = function (options) {
         if (tmpSortColumns instanceof Array ||
             typeof tmpSortColumns === 'object') {
 
-            for (i = 0, len = tmpSortColumns.length, column; i < len; i++) {
+            for (var i = 0, len = tmpSortColumns.length; i < len; i++) {
                 var sortColumn = tmpSortColumns[i];
                 if (typeof sortColumn === 'string') {
                     sortColumn = { column: sortColumn, descending: false };
                 }
-                col = p.columns.get(sortColumn.column);
+                var col = p.columns.get(sortColumn.column);
                 sortColumns.push({
                     column: sortColumn.column,
                     comparePath: col.comparePath,
@@ -288,7 +269,7 @@ DGTable.prototype.initialize = function (options) {
     }
 
     /** @field {RowCollection} _rows */
-    p.rows = new RowCollection({ sortColumn: sortColumns, columns: this.columns });
+    p.rows = new RowCollection({ sortColumn: sortColumns });
     p.rows.onComparatorRequired = function(column, descending){
         if (o.onComparatorRequired) {
             return o.onComparatorRequired(column, descending);
@@ -815,12 +796,19 @@ DGTable.prototype.render = function () {
  * Forces a full render of the table
  * @public
  * @expose
+ * @param {Boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
-DGTable.prototype.clearAndRender = function () {
+DGTable.prototype.clearAndRender = function (render) {
     var p = this.p;
+
     p.tableSkeletonNeedsRendering = true;
-    return this.render();
+
+    if (render === undefined || render) {
+        this.render();
+    }
+
+    return this;
 };
 
 /**
@@ -1001,14 +989,54 @@ DGTable.prototype._calculateTbodyWidth = function () {
 };
 
 /**
+ * Sets the columns of the table
+ * @public
+ * @expose
+ * @param {COLUMN_OPTIONS[]} columns - Column definitions array
+ * @param {Boolean=true} render - Should render now?
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setColumns = function (columns, render) {
+    var that = this,
+        p = that.p;
+
+    var normalizedCols = new ColumnCollection();
+    for (var i = 0, order = 0; i < columns.length; i++) {
+
+        var columnData = columns[i];
+        var normalizedColumn = that._initColumnFromData(columnData);
+
+        if (columnData.order !== undefined) {
+            if (columnData.order > order) {
+                order = columnData.order + 1;
+            }
+            normalizedColumn.order = columnData.order;
+        } else {
+            normalizedColumn.order = order++;
+        }
+
+        normalizedCols.push(normalizedColumn);
+    }
+    normalizedCols.normalizeOrder();
+
+    p.columns = normalizedCols;
+    p.visibleColumns = normalizedCols.getVisibleColumns();
+    
+    that._ensureVisibleColumns().clearAndRender(render);
+
+    return that;
+};
+
+/**
  * Add a column to the table
  * @public
  * @expose
  * @param {COLUMN_OPTIONS} columnData column properties
  * @param {String|Number} [before=-1] column name or order to be inserted before
+ * @param {Boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
-DGTable.prototype.addColumn = function (columnData, before) {
+DGTable.prototype.addColumn = function (columnData, before, render) {
     var that = this, p = that;
     var columns = p.columns;
 
@@ -1031,10 +1059,8 @@ DGTable.prototype.addColumn = function (columnData, before) {
         columns.push(column);
         columns.normalizeOrder();
 
-        p.tableSkeletonNeedsRendering = true;
         p.visibleColumns = columns.getVisibleColumns();
-        this._ensureVisibleColumns();
-        this.render();
+        this._ensureVisibleColumns().clearAndRender(render);
 
         this.trigger('addcolumn', column.name);
     }
@@ -1046,9 +1072,10 @@ DGTable.prototype.addColumn = function (columnData, before) {
  * @public
  * @expose
  * @param {String} column column name
+ * @param {Boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
-DGTable.prototype.removeColumn = function (column) {
+DGTable.prototype.removeColumn = function (column, render) {
     var that = this, p = that.p;
     var columns = p.columns;
 
@@ -1058,7 +1085,7 @@ DGTable.prototype.removeColumn = function (column) {
         columns.normalizeOrder();
 
         p.visibleColumns = columns.getVisibleColumns();
-        this._ensureVisibleColumns().clearAndRender();
+        this._ensureVisibleColumns().clearAndRender(render);
 
         this.trigger('removecolumn', column);
     }
@@ -1719,21 +1746,15 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
         p.header.scrollLeft = lastScrollLeft;
     }
 
-    var $thisWrapper, $header, $headerRow;
     var tableClassName = o.tableClassName;
 
-    if (!p.$table) {
-
-        $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
-        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
-        $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
-        for (var i = 0; i < p.visibleColumns.length; i++) {
-            $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
-        }
-        $thisWrapper.appendTo(document.body);
-    } else {
-        $headerRow = p.$headerRow;
+    var $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px' });
+    var $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
+    var $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
+    for (var i = 0; i < p.visibleColumns.length; i++) {
+        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
     }
+    $thisWrapper.appendTo(document.body);
 
     detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
 
@@ -1948,8 +1969,11 @@ DGTable.prototype.tableWidthChanged = (function () {
                 }
             }
 
-            p.visibleColumns[p.visibleColumns.length - 1].actualWidthConsideringScrollbarWidth =
-                p.visibleColumns[p.visibleColumns.length - 1].actualWidth - (p.scrollbarWidth || 0);
+            if (p.visibleColumns.length) {
+                // (There should always be at least 1 column visible, but just in case)
+                p.visibleColumns[p.visibleColumns.length - 1].actualWidthConsideringScrollbarWidth =
+                    p.visibleColumns[p.visibleColumns.length - 1].actualWidth - (p.scrollbarWidth || 0);
+            }
 
             if (renderColumns) {
                 var tableWidth = this._calculateTbodyWidth();
@@ -2878,15 +2902,15 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
                 //   we can do relative enlarging/shrinking.
                 // Otherwise, we can end up having a 0 width.
 
-            var unNormalizedSizeToSet = sizeToSet / ((1 - sizeToSet) / totalRelativePercentage);
+                var unNormalizedSizeToSet = sizeToSet / ((1 - sizeToSet) / totalRelativePercentage);
 
-            totalRelativePercentage += sizeToSet;
+                totalRelativePercentage += sizeToSet;
 
-            // Account for relative widths scaling later
-            if ((totalRelativePercentage < 1 && o.relativeWidthGrowsToFillWidth) ||
-                (totalRelativePercentage > 1 && o.relativeWidthShrinksToFillWidth)) {
-                sizeToSet = unNormalizedSizeToSet;
-            }
+                // Account for relative widths scaling later
+                if ((totalRelativePercentage < 1 && o.relativeWidthGrowsToFillWidth) ||
+                    (totalRelativePercentage > 1 && o.relativeWidthShrinksToFillWidth)) {
+                    sizeToSet = unNormalizedSizeToSet;
+                }
             }
             
             sizeToSet *= 100;
@@ -3294,8 +3318,10 @@ DGTable.prototype._updateLastCellWidthFromScrollbar = function(force) {
             p.columns[i].actualWidthConsideringScrollbarWidth = null;
         }
 
-        if (p.scrollbarWidth > 0) {
+        if (p.scrollbarWidth > 0 && p.visibleColumns.length > 0) {
+            // (There should always be at least 1 column visible, but just in case)
             var lastColIndex = p.visibleColumns.length - 1;
+
             p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = p.visibleColumns[lastColIndex].actualWidth - p.scrollbarWidth;
             var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px';
             var tbodyChildren = p.tbody.childNodes;
