@@ -117,8 +117,6 @@ DGTable.prototype.initialize = function (options) {
      * @field {Boolean} _tableSkeletonNeedsRendering */
     p.tableSkeletonNeedsRendering = true;
 
-    options.columns = options.columns || [];
-
     /**
      * @private
      * @field {Boolean} virtualTable */
@@ -241,7 +239,7 @@ DGTable.prototype.initialize = function (options) {
     o.height = options.height;
 
     // Prepare columns
-    that.setColumns(options.columns);
+    that.setColumns(options.columns || [], false);
 
     // Set sorting columns
     var sortColumns = [];
@@ -1003,6 +1001,8 @@ DGTable.prototype._calculateTbodyWidth = function () {
 DGTable.prototype.setColumns = function (columns, render) {
     var that = this,
         p = that.p;
+        
+    columns = columns || [];
 
     var normalizedCols = new ColumnCollection();
     for (var i = 0, order = 0; i < columns.length; i++) {
