@@ -136,29 +136,32 @@ var generateSizeFunction = function (key, cssExpand, inner, outer) {
     };
 };
 
+var generatejQueryFunction = function (key) {
+    return function () {
+        var collection = arguments[0];
+        if (!$.isArray(collection) && !(collection instanceof $)) {
+            collection = [collection];
+        }
+        
+        var ret = $.fn[key].apply(collection, Array.prototype.slice.call(arguments, 1));
+        
+        if (arguments.length > 1) {
+            return this;
+        }
+        
+        return ret;
+    };
+};
+
 for (var i = 0; i < sizeKeys.length; i++) {
     var key = sizeKeys[i];
     var cssExpand = cssExpands[key];
 
     if (jQuerySupportsFractions) {
 
-        CssUtil[key] = (function (key) {
-            return function () {
-                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
-            };
-        })(key);
-
-        CssUtil['inner' + cssExpand[2]] = (function (key) {
-            return function () {
-                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
-            };
-        })('inner' + cssExpand[2]);
-
-        CssUtil['outer' + cssExpand[2]] = (function (key) {
-            return function () {
-                return $.fn[key].apply(arguments[0], Array.prototype.slice.call(arguments, 1));
-            };
-        })('outer' + cssExpand[2]);
+        CssUtil[key] = generatejQueryFunction(key);
+        CssUtil['inner' + cssExpand[2]] = generatejQueryFunction('inner' + cssExpand[2]);
+        CssUtil['outer' + cssExpand[2]] = generatejQueryFunction('outer' + cssExpand[2]);
 
     } else {
 
