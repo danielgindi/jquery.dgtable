@@ -974,7 +974,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
 
     $thisWrapper.appendTo(document.body);
 
-    var fractionTest = $('<div style="border:1px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body);
+    var fractionTest = $('<div style="border:1.5px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body);
     var hasFractions = parseFloat(fractionTest.css('border-width'));
     hasFractions = Math.round(hasFractions) != hasFractions;
     fractionTest.remove();
