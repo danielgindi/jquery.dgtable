@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.4
+ * jquery.dgtable 0.5.5
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.4';
+	DGTable.VERSION = '0.5.5';
 
 	/**
 	 * @public
@@ -323,8 +323,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (tmpSortColumns instanceof Array || (typeof tmpSortColumns === 'undefined' ? 'undefined' : _typeof(tmpSortColumns)) === 'object') {
 
-	            for (var i = 0, len = tmpSortColumns.length; i < len; i++) {
-	                var sortColumn = tmpSortColumns[i];
+	            for (var i = 0, len = tmpSortColumns.length, sortColumn; i < len; i++) {
+	                sortColumn = tmpSortColumns[i];
+
 	                if (typeof sortColumn === 'string') {
 	                    sortColumn = { column: sortColumn, descending: false };
 	                }
@@ -530,9 +531,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (!events.hasOwnProperty(eventName)) return that;
 
-	    var callbacks = events[eventName];
-	    for (var i = 0; i < callbacks.length; i++) {
-	        var item = callbacks[i];
+	    for (var callbacks = events[eventName], i = 0, item; i < callbacks.length; i++) {
+	        item = callbacks[i];
+
 	        if (callback && item.cb !== callback) continue;
 	        callbacks.splice(i--, 1);
 	    }
@@ -545,9 +546,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        events = that.p.events;
 
 	    if (events.hasOwnProperty(eventName)) {
-	        var callbacks = events[eventName];
-	        for (var i = 0; i < callbacks.length; i++) {
-	            var item = callbacks[i];
+	        for (var callbacks = events[eventName], i = 0, item; i < callbacks.length; i++) {
+	            item = callbacks[i];
+
 	            if (item.once) {
 	                callbacks.splice(i--, 1);
 	            }
@@ -649,8 +650,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (p.$tbody) {
-	        var trs = p.$tbody[0].childNodes;
-	        for (var i = 0, len = trs.length; i < len; i++) {
+	        for (var trs = p.$tbody[0].childNodes, i = 0, len = trs.length; i < len; i++) {
 	            that.trigger('rowdestroy', trs[i]);
 	        }
 	    }
@@ -733,9 +733,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {DGTable} self
 	 */
 	DGTable.prototype._unbindCellEventsForRow = function (rowToClean) {
-	    var that = this,
-	        p = that.p;
-	    for (var i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
+	    for (var that = this, p = that.p, i = 0, cells = rowToClean.childNodes, cellCount = cells.length; i < cellCount; i++) {
 	        p._unbindCellHoverIn(cells[i]);
 	    }
 	    return this;
@@ -897,38 +895,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {DocumentFragment} fragment containing all rendered rows
 	 */
 	DGTable.prototype.renderRows = function (first, last) {
-
-	    var that = this,
-	        o = that.o,
-	        p = that.p,
-	        tableClassName = o.tableClassName,
-	        rowClassName = tableClassName + '-row',
-	        cellClassName = tableClassName + '-cell',
-	        rows = p.filteredRows || p.rows,
-	        isDataFiltered = !!p.filteredRows,
-	        allowCellPreview = o.allowCellPreview,
-	        visibleColumns = p.visibleColumns,
-	        cellFormatter = o.cellFormatter,
-	        isVirtual = o.virtualTable,
-	        virtualRowHeightFirst = p.virtualRowHeightFirst,
-	        virtualRowHeight = p.virtualRowHeight,
-	        top,
-	        physicalRowIndex,
-	        dataPath,
-	        dataPathIndex,
-	        colValue,
-	        colCount = visibleColumns.length;
-
-	    for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
+	    for (var that = this, o = that.o, p = that.p, tableClassName = o.tableClassName, rowClassName = tableClassName + '-row', cellClassName = tableClassName + '-cell', rows = p.filteredRows || p.rows, isDataFiltered = !!p.filteredRows, allowCellPreview = o.allowCellPreview, visibleColumns = p.visibleColumns, cellFormatter = o.cellFormatter, isVirtual = o.virtualTable, virtualRowHeightFirst = p.virtualRowHeightFirst, virtualRowHeight = p.virtualRowHeight, top, physicalRowIndex, dataPath, dataPathIndex, colValue, colCount = visibleColumns.length, colIndex = 0, column; colIndex < colCount; colIndex++) {
 	        column = visibleColumns[colIndex];
 	        column._finalWidth = column.actualWidthConsideringScrollbarWidth || column.actualWidth;
 	    }
 
-	    var bodyFragment = document.createDocumentFragment(),
-	        isRtl = this._isTableRtl(),
-	        virtualRowXAttr = isRtl ? 'right' : 'left';
-
-	    for (var i = first, rowCount = rows.length, rowData, row, cell, cellInner, content; i < rowCount && i <= last; i++) {
+	    for (var bodyFragment = document.createDocumentFragment(), isRtl = this._isTableRtl(), virtualRowXAttr = isRtl ? 'right' : 'left', i = first, rowCount = rows.length, rowData, row, cell, cellInner, content; i < rowCount && i <= last; i++) {
 
 	        rowData = rows[i];
 	        physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
@@ -1038,7 +1010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    $thisWrapper.appendTo(document.body);
 
-	    var fractionTest = $('<div style="border:1px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body),
+	    var fractionTest = $('<div style="border:1.5px solid #000;width:0;height:0;position:absolute;left:0;top:-9999px">').appendTo(document.body),
 	        hasFractions = parseFloat(fractionTest.css('border-width'));
 
 	    hasFractions = Math.round(hasFractions) != hasFractions;
@@ -1069,8 +1041,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    columns = columns || [];
 
-	    var normalizedCols = new _column_collection2['default']();
-	    for (var i = 0, order = 0; i < columns.length; i++) {
+	    for (var normalizedCols = new _column_collection2['default'](), i = 0, order = 0; i < columns.length; i++) {
 
 	        var columnData = columns[i],
 	            normalizedColumn = that._initColumnFromData(columnData);
@@ -1224,8 +1195,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        col.label = label === undefined ? col.name : label;
 
 	        if (col.element) {
-	            for (var i = 0; i < col.element[0].firstChild.childNodes.length; i++) {
-	                var node = col.element[0].firstChild.childNodes[i];
+	            for (var i = 0, node; i < col.element[0].firstChild.childNodes.length; i++) {
+	                node = col.element[0].firstChild.childNodes[i];
+
 	                if (node.nodeType === 3) {
 	                    node.textContent = col.label;
 	                    break;
@@ -1284,8 +1256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var destWidth = p.visibleColumns[destOrder];
 	            destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
 
-	            var tbodyChildren = p.$tbody[0].childNodes;
-	            for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+	            for (var tbodyChildren = p.$tbody[0].childNodes, i = 0, count = tbodyChildren.length, row; i < count; i++) {
 	                row = tbodyChildren[i];
 	                if (row.nodeType !== 1) continue;
 	                row.insertBefore(row.childNodes[fromPos], row.childNodes[beforePos]);
@@ -1404,8 +1375,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._refilter();
 
 	        // Build output for event, with option names that will survive compilers
-	        var sorts = [];
-	        for (var i = 0; i < currentSort.length; i++) {
+
+	        for (var sorts = [], i = 0; i < currentSort.length; i++) {
 	            sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
 	        }
 	        this.trigger('sort', sorts);
@@ -1513,8 +1484,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (o.sortableColumns != sortableColumns) {
 	        o.sortableColumns = sortableColumns;
 	        if (p.$table) {
-	            var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
-	            for (var i = 0; i < headerCell.length; i++) {
+	            for (var headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell'), i = 0; i < headerCell.length; i++) {
 	                $(headerCell[0])[o.sortableColumns > 0 && p.visibleColumns[i].sortable ? 'addClass' : 'removeClass']('sortable');
 	            }
 	        }
@@ -1674,11 +1644,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Object} configuration for all columns
 	 */
 	DGTable.prototype.getColumnsConfig = function () {
-	    var that = this,
-	        p = that.p,
-	        config = {};
-
-	    for (var i = 0; i < p.columns.length; i++) {
+	    for (var that = this, p = that.p, config = {}, i = 0; i < p.columns.length; i++) {
 	        config[p.columns[i].name] = this.getColumnConfig(p.columns[i].name);
 	    }
 	    return config;
@@ -1691,11 +1657,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Array.<SERIALIZED_COLUMN_SORT>} configuration for all columns
 	 */
 	DGTable.prototype.getSortedColumns = function () {
-	    var that = this,
-	        p = that.p,
-	        sorted = [];
-
-	    for (var i = 0, sort; i < p.rows.sortColumn.length; i++) {
+	    for (var that = this, p = that.p, sorted = [], i = 0, sort; i < p.rows.sortColumn.length; i++) {
 	        sort = p.rows.sortColumn[i];
 	        sorted.push({ column: sort.column, descending: sort.descending });
 	    }
@@ -1717,11 +1679,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (row < 0 || row > p.rows.length - 1) return null;
 	    var column = p.columns.get(columnName);
 	    if (!column) return null;
-	    var rowData = p.rows[row],
-	        dataPath = column.dataPath,
-	        colValue = rowData[dataPath[0]];
 
-	    for (var dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+	    for (var rowData = p.rows[row], dataPath = column.dataPath, colValue = rowData[dataPath[0]], dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
 	        colValue = colValue[dataPath[dataPathIndex]];
 	    }
 
@@ -1837,20 +1796,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.header.scrollLeft = lastScrollLeft;
 	    }
 
-	    var tableClassName = o.tableClassName,
-	        $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' }),
-	        $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper),
-	        $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
-
-	    for (var i = 0; i < p.visibleColumns.length; i++) {
+	    for (var tableClassName = o.tableClassName, $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' }), $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper), $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header), i = 0; i < p.visibleColumns.length; i++) {
 	        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
 	    }
 	    $thisWrapper.appendTo(document.body);
 
 	    detectedWidth -= this._horizontalBorderWidth($headerRow[0]);
 
-	    var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell');
-	    for (var i = 0, $cell; i < $cells.length; i++) {
+	    for (var $cells = $headerRow.find('>div.' + tableClassName + '-header-cell'), i = 0, $cell; i < $cells.length; i++) {
 	        $cell = $($cells[i]);
 
 	        var isBoxing = $cell.css('boxSizing') === 'border-box';
@@ -2247,9 +2200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var childNodes = p.tbody.childNodes;
 
 	    if (this.o.virtualTable) {
-	        // Now make sure that the row actually rendered, as this is a virtual table
-	        var isRowVisible = false;
-	        for (var i = 0; i < childNodes.length; i++) {
+	        for (var isRowVisible = false, i = 0; i < childNodes.length; i++) {
 	            if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
 	                isRowVisible = true;
 	                this.trigger('rowdestroy', childNodes[i]);
@@ -2258,6 +2209,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break;
 	            }
 	        }
+	        // Now make sure that the row actually rendered, as this is a virtual table
+
 	        if (isRowVisible) {
 	            var renderedRow = this.renderRows(rowIndex, rowIndex);
 	            p.tbody.insertBefore(renderedRow, childNodes[i] || null);
@@ -2322,11 +2275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (this.o.virtualTable) {
-	        // Now make sure that the row actually rendered, as this is a virtual table
-	        var rowsToRender = [],
-	            childNodes = p.tbody.childNodes;
-
-	        for (var i = 0, rowCount = childNodes.length; i < rowCount; i++) {
+	        for (var rowsToRender = [], childNodes = p.tbody.childNodes, i = 0, rowCount = childNodes.length; i < rowCount; i++) {
 	            rowsToRender.push(childNodes[i]['physicalRowIndex']);
 	            this.trigger('rowdestroy', childNodes[i]);
 	            this._unbindCellEventsForRow(childNodes[i]);
@@ -2334,8 +2283,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            i--;
 	            rowCount--;
 	        }
-	        for (var i = 0; i < rowsToRender.length; i++) {
-	            var renderedRow = this.renderRows(rowsToRender[i], rowsToRender[i]);
+	        // Now make sure that the row actually rendered, as this is a virtual table
+
+	        for (var i = 0, renderedRow; i < rowsToRender.length; i++) {
+	            renderedRow = this.renderRows(rowsToRender[i], rowsToRender[i]);
+
 	            p.tbody.appendChild(renderedRow);
 	        }
 	    }
@@ -2946,13 +2898,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var sizeToSet = width;
 
 	        if (column.widthMode === ColumnWidthMode.RELATIVE) {
-	            var detectedWidth = this._calculateWidthAvailableForColumns(),
-	                sizeLeft = detectedWidth,
-	                totalRelativePercentage = 0,
-	                relatives = 0;
 	            //sizeLeft -= p.table.offsetWidth - p.table.clientWidth;
 
-	            for (var i = 0, col; i < p.visibleColumns.length; i++) {
+	            for (var detectedWidth = this._calculateWidthAvailableForColumns(), sizeLeft = detectedWidth, totalRelativePercentage = 0, relatives = 0, i = 0, col; i < p.visibleColumns.length; i++) {
 	                col = p.visibleColumns[i];
 	                if (col.name === column.name) continue;
 
@@ -3131,10 +3079,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (col) {
 	        headerCells[cellIndex].style.width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px';
 
-	        var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px',
-	            tbodyChildren = p.$tbody[0].childNodes;
-
-	        for (var i = 0, count = tbodyChildren.length, headerRow; i < count; i++) {
+	        for (var width = (col.actualWidthConsideringScrollbarWidth || col.actualWidth) + 'px', tbodyChildren = p.$tbody[0].childNodes, i = 0, count = tbodyChildren.length, headerRow; i < count; i++) {
 	            headerRow = tbodyChildren[i];
 	            if (headerRow.nodeType !== 1) continue;
 	            headerRow.childNodes[cellIndex].style.width = width;
@@ -3195,11 +3140,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	    }
 
-	    var preventDefault = function preventDefault(event) {
+	    for (var preventDefault = function preventDefault(event) {
 	        event.preventDefault();
-	    };
-
-	    for (var i = 0, column, cell, cellInside, $cell; i < p.visibleColumns.length; i++) {
+	    }, i = 0, column, cell, cellInside, $cell; i < p.visibleColumns.length; i++) {
 	        column = p.visibleColumns[i];
 	        if (column.visible) {
 	            cell = createElement('div');
@@ -3255,8 +3198,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (p.$table && o.virtualTable) {
 	        p.$table.remove();
 	        if (p.$tbody) {
-	            var rows = p.$tbody[0].childNodes;
-	            for (var i = 0, len = rows.length; i < len; i++) {
+	            for (var rows = p.$tbody[0].childNodes, i = 0, len = rows.length; i < len; i++) {
 	                that.trigger('rowdestroy', rows[i]);
 	                that._unbindCellEventsForRow(rows[i]);
 	            }
@@ -3378,10 +3320,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var lastColIndex = p.visibleColumns.length - 1;
 
 	            p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth = p.visibleColumns[lastColIndex].actualWidth - p.scrollbarWidth;
-	            var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px',
-	                tbodyChildren = p.tbody.childNodes;
 
-	            for (var i = 0, count = tbodyChildren.length, row; i < count; i++) {
+	            for (var lastColWidth = p.visibleColumns[lastColIndex].actualWidthConsideringScrollbarWidth + 'px', tbodyChildren = p.tbody.childNodes, i = 0, count = tbodyChildren.length, row; i < count; i++) {
 	                row = tbodyChildren[i];
 	                if (row.nodeType !== 1) continue;
 	                row.childNodes[lastColIndex].style.width = lastColWidth;
@@ -3969,7 +3909,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	var _extends = Object.assign || function (target) { for (var i = 1, source; i < arguments.length; i++) { source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var _util = __webpack_require__(2);
 
@@ -4196,7 +4136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	var _extends = Object.assign || function (target) { for (var i = 1, source; i < arguments.length; i++) { source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	function ColumnCollection() {
 
@@ -4284,8 +4224,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Array<Object>} ordered array of visible columns
 	 */
 	ColumnCollection.prototype.getVisibleColumns = function () {
-	    var visible = [];
-	    for (var i = 0, column; i < this.length; i++) {
+	    for (var visible = [], i = 0, column; i < this.length; i++) {
 	        column = this[i];
 	        if (column.visible) {
 	            visible.push(column);
@@ -4301,8 +4240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {int} maximum order currently in the array
 	 */
 	ColumnCollection.prototype.getMaxOrder = function () {
-	    var order = 0;
-	    for (var i = 0, column; i < this.length; i++) {
+	    for (var order = 0, i = 0, column; i < this.length; i++) {
 	        column = this[i];
 	        if (column.order > order) {
 	            order = column.order;
@@ -4356,23 +4294,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var $ = _jquery2['default'],
-	    hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle,
-	    jQuerySupportsFractions = $ && $.fn.jquery >= '3',
-	    cssExpands = {
+	for (var $ = _jquery2['default'], hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle, jQuerySupportsFractions = $ && $.fn.jquery >= '3', cssExpands = {
 	    width: ['Left', 'Right', 'Width'],
 	    height: ['Top', 'Bottom', 'Height']
-	},
-	    sizeKeys = ['width', 'height'],
-	    CssUtil = {},
-	    generateSizeFunction = function generateSizeFunction(key, cssExpand, inner, outer) {
+	}, sizeKeys = ['width', 'height'], CssUtil = {}, generateSizeFunction = function generateSizeFunction(key, cssExpand, inner, outer) {
 
 	    return function () {
 	        var el = arguments[0],
 	            value = arguments[1];
 
 
-	        if (el && !(el instanceof Element) && 'length' in el) {
+	        if (el && !(el instanceof Element) && ('length' in el)) {
 	            el = el[0];
 	        }
 
@@ -4465,8 +4397,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value;
 	        }
 	    };
-	},
-	    generatejQueryFunction = function generatejQueryFunction(key) {
+	}, generatejQueryFunction = function generatejQueryFunction(key) {
 	    return function () {
 	        var collection = arguments[0];
 	        if (!$.isArray(collection) && !(collection instanceof $)) {
@@ -4481,9 +4412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        return ret;
 	    };
-	};
-
-	for (var i = 0; i < sizeKeys.length; i++) {
+	}, i = 0; i < sizeKeys.length; i++) {
 	    var key = sizeKeys[i],
 	        cssExpand = cssExpands[key];
 
