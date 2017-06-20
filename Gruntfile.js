@@ -42,7 +42,6 @@ module.exports = function( grunt ) {
                             , presets: ['es2015']
                             , plugins: [
                                 'transform-es3-member-expression-literals'
-                                , 'transform-es3-property-literals'
                                 , 'transform-merge-sibling-variables'
                                 , 'transform-object-assign'
                                 , 'transform-property-literals'
