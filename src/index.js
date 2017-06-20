@@ -1327,21 +1327,33 @@ DGTable.prototype.sort = function (column, descending, add) {
  */
 DGTable.prototype.resort = function () {
     var that = this,
-        p = that.p;
+        p = that.p
+        columns = p.columns;
 
     var currentSort = p.rows.sortColumn;
     if (currentSort.length) {
+        
+        for (var i = 0; i < currentSort.length; i++) {
+            if (!columns.get(currentSort[i].column)) {
+                currentSort.splice(i--, 1);
+            }
+        }
+        
         p.rows.sortColumn = currentSort;
-        p.rows.sort(!!p.filteredRows);
+        if (currentSort.length) {
+            p.rows.sort(!!p.filteredRows);
+        }
         this._refilter();
 
         // Build output for event, with option names that will survive compilers
         var sorts = [];
-        for (var i = 0; i < currentSort.length; i++) {
+        for (i = 0; i < currentSort.length; i++) {
             sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
         }
         this.trigger('sort', sorts);
     }
+    
+    
     return this;
 };
 
@@ -3046,6 +3058,8 @@ DGTable.prototype._showSortArrow = function (column, descending) {
         p = that.p;
 
     var col = p.columns.get(column);
+    if (!col) return false;
+    
     var arrow = createElement('span');
     arrow.className = 'sort-arrow';
 
