@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.6
+ * jquery.dgtable 0.5.7
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.6';
+	DGTable.VERSION = '0.5.7';
 
 	/**
 	 * @public
@@ -1273,7 +1273,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Sort the table
 	 * @public
 	 * @expose
-	 * @param {String} column Name of the column to sort on
+	 * @param {String?} column Name of the column to sort on (or null to remove sort arrow)
 	 * @param {Boolean=} descending Sort in descending order
 	 * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
 	 * @returns {DGTable} self
@@ -1284,10 +1284,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p,
 	        columns = p.columns,
 	        col = columns.get(column),
-	        i;
+	        i,
+	        currentSort = p.rows.sortColumn;
 
 	    if (col) {
-	        var currentSort = p.rows.sortColumn;
 
 	        if (currentSort.length && currentSort[currentSort.length - 1].column == column) {
 	            // Recognize current descending mode, if currently sorting by this column
@@ -1324,36 +1324,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	            comparePath: col.comparePath,
 	            descending: !!descending
 	        });
+	    } else {
+	        currentSort.length = 0;
+	    }
 
-	        this._clearSortArrows();
-	        for (i = 0; i < currentSort.length; i++) {
-	            this._showSortArrow(currentSort[i].column, currentSort[i].descending);
-	        }
-	        if (o.adjustColumnWidthForSortArrow && !o._tableSkeletonNeedsRendering) {
-	            this.tableWidthChanged(true);
-	        }
+	    this._clearSortArrows();
 
-	        if (o.virtualTable) {
-	            while (p.tbody && p.tbody.firstChild) {
-	                this.trigger('rowdestroy', p.tbody.firstChild);
-	                this._unbindCellEventsForRow(p.tbody.firstChild);
-	                p.tbody.removeChild(p.tbody.firstChild);
-	            }
-	        } else {
-	            p.tableSkeletonNeedsRendering = true;
-	        }
+	    for (i = 0; i < currentSort.length; i++) {
+	        this._showSortArrow(currentSort[i].column, currentSort[i].descending);
+	    }
 
-	        p.rows.sortColumn = currentSort;
+	    if (o.adjustColumnWidthForSortArrow && !o._tableSkeletonNeedsRendering) {
+	        this.tableWidthChanged(true);
+	    }
+
+	    if (o.virtualTable) {
+	        while (p.tbody && p.tbody.firstChild) {
+	            this.trigger('rowdestroy', p.tbody.firstChild);
+	            this._unbindCellEventsForRow(p.tbody.firstChild);
+	            p.tbody.removeChild(p.tbody.firstChild);
+	        }
+	    } else {
+	        p.tableSkeletonNeedsRendering = true;
+	    }
+
+	    p.rows.sortColumn = currentSort;
+
+	    if (currentSort.length) {
 	        p.rows.sort(!!p.filteredRows);
 	        this._refilter();
-
-	        // Build output for event, with option names that will survive compilers
-	        var sorts = [];
-	        for (i = 0; i < currentSort.length; i++) {
-	            sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
-	        }
-	        this.trigger('sort', sorts);
 	    }
+
+	    // Build output for event, with option names that will survive compilers
+	    var sorts = [];
+	    for (i = 0; i < currentSort.length; i++) {
+	        sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
+	    }
+	    this.trigger('sort', sorts);
+
 	    return this;
 	};
 
@@ -1365,21 +1373,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.resort = function () {
 	    var that = this,
-	        p = that.p,
-	        currentSort = p.rows.sortColumn;
+	        p = that.p;
+	    columns = p.columns;
 
+	    var currentSort = p.rows.sortColumn;
 	    if (currentSort.length) {
+
+	        for (var i = 0; i < currentSort.length; i++) {
+	            if (!columns.get(currentSort[i].column)) {
+	                currentSort.splice(i--, 1);
+	            }
+	        }
+
 	        p.rows.sortColumn = currentSort;
-	        p.rows.sort(!!p.filteredRows);
+	        if (currentSort.length) {
+	            p.rows.sort(!!p.filteredRows);
+	        }
 	        this._refilter();
 
 	        // Build output for event, with option names that will survive compilers
-
-	        for (var sorts = [], i = 0; i < currentSort.length; i++) {
+	        var sorts = [];
+	        for (i = 0; i < currentSort.length; i++) {
 	            sorts.push({ column: currentSort[i].column, descending: currentSort[i].descending });
 	        }
 	        this.trigger('sort', sorts);
 	    }
+
 	    return this;
 	};
 
@@ -3046,9 +3065,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var that = this,
 	        p = that.p,
-	        col = p.columns.get(column),
-	        arrow = createElement('span');
+	        col = p.columns.get(column);
 
+	    if (!col) return false;
+
+	    var arrow = createElement('span');
 	    arrow.className = 'sort-arrow';
 
 	    if (col.element) {
