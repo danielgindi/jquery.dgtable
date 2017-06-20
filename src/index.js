@@ -591,7 +591,6 @@ DGTable.prototype.close = DGTable.prototype.remove = DGTable.prototype.destroy =
     }
 
     // Using quotes for __super__ because Google Closure Compiler has a bug...
-    DGTable['__super__'].remove.apply(this, arguments);
 
     this._destroyHeaderCells()._unbindCellEventsForTable();
     if (p.$table) {
