@@ -106,9 +106,8 @@ module.exports = function( grunt ) {
                     , language_in: 'ECMASCRIPT5_STRICT'
                     , externs: [
                         'closure-compiler/externs/jquery-1.9.externs'
-                        , 'closure-compiler/externs/underscore-1.5.2.externs'
-                        , 'closure-compiler/externs/backbone-1.1.0.externs'
                     ]
+                    , charset: 'UTF8'
                     , create_source_map: 'dist/jquery.dgtable.min.js.map'
                     , source_map_format: 'V3'
                 }
