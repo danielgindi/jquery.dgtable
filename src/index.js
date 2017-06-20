@@ -1228,7 +1228,7 @@ DGTable.prototype.moveColumn = function (src, dest) {
  * Sort the table
  * @public
  * @expose
- * @param {String} column Name of the column to sort on
+ * @param {String?} column Name of the column to sort on (or null to remove sort arrow)
  * @param {Boolean=} descending Sort in descending order
  * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
  * @returns {DGTable} self
@@ -1240,8 +1240,9 @@ DGTable.prototype.sort = function (column, descending, add) {
         columns = p.columns,
         col = columns.get(column), i;
 
+    var currentSort = p.rows.sortColumn;
+        
     if (col) {
-        var currentSort = p.rows.sortColumn;
 
         if (currentSort.length && currentSort[currentSort.length - 1].column == column) {
             // Recognize current descending mode, if currently sorting by this column
@@ -1277,36 +1278,44 @@ DGTable.prototype.sort = function (column, descending, add) {
             comparePath: col.comparePath,
             descending: !!descending
         });
+    } else {
+        currentSort.length = 0;
+    }
 
-        this._clearSortArrows();
-        for (i = 0; i < currentSort.length; i++) {
-            this._showSortArrow(currentSort[i].column, currentSort[i].descending);
-        }
-        if (o.adjustColumnWidthForSortArrow && !o._tableSkeletonNeedsRendering) {
-            this.tableWidthChanged(true);
-        }
+    this._clearSortArrows();
 
-        if (o.virtualTable) {
-            while (p.tbody && p.tbody.firstChild) {
-                this.trigger('rowdestroy', p.tbody.firstChild);
-                this._unbindCellEventsForRow(p.tbody.firstChild);
-                p.tbody.removeChild(p.tbody.firstChild);
-            }
-        } else {
-            p.tableSkeletonNeedsRendering = true;
-        }
+    for (i = 0; i < currentSort.length; i++) {
+        this._showSortArrow(currentSort[i].column, currentSort[i].descending);
+    }
 
-        p.rows.sortColumn = currentSort;
+    if (o.adjustColumnWidthForSortArrow && !o._tableSkeletonNeedsRendering) {
+        this.tableWidthChanged(true);
+    }
+
+    if (o.virtualTable) {
+        while (p.tbody && p.tbody.firstChild) {
+            this.trigger('rowdestroy', p.tbody.firstChild);
+            this._unbindCellEventsForRow(p.tbody.firstChild);
+            p.tbody.removeChild(p.tbody.firstChild);
+        }
+    } else {
+        p.tableSkeletonNeedsRendering = true;
+    }
+
+    p.rows.sortColumn = currentSort;
+    
+    if (currentSort.length) {
         p.rows.sort(!!p.filteredRows);
         this._refilter();
-
-        // Build output for event, with option names that will survive compilers
-        var sorts = [];
-        for (i = 0; i < currentSort.length; i++) {
-            sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
-        }
-        this.trigger('sort', sorts);
     }
+
+    // Build output for event, with option names that will survive compilers
+    var sorts = [];
+    for (i = 0; i < currentSort.length; i++) {
+        sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
+    }
+    this.trigger('sort', sorts);
+    
     return this;
 };
 
