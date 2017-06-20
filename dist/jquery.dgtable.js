@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.5
+ * jquery.dgtable 0.5.6
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -57,7 +57,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
 
@@ -77,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _css_util = __webpack_require__(5),
 	    _css_util2 = _interopRequireDefault(_css_util);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var $ = _jquery2['default'],
 	    userAgent = navigator.userAgent,
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.5';
+	DGTable.VERSION = '0.5.6';
 
 	/**
 	 * @public
@@ -656,7 +656,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    // Using quotes for __super__ because Google Closure Compiler has a bug...
-	    DGTable['__super__'].remove.apply(this, arguments);
 
 	    this._destroyHeaderCells()._unbindCellEventsForTable();
 	    if (p.$table) {
@@ -1006,7 +1005,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        $row.append(cell);
 	    }
 
-	    var $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
+	    var $thisWrapper = $('<div>').addClass(that.el.className).css({ "z-index": -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
 
 	    $thisWrapper.appendTo(document.body);
 
@@ -1796,7 +1795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.header.scrollLeft = lastScrollLeft;
 	    }
 
-	    for (var tableClassName = o.tableClassName, $thisWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px' }), $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper), $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header), i = 0; i < p.visibleColumns.length; i++) {
+	    for (var tableClassName = o.tableClassName, $thisWrapper = $('<div>').addClass(that.el.className).css({ "z-index": -1, position: 'absolute', left: '0', top: '-9999px' }), $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper), $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header), i = 0; i < p.visibleColumns.length; i++) {
 	        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
 	    }
 	    $thisWrapper.appendTo(document.body);
@@ -2628,7 +2627,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.$resizer = $('<div></div>').addClass(o.resizerClassName).css({
 	            position: 'absolute',
 	            display: 'block',
-	            'z-index': -1,
+	            "z-index": -1,
 	            visibility: 'hidden',
 	            width: '2px',
 	            background: '#000',
@@ -2659,7 +2658,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        p.$resizer.css({
-	            'z-index': '10',
+	            "z-index": '10',
 	            visibility: 'visible',
 	            left: posCol.left,
 	            top: posCol.top,
@@ -3173,7 +3172,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            // Disable these to allow our own context menu events without interruption
-	            $cell.css({ '-webkit-touch-callout': 'none', '-webkit-user-select': 'none', '-moz-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none' });
+	            $cell.css({ "-webkit-touch-callout": 'none', "-webkit-user-select": 'none', "-moz-user-select": 'none', "-ms-user-select": 'none', "-o-user-select": 'none', "user-select": 'none' });
 	        }
 	    }
 
@@ -3226,7 +3225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return row;
 	        },
 	            $dummyTbody,
-	            $dummyWrapper = $('<div>').addClass(that.el.className).css({ 'z-index': -1, position: 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
+	            $dummyWrapper = $('<div>').addClass(that.el.className).css({ "z-index": -1, position: 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)));
 
 	        $dummyWrapper.appendTo(document.body);
 
@@ -3464,16 +3463,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var css = {
-	            'box-sizing': borderBox ? 'border-box' : 'content-box',
+	            "box-sizing": borderBox ? 'border-box' : 'content-box',
 	            width: requiredWidth,
-	            'min-height': _css_util2['default'].height($el),
-	            'padding-left': paddingL,
-	            'padding-right': paddingR,
-	            'padding-top': paddingT,
-	            'padding-bottom': paddingB,
+	            "min-height": _css_util2['default'].height($el),
+	            "padding-left": paddingL,
+	            "padding-right": paddingR,
+	            "padding-top": paddingT,
+	            "padding-bottom": paddingB,
 	            overflow: 'hidden',
 	            position: 'absolute',
-	            'z-index': '-1',
+	            "z-index": '-1',
 	            left: '0',
 	            top: '0',
 	            cursor: 'default'
@@ -3496,18 +3495,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        $(div.firstChild).css({
 	            direction: $elInner.css('direction'),
-	            'white-space': $elInner.css('white-space')
+	            "white-space": $elInner.css('white-space')
 	        });
 
 	        if (isHeaderCell) {
 	            // Disable these to allow our own context menu events without interruption
 	            $div.css({
-	                '-webkit-touch-callout': 'none',
-	                '-webkit-user-select': 'none',
-	                '-moz-user-select': 'none',
-	                '-ms-user-select': 'none',
-	                '-o-user-select': 'none',
-	                'user-select': 'none'
+	                "-webkit-touch-callout": 'none',
+	                "-webkit-user-select": 'none',
+	                "-moz-user-select": 'none',
+	                "-ms-user-select": 'none',
+	                "-o-user-select": 'none',
+	                "user-select": 'none'
 	            });
 	        }
 
@@ -3567,7 +3566,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Apply css to preview cell
 	        var previewCss = {
 	            top: offset.top,
-	            'z-index': 9999
+	            "z-index": 9999
 	        };
 	        previewCss[prop] = offset[prop];
 
@@ -3765,15 +3764,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports['default'] = DGTable;
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -3899,9 +3898,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	};
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4124,9 +4123,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports['default'] = RowCollection;
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -4279,9 +4278,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports['default'] = ColumnCollection;
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4292,7 +4291,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _jquery = __webpack_require__(1),
 	    _jquery2 = _interopRequireDefault(_jquery);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	for (var $ = _jquery2['default'], hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle, jQuerySupportsFractions = $ && $.fn.jquery >= '3', cssExpands = {
 	    width: ['Left', 'Right', 'Width'],
@@ -4435,7 +4434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	exports['default'] = CssUtil;
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;
