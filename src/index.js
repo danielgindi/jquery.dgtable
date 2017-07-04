@@ -3736,6 +3736,7 @@ DGTable.prototype._cellMouseOutEvent = function(el) {
  */
 DGTable.prototype.hideCellPreview = function() {
     var that = this, p = that.p;
+    
     if (p.$cellPreviewEl) {
         var div = p.$cellPreviewEl[0];
         p.$cellPreviewEl.remove();
@@ -3748,8 +3749,11 @@ DGTable.prototype.hideCellPreview = function() {
         this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
 
         p.$cellPreviewEl = null;
+        p.abortCellPreview = false;
+    } else {
+        p.abortCellPreview = true;
     }
-    p.abortCellPreview = false;
+    
     return this;
 };
 
