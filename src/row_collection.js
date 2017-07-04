@@ -39,8 +39,8 @@ RowCollection.prototype.initialize = function (options) {
 };
 
 /**
- * @param {Object|Object[]} rows Row or array of rows to add to this collection
- * @param {number?} at Position to insert rows. This will prevent the sort if it is active.
+ * @param {Object|Object[]} rows - row or array of rows to add to this collection
+ * @param {number?} at - position to insert rows at
  */
 RowCollection.prototype.add = function (rows, at) {
     var isArray = ('splice' in rows && 'length' in rows), i, len;
