@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.7
+ * jquery.dgtable 0.5.8
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.7';
+	DGTable.VERSION = '0.5.8';
 
 	/**
 	 * @public
@@ -1171,7 +1171,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (p.filteredRows) {
-	        p.filteredRows = null; // Release memory
 	        p.filteredRows = p.rows.filteredCollection(p.rows.filterColumn, p.rows.filterString, p.rows.filterCaseSensitive);
 	    }
 	    return this;
@@ -2091,22 +2090,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Add rows to the table
 	 * @public
 	 * @expose
-	 * @param {Object[]} data array of rows to add to the table
-	 * @param {Boolean?} resort should resort all rows?
+	 * @param {Object[]} data - array of rows to add to the table
+	 * @param {Number} [at=-1] - where to add the rows at
+	 * @param {Boolean} [resort=false] - should resort all rows?
+	 * @param {Boolean} [render=true]
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.addRows = function (data, resort) {
+	DGTable.prototype.addRows = function (data, at, resort, render) {
 	    var that = this,
 	        p = that.p;
 
+	    if (typeof at === 'boolean') {
+	        render = resort;
+	        resort = at;
+	        at = -1;
+	    }
+	    if (typeof at !== 'number') {
+	        at = -1;
+	    } else {
+	        if (at < 0 || at > p.rows.length) at = p.rows.length;
+	    }
+
+	    render = render === undefined ? true : !!render;
+
 	    if (data) {
-	        p.rows.add(data);
-	        if (that.o.virtualTable) {
-	            while (p.tbody.firstChild) {
-	                this.trigger('rowdestroy', p.tbody.firstChild);
-	                this._unbindCellEventsForRow(p.tbody.firstChild);
-	                p.tbody.removeChild(p.tbody.firstChild);
-	            }
+	        p.rows.add(data, at);
+
+	        if (p.filteredRows || resort && p.rows.sortColumn.length) {
 
 	            if (resort && p.rows.sortColumn.length) {
 	                this.resort();
@@ -2114,28 +2124,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this._refilter();
 	            }
 
-	            this._calculateVirtualHeight() // Calculate virtual height
-	            ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
-	            ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+	            p.tableSkeletonNeedsRendering = true;
 
-	            this.render();
-	        } else {
-	            if (p.filteredRows) {
-	                var filteredCount = p.filteredRows.length;
-	                this._refilter();
-	                if (!p.filteredRows || p.filteredRows.length != filteredCount) {
-	                    this.clearAndRender();
+	            if (render) {
+	                // Render the skeleton with all rows from scratch
+	                this.render();
+	            }
+	        } else if (render) {
+	            var childNodes = p.tbody.childNodes;
+
+	            if (that.o.virtualTable) {
+
+	                while (p.tbody.firstChild) {
+	                    this.trigger('rowdestroy', p.tbody.firstChild);
+	                    this._unbindCellEventsForRow(p.tbody.firstChild);
+	                    p.tbody.removeChild(p.tbody.firstChild);
 	                }
+
+	                this._calculateVirtualHeight() // Calculate virtual height
+	                ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
+	                .render()._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
 	            } else if (p.$tbody) {
-	                var firstRow = p.rows.length - data.length,
-	                    lastRow = firstRow + data.length - 1,
+
+	                var firstRow = at,
+	                    lastRow = at + data.length - 1,
 	                    renderedRows = that.renderRows(firstRow, lastRow);
 
-	                p.tbody.appendChild(renderedRows);
-	                that._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
+	                p.tbody.insertBefore(renderedRows, childNodes[at] || null);
+
+	                for (var i = lastRow + 1, row; i < childNodes.length; i++) {
+	                    row = childNodes[i];
+
+	                    row['rowIndex'] += data.length;
+	                    row['physicalRowIndex'] += data.length;
+	                }
+
+	                this.render()._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
 	                ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
 	            }
 	        }
+
 	        this.trigger('addrows', data.length, false);
 	    }
 	    return this;
@@ -2145,53 +2173,84 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Removes a row from the table
 	 * @public
 	 * @expose
-	 * @param {Number} physicalRowIndex index
+	 * @param {Number} physicalRowIndex - index
+	 * @param {Number} count - how many rows to remove
 	 * @param {Boolean=true} render
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.removeRow = function (physicalRowIndex, render) {
+	DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
 	    var that = this,
 	        p = that.p;
 
+	    if (typeof count !== 'number' || count <= 0) return this;
+
 	    if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
 
-	    p.rows.splice(physicalRowIndex, 1);
+	    p.rows.splice(physicalRowIndex, count);
 	    render = render === undefined ? true : !!render;
+
 	    if (p.filteredRows) {
+
 	        this._refilter();
+
 	        p.tableSkeletonNeedsRendering = true;
+
 	        if (render) {
 	            // Render the skeleton with all rows from scratch
 	            this.render();
 	        }
 	    } else if (render) {
-	        var childNodes = p.tbody.childNodes;
-	        if (this.o.virtualTable) {
-	            for (var i = 0; i < childNodes.length; i++) {
-	                if (childNodes[i]['rowIndex'] >= physicalRowIndex) {
-	                    this.trigger('rowdestroy', childNodes[i]);
-	                    this._unbindCellEventsForRow(childNodes[i]);
-	                    p.tbody.removeChild(childNodes[i]);
 
-	                    // Keep on destroying all rows further, and later render them all back.
-	                    // Because f we have a hole in the middle, it will be harder to shift the rest of the rows and re-render
-	                    i--;
-	                }
+	        var childNodes = p.tbody.childNodes;
+
+	        if (this.o.virtualTable) {
+
+	            while (p.tbody.firstChild) {
+	                this.trigger('rowdestroy', p.tbody.firstChild);
+	                this._unbindCellEventsForRow(p.tbody.firstChild);
+	                p.tbody.removeChild(p.tbody.firstChild);
 	            }
+
 	            this._calculateVirtualHeight()._updateLastCellWidthFromScrollbar().render()._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
+
 	        } else {
-	            for (var i = 0; i < childNodes.length; i++) {
-	                if (childNodes[i]['rowIndex'] === physicalRowIndex) {
-	                    this.trigger('rowdestroy', childNodes[i]);
-	                    this._unbindCellEventsForRow(childNodes[i]);
-	                    p.tbody.removeChild(childNodes[i]);
-	                    break;
+
+	            for (var countRemoved = 0, lastRowIndex = physicalRowIndex + count - 1, i = 0; i < childNodes.length; i++) {
+	                var row = childNodes[i],
+	                    index = row['physicalRowIndex'];
+
+
+	                if (index >= physicalRowIndex) {
+	                    if (index <= lastRowIndex) {
+	                        this.trigger('rowdestroy', row);
+	                        this._unbindCellEventsForRow(row);
+	                        p.tbody.removeChild(row);
+	                        i--;
+	                    } else {
+	                        row['physicalRowIndex'] -= count;
+	                    }
+	                } else {
+	                    row['rowIndex'] = i;
 	                }
 	            }
+
 	            this.render()._updateLastCellWidthFromScrollbar()._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
 	        }
 	    }
+
 	    return this;
+	};
+
+	/**
+	 * Removes a row from the table
+	 * @public
+	 * @expose
+	 * @param {Number} physicalRowIndex - index
+	 * @param {Boolean=true} render
+	 * @returns {DGTable} self
+	 */
+	DGTable.prototype.removeRow = function (physicalRowIndex, render) {
+	    return this.removeRows(physicalRowIndex, 1, render);
 	};
 
 	/**
@@ -3642,6 +3701,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype.hideCellPreview = function () {
 	    var that = this,
 	        p = that.p;
+
 	    if (p.$cellPreviewEl) {
 	        var div = p.$cellPreviewEl[0];
 	        p.$cellPreviewEl.remove();
@@ -3654,8 +3714,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
 
 	        p.$cellPreviewEl = null;
+	        p.abortCellPreview = false;
+	    } else {
+	        p.abortCellPreview = true;
 	    }
-	    p.abortCellPreview = false;
+
 	    return this;
 	};
 
@@ -3970,8 +4033,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
-	 * @param {Object|Object[]} rows Row or array of rows to add to this collection
-	 * @param {number?} at Position to insert rows. This will prevent the sort if it is active.
+	 * @param {Object|Object[]} rows - row or array of rows to add to this collection
+	 * @param {number?} at - position to insert rows at
 	 */
 	RowCollection.prototype.add = function (rows, at) {
 	    var isArray = 'splice' in rows && 'length' in rows,
