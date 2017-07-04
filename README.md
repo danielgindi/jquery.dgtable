@@ -229,8 +229,9 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getRowElement({Number} physicalRowIndex) {Element?}`: Returns the element of the row specified
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
-* `addRows({Object[]} data) {DGTable}`: *Undocumented yet*
-* `removeRow({Number} physicalRowIndex, {Boolean=true} render) {DGTable}`: *Undocumented yet*
+* `addRows({Object[]} data, {Number} at = -1, {Boolean} resort = false, {Boolean} render = true) {DGTable}`: Adds the specified rows at the specified position, and optionally resorts the data
+* `removeRow({Number} physicalRowIndex, {Boolean} render = true) {DGTable}`: Removes one row at the specified position
+* `removeRows({Number} physicalRowIndex, {Number} count, {Boolean} render = true) {DGTable}`: Removes rows at the specified position
 * `refreshRow({Number} physicalRowIndex) {DGTable}`: Refreshes the row specified
   * *returns* Self
 * `refreshAllVirtualRows() {DGTable}`: Refreshes all virtual rows
