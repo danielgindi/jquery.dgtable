@@ -3502,14 +3502,13 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         o = that.o,
         p = that.p;
 
-    p.abortCellPreview = false;
-
     var elInner = el.firstChild;
 
     if ((elInner.scrollWidth - elInner.clientWidth > 1) ||
         (elInner.scrollHeight - elInner.clientHeight > 1)) {
 
         that.hideCellPreview();
+        p.abortCellPreview = false;
 
         var $el = $(el), $elInner = $(elInner);
         var div = createElement('div'), $div = $(div);
