@@ -41,6 +41,5 @@
     "webpack": "^1.15.0"
   },
   "scripts": {
-    "postinstall": "grunt build"
   }
 }
