@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.8
+ * jquery.dgtable 0.5.9
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.8';
+	DGTable.VERSION = '0.5.9';
 
 	/**
 	 * @public
@@ -3478,15 +3478,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	DGTable.prototype._cellMouseOverEvent = function (el) {
 	    var that = this,
 	        o = that.o,
-	        p = that.p;
-
-	    p.abortCellPreview = false;
-
-	    var elInner = el.firstChild;
+	        p = that.p,
+	        elInner = el.firstChild;
 
 	    if (elInner.scrollWidth - elInner.clientWidth > 1 || elInner.scrollHeight - elInner.clientHeight > 1) {
 
 	        that.hideCellPreview();
+	        p.abortCellPreview = false;
 
 	        var $el = $(el),
 	            $elInner = $(elInner),
