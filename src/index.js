@@ -1326,7 +1326,7 @@ DGTable.prototype.sort = function (column, descending, add) {
  */
 DGTable.prototype.resort = function () {
     var that = this,
-        p = that.p
+        p = that.p,
         columns = p.columns;
 
     var currentSort = p.rows.sortColumn;
