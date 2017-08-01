@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.9
+ * jquery.dgtable 0.5.10
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.9';
+	DGTable.VERSION = '0.5.10';
 
 	/**
 	 * @public
@@ -1372,10 +1372,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.resort = function () {
 	    var that = this,
-	        p = that.p;
-	    columns = p.columns;
+	        p = that.p,
+	        columns = p.columns,
+	        currentSort = p.rows.sortColumn;
 
-	    var currentSort = p.rows.sortColumn;
 	    if (currentSort.length) {
 
 	        for (var i = 0; i < currentSort.length; i++) {
