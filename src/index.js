@@ -2074,12 +2074,12 @@ DGTable.prototype.addRows = function (data, at, resort, render) {
         resort = at;
         at = -1;
     }
-    if (typeof at !== 'number') {
+    
+    if (typeof at !== 'number')
         at = -1;
-    } else {
-        if (at < 0 || at > p.rows.length)
-            at = p.rows.length;
-    }
+    
+    if (at < 0 || at > p.rows.length)
+        at = p.rows.length;
     
     render = (render === undefined) ? true : !!render;
 
