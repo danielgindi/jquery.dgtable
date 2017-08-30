@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.10
+ * jquery.dgtable 0.5.11
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.10';
+	DGTable.VERSION = '0.5.11';
 
 	/**
 	 * @public
@@ -2105,11 +2105,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        resort = at;
 	        at = -1;
 	    }
-	    if (typeof at !== 'number') {
-	        at = -1;
-	    } else {
-	        if (at < 0 || at > p.rows.length) at = p.rows.length;
-	    }
+
+	    if (typeof at !== 'number') at = -1;
+
+	    if (at < 0 || at > p.rows.length) at = p.rows.length;
 
 	    render = render === undefined ? true : !!render;
 
