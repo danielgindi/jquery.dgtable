@@ -1040,7 +1040,7 @@ DGTable.prototype.setColumns = function (columns, render) {
  * @returns {DGTable} self
  */
 DGTable.prototype.addColumn = function (columnData, before, render) {
-    var that = this, p = that;
+    var that = this, p = that.p;
     var columns = p.columns;
 
     if (columnData && !columns.get(columnData.name)) {
