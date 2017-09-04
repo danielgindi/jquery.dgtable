@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.11
+ * jquery.dgtable 0.5.12
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -75,7 +75,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _column_collection = __webpack_require__(4),
 	    _column_collection2 = _interopRequireDefault(_column_collection),
 	    _css_util = __webpack_require__(5),
-	    _css_util2 = _interopRequireDefault(_css_util);
+	    _css_util2 = _interopRequireDefault(_css_util),
+	    _selection_helper = __webpack_require__(6),
+	    _selection_helper2 = _interopRequireDefault(_selection_helper);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -117,7 +119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.11';
+	DGTable.VERSION = '0.5.12';
 
 	/**
 	 * @public
@@ -1078,7 +1080,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype.addColumn = function (columnData, before, render) {
 	    var that = this,
-	        p = that,
+	        p = that.p,
 	        columns = p.columns;
 
 
@@ -3591,6 +3593,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
 	        div['columnName'] = p.visibleColumns[(0, _util.indexOf)(el.parentNode.childNodes, el)].name;
 
+	        try {
+	            var selection = _selection_helper2['default'].saveSelection(el);
+	            if (selection) _selection_helper2['default'].restoreSelection(div, selection);
+	        } catch (ex) {}
+
 	        that.trigger('cellpreview', div.firstChild, physicalRowIndex == null ? null : physicalRowIndex, div['columnName'], physicalRowIndex == null ? null : p.rows[physicalRowIndex]);
 
 	        if (p.abortCellPreview) {
@@ -3700,10 +3707,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (p.$cellPreviewEl) {
-	        var div = p.$cellPreviewEl[0];
+	        var div = p.$cellPreviewEl[0],
+	            selection;
+
+
+	        try {
+	            selection = _selection_helper2['default'].saveSelection(div['__cell']['__previewEl']);
+	        } catch (ex) {}
+
 	        p.$cellPreviewEl.remove();
 	        p._unbindCellHoverOut(div['__cell']);
 	        p._unbindCellHoverOut(div);
+
+	        try {
+	            if (selection) _selection_helper2['default'].restoreSelection(div['__cell'], selection);
+	        } catch (ex) {}
 
 	        div['__cell']['__previewEl'] = null;
 	        div['__cell'] = null;
@@ -4514,6 +4532,94 @@ return /******/ (function(modules) { // webpackBootstrap
 	generateSizeFunction = null;
 
 	exports['default'] = CssUtil;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	// saveSelection/restoreSelection courtesy of Tim Down, with my improvements
+	// https://stackoverflow.com/questions/13949059/persisting-the-changes-of-range-objects-after-selection-in-html/13950376#13950376
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0, descriptor; i < props.length; i++) { descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function isChildOf(child, parent) {
+	    while ((child = child.parentNode) && child !== parent) {}
+	    return !!child;
+	}
+
+	var SelectionHelper = function () {
+	    function SelectionHelper() {
+	        _classCallCheck(this, SelectionHelper);
+	    }
+
+	    _createClass(SelectionHelper, null, [{
+	        key: 'saveSelection',
+	        value: function saveSelection(el) {
+	            var range = window.getSelection().getRangeAt(0);
+
+	            if (el !== range.commonAncestorContainer && !isChildOf(range.commonAncestorContainer, el)) return null;
+
+	            var preSelectionRange = range.cloneRange();
+	            preSelectionRange.selectNodeContents(el);
+	            preSelectionRange.setEnd(range.startContainer, range.startOffset);
+	            var start = preSelectionRange.toString().length;
+
+	            return {
+	                start: start,
+	                end: start + range.toString().length
+	            };
+	        }
+	    }, {
+	        key: 'restoreSelection',
+	        value: function restoreSelection(el, savedSel) {
+	            var charIndex = 0,
+	                nodeStack = [el],
+	                node = void 0,
+	                foundStart = false,
+	                stop = false,
+	                range = document.createRange();
+
+	            range.setStart(el, 0);
+	            range.collapse(true);
+
+	            while (!stop && (node = nodeStack.pop())) {
+	                if (node.nodeType == 3) {
+	                    var nextCharIndex = charIndex + node.length;
+	                    if (!foundStart && savedSel.start >= charIndex && savedSel.start <= nextCharIndex) {
+	                        range.setStart(node, savedSel.start - charIndex);
+	                        foundStart = true;
+	                    }
+	                    if (foundStart && savedSel.end >= charIndex && savedSel.end <= nextCharIndex) {
+	                        range.setEnd(node, savedSel.end - charIndex);
+	                        stop = true;
+	                    }
+	                    charIndex = nextCharIndex;
+	                } else {
+	                    var i = node.childNodes.length;
+	                    while (i--) {
+	                        nodeStack.push(node.childNodes[i]);
+	                    }
+	                }
+	            }
+
+	            var sel = window.getSelection();
+	            sel.removeAllRanges();
+	            sel.addRange(range);
+	        }
+	    }]);
+
+	    return SelectionHelper;
+	}();
+
+	exports['default'] = SelectionHelper;
 
 /***/ })
 /******/ ])
