@@ -1695,6 +1695,30 @@ DGTable.prototype.getRowCount = function () {
 };
 
 /**
+ * Returns the physical row index for specific row
+ * @public
+ * @expose
+ * @param {Object} rowData - Row data to find
+ * @returns {Number} Row index
+ */
+DGTable.prototype.getIndexForRow = function (rowData) {
+    var that = this, p = that.p;
+    return p.rows.indexOf(rowData);
+};
+
+/**
+ * Returns the filtered row index for specific row
+ * @public
+ * @expose
+ * @param {Object} rowData - Row data to find
+ * @returns {Number} Row index
+ */
+DGTable.prototype.getIndexForFilteredRow = function (rowData) {
+    var that = this, p = that.p;
+    return (p.filteredRows || p.rows).indexOf(rowData);
+};
+
+/**
  * Returns the row data for a specific row
  * @public
  * @expose

@@ -225,6 +225,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * *returns* row data of the row at physical index **row**
 * `getRowCount() {Number}`: Gets the number of rows
   * *returns* the number of rows
+* `getIndexForRow({Object} row) {Number}`: Finds the index of the specified row
+  * *returns* the index of the specified row
+* `getIndexForFilteredRow({Object} row) {Number}`: Finds the index of the specified row within the filtered results
+  * *returns* the index of the specified row
 * `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
 * `getRowElement({Number} physicalRowIndex) {Element?}`: Returns the element of the row specified
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
