@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.12
+ * jquery.dgtable 0.5.13
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -119,7 +119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.12';
+	DGTable.VERSION = '0.5.13';
 
 	/**
 	 * @public
@@ -1735,6 +1735,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var that = this,
 	        p = that.p;
 	    return p.rows ? p.rows.length : 0;
+	};
+
+	/**
+	 * Returns the physical row index for specific row
+	 * @public
+	 * @expose
+	 * @param {Object} rowData - Row data to find
+	 * @returns {Number} Row index
+	 */
+	DGTable.prototype.getIndexForRow = function (rowData) {
+	    var that = this,
+	        p = that.p;
+	    return p.rows.indexOf(rowData);
+	};
+
+	/**
+	 * Returns the filtered row index for specific row
+	 * @public
+	 * @expose
+	 * @param {Object} rowData - Row data to find
+	 * @returns {Number} Row index
+	 */
+	DGTable.prototype.getIndexForFilteredRow = function (rowData) {
+	    var that = this,
+	        p = that.p;
+	    return (p.filteredRows || p.rows).indexOf(rowData);
 	};
 
 	/**
