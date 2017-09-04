@@ -5,6 +5,7 @@ import { bind, indexOf, contains, find, forEach } from './util';
 import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
+import SelectionHelper from './selection_helper';
 
 const $ = jQuery;
 
@@ -3623,6 +3624,12 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
         div['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
 
+        try {
+            let selection = SelectionHelper.saveSelection(el);
+            if (selection)
+                SelectionHelper.restoreSelection(div, selection);
+        } catch (ex) { }
+        
         that.trigger(
             'cellpreview',
             div.firstChild,
@@ -3738,9 +3745,20 @@ DGTable.prototype.hideCellPreview = function() {
     
     if (p.$cellPreviewEl) {
         var div = p.$cellPreviewEl[0];
+        var selection;
+        
+        try {
+            selection = SelectionHelper.saveSelection(div['__cell']['__previewEl']);
+        } catch (ex) { }
+        
         p.$cellPreviewEl.remove();
         p._unbindCellHoverOut(div['__cell']);
         p._unbindCellHoverOut(div);
+        
+        try {
+            if (selection)
+                SelectionHelper.restoreSelection(div['__cell'], selection);
+        } catch (ex) { }
 
         div['__cell']['__previewEl'] = null;
         div['__cell'] = null;
