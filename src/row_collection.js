@@ -154,7 +154,10 @@ function getDefaultComparator(column, descending) {
                 rightVal = rightVal && rightVal[comparePath[i]];
             }
         }
-        return leftVal < rightVal ? lessVal : (leftVal > rightVal ? moreVal : 0);
+        if (leftVal === rightVal) return 0;
+        if (leftVal == null) return lessVal;
+        if (leftVal < rightVal) return lessVal;
+        return moreVal;
     };
 }
 
