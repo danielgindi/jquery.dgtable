@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.13
+ * jquery.dgtable 0.5.14
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -119,7 +119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.13';
+	DGTable.VERSION = '0.5.14';
 
 	/**
 	 * @public
@@ -4193,7 +4193,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                rightVal = rightVal && rightVal[comparePath[i]];
 	            }
 	        }
-	        return leftVal < rightVal ? lessVal : leftVal > rightVal ? moreVal : 0;
+	        if (leftVal === rightVal) return 0;
+	        if (leftVal == null) return lessVal;
+	        if (leftVal < rightVal) return lessVal;
+	        return moreVal;
 	    };
 	}
 
