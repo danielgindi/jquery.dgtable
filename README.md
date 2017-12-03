@@ -220,7 +220,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getColumnConfig({String} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
-* `getHtmlForCell({Number} row, {String} columnName) {String}`: *Undocumented yet*
+* `getHtmlForCell(row: Number, columnName: String) {String}`: Returns the HTML for specified cell in a row.
+  * **row**: Index of row
+  * **columnName**: Name of cell
+  * *returns* HTML for cell. By default cell content is *not* HTML encoded, you should encode appropriately in your `cellFormatter`.
 * `getDataForRow({Number} row) {Object}`: Gets the row data for a specific row
   * *returns* row data of the row at physical index **row**
 * `getRowCount() {Number}`: Gets the number of rows
@@ -240,7 +243,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * *returns* Self
 * `refreshAllVirtualRows() {DGTable}`: Refreshes all virtual rows
   * *returns* Self
-* `setRows({Object[]} data) {DGTable}`: *Undocumented yet*
+* `setRows(data: Object[], resort: Boolean=false) {DGTable}`: Rests the table rows to the provided array of rows.
+  * **data**: New rows for the table
+  * **resort**: Should re-sort the table?
+  * *returns* Self, to allow for call chaining.
 * `getUrlForElementContent({string} id) {string?}`: *Undocumented yet*
 * `isWorkerSupported() {Boolean}`: *Undocumented yet*
 * `createWebWorker({string} url) {Worker?}`: *Undocumented yet*

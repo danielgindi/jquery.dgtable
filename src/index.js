@@ -832,15 +832,11 @@ DGTable.prototype.renderRows = function (first, last) {
         isDataFiltered = !!p.filteredRows,
         allowCellPreview = o.allowCellPreview,
         visibleColumns = p.visibleColumns,
-        cellFormatter = o.cellFormatter,
         isVirtual = o.virtualTable,
         virtualRowHeightFirst = p.virtualRowHeightFirst,
         virtualRowHeight = p.virtualRowHeight,
         top,
-        physicalRowIndex,
-        dataPath,
-        dataPathIndex,
-        colValue;
+        physicalRowIndex;
 
     var colCount = visibleColumns.length;
     for (var colIndex = 0, column; colIndex < colCount; colIndex++) {
@@ -878,17 +874,7 @@ DGTable.prototype.renderRows = function (first, last) {
             }
             cellInner = cell.appendChild(createElement('div'));
 
-            dataPath = column.dataPath;
-            colValue = rowData[dataPath[0]];
-            for (dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
-                colValue = colValue && colValue[dataPath[dataPathIndex]];
-            }
-
-            content = cellFormatter(colValue, column.name, rowData);
-            if (content === undefined) {
-                content = '';
-            }
-            cellInner.innerHTML = content;
+            cellInner.innerHTML = this._getHtmlForCell(rowData, column);
             row.appendChild(cell);
         }
 
@@ -1670,6 +1656,32 @@ DGTable.prototype.getHtmlForCell = function (row, columnName) {
 };
 
 /**
+ * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+ * @public
+ * @expose
+ * @param {Object} rowData - row data
+ * @param {Object} column - column data
+ * @returns {String} HTML string for the specified cell
+ */
+DGTable.prototype._getHtmlForCell = function (rowData, column) {
+    var that = this;
+
+    var dataPath = column.dataPath;
+    var colValue = rowData[dataPath[0]];
+    for (var dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+        if (colValue == null) break;
+        colValue = colValue && colValue[dataPath[dataPathIndex]];
+    }
+
+    var content = this.o.cellFormatter(colValue, column.name, rowData);
+    if (content === undefined) {
+        content = '';
+    }
+    
+    return content;
+};
+
+/**
  * Returns the row data for a specific row
  * @public
  * @expose
@@ -2385,7 +2397,7 @@ DGTable.prototype.refreshAllVirtualRows = function () {
  * @public
  * @expose
  * @param {Object[]} data array of rows to add to the table
- * @param {Boolean?} resort should resort all rows?
+ * @param {Boolean} [resort=false] should resort all rows?
  * @returns {DGTable} self
  */
 DGTable.prototype.setRows = function (data, resort) {
