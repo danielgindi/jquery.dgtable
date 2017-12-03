@@ -25,15 +25,6 @@ RowCollection.prototype.initialize = function (options) {
 
     options = options || {};
 
-    /** @field {String} filterColumn */
-    this.filterColumn = null;
-
-    /** @field {String} filterString */
-    this.filterString = null;
-
-    /** @field {Boolean} filterCaseSensitive */
-    this.filterCaseSensitive = false;
-
     /** @field {string} sortColumn */
     this.sortColumn = options.sortColumn == null ? [] : options.sortColumn;
 };
@@ -74,52 +65,25 @@ RowCollection.prototype.reset = function (rows) {
 };
 
 /**
- * @param {string} columnName name of the column to filter on
- * @param {string} filter keyword to filter by
- * @param {boolean=false} caseSensitive is the filter case sensitive?
+ * @param {Function} filterFunc - Filtering function
+ * @param {Object|null} args? - Options to pass to the function
  * @returns {RowCollection} success result
  */
-RowCollection.prototype.filteredCollection = function (columnName, filter, caseSensitive) {
-    filter = filter.toString();
-    if (filter && columnName != null) {
+RowCollection.prototype.filteredCollection = function (filterFunc, args) {
+    if (filterFunc && args) {
         var rows = new RowCollection({ sortColumn: this.sortColumn });
-        this.filterColumn = columnName;
-        this.filterString = filter;
-        this.filterCaseSensitive = caseSensitive;
+        
         for (var i = 0, len = this.length, row; i < len; i++) {
             row = this[i];
-            if (this.shouldBeVisible(row)) {
+            if (filterFunc(row, args)) {
                 row['__i'] = i;
                 rows.push(row);
             }
         }
         return rows;
     } else {
-        this.filterColumn = null;
-        this.filterString = null;
         return null;
     }
-};
-
-/**
- * @param {Array} row
- * @returns {boolean}
- */
-RowCollection.prototype.shouldBeVisible = function (row) {
-    if (row && this.filterColumn) {
-        var actualVal = row[this.filterColumn];
-        if (actualVal == null) {
-            return false;
-        }
-        actualVal = actualVal.toString();
-        var filterVal = this.filterString;
-        if (!this.filterCaseSensitive) {
-            actualVal = actualVal.toUpperCase();
-            filterVal = filterVal.toUpperCase();
-        }
-        return actualVal.indexOf(filterVal) !== -1;
-    }
-    return true;
 };
 
 /**

@@ -100,6 +100,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **cellPreviewClassName**: `String='dgtable-cell-preview'` Class name for the cell preview element
 * **className**: `String='dgtable-wrapper'` Element class name.
 * **el**: `Element?` Optional element to take over
+* **filter**: `Function(row: Object, args: Object): Boolean` *(optional)* A filter function for using with the `filter` method
 
 #### Events triggered by DGTable:
 
@@ -147,9 +148,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Old width
   * 3nd argument: New width
 * `filter`: A filter was applied
-  * 1st argument: The column's name
-  * 2nd argument: The filter keyword
-  * 3nd argument: Case sensitive?
+  * 1st argument: The options passed to the filter method
 * `sort`: The data was sorted
   * 1st argument: Array of sort constructs `[{ "column": "column's name", "descending": true/false }, ...]`
 * `headercontextmenu`: A context menu should be shown for a header cell
@@ -172,10 +171,16 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `removeColumn({String} column, {Boolean} render = true) {DGTable}`: Remove a column from the table
   * **column**: Column name
   * *returns* Self, to allow for call chaining.
-* `filter({String} column, {String} filter, {Boolean} caseSensitive=false) {DGTable}`: Remove a column from the table
-  * **column**: Name of the column to filter on
-  * **filter**: Check specified column for existence of this string
-  * **caseSensitive**: Use caseSensitive filtering
+* `setFilter({Function(row: Object, args: Object): Boolean} filterFunc) {DGTable}`: Sets a new filtering function, set null for default.
+  * **filterFunc**: The filtering function receives a row and an options object, and returns true for any row that passes the filter.
+  * *returns* Self, to allow for call chaining.
+* `filter({Object} args) {DGTable}`: Filter the visible rows in the table
+  * **args**: Options to pass to the filtering function
+  * *returns* Self, to allow for call chaining.
+* `filter({{column: String, keyword: String, caseSensitive: Boolean}} args) {DGTable}`: Syntax for default filtering function.
+  * **args.column**: Name of the column to filter on
+  * **args.keyword**: Tests the specified column if contains this keyword
+  * **args.caseSensitive**: Use caseSensitive filtering
   * *returns* Self, to allow for call chaining.
 * `setColumnLabel({String} column, {String} label) {DGTable}`: Set a new label to a column
   * **column**: Name of the column

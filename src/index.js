@@ -6,6 +6,7 @@ import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
 import SelectionHelper from './selection_helper';
+import ByColumnFilter from './by_column_filter';
 
 const $ = jQuery;
 
@@ -238,6 +239,10 @@ DGTable.prototype.initialize = function (options) {
     /** @private
      * @field {Number} height */
     o.height = options.height;
+
+    /** @private
+     * @field {Function} filter */
+    o.filter = options.filter;
 
     // Prepare columns
     that.setColumns(options.columns || [], false);
@@ -1085,26 +1090,47 @@ DGTable.prototype.removeColumn = function (column, render) {
 /**
  * @public
  * @expose
- * @param {String} column Name of the column to filter on
- * @param {String} filter Check specified column for existence of this string
- * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
+ * @param {function(row:Object,args:Object):Boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
  * @returns {DGTable} self
  */
-DGTable.prototype.filter = function (column, filter, caseSensitive) {
-    var that = this, p = that.p;
+DGTable.prototype.setFilter = function (filterFunc) {
+    this.o.filter = filterFunc;
+    return thisl
+};
 
-    var col = p.columns.get(column);
-    if (col) {
-        var hasFilter = !!p.filteredRows;
-        if (p.filteredRows) {
-            p.filteredRows = null; // Release array memory
-        }
-        p.filteredRows = p.rows.filteredCollection(column, filter, caseSensitive);
-        if (hasFilter || p.filteredRows) {
-            this.clearAndRender();
-            this.trigger('filter', column, filter, caseSensitive);
-        }
+/**
+ * @public
+ * @expose
+ * @param {Object|null} opts - Options to pass to the filter function
+ * @returns {DGTable} self
+ */
+DGTable.prototype.filter = function (opts) {
+    var that = this, p = that.p;
+    
+    var filterFunc = that.o.filter || ByColumnFilter;
+    
+    // Deprecated use of older by-column filter
+    if (typeof arguments[0] === 'string' && typeof arguments[1] === 'string') {
+        opts = {
+            column: arguments[0],
+            keyword: arguments[1],
+            caseSensitive: arguments[2],
+        };
     }
+    
+    var hadFilter = !!p.filteredRows;
+    if (p.filteredRows) {
+        p.filteredRows = null; // Allow releasing array memory now
+    }
+
+    p.filterOpts = opts;
+    p.filteredRows = p.rows.filteredCollection(filterFunc, opts);
+
+    if (hadFilter || p.filteredRows) {
+        this.clearAndRender();
+        this.trigger('filter', opts);
+    }
+    
     return this;
 };
 
@@ -1115,8 +1141,8 @@ DGTable.prototype.filter = function (column, filter, caseSensitive) {
 DGTable.prototype._refilter = function() {
     var that = this, p = that.p;
 
-    if (p.filteredRows) {
-        p.filteredRows = p.rows.filteredCollection(p.rows.filterColumn, p.rows.filterString, p.rows.filterCaseSensitive);
+    if (p.filteredRows && p.filterOpts) {
+        p.filteredRows = p.rows.filteredCollection(p.filterOpts);
     }
     return this;
 };
@@ -3900,6 +3926,7 @@ DGTable.Width = {
  * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
  * @property {Element|null|undefined} [el=undefined]
  * @property {String|null|undefined} [className=undefined]
+ * @property {Function|null|undefined} [filter=undefined]
  * */
 
 /**

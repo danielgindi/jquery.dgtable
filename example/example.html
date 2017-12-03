@@ -317,7 +317,7 @@
 <div>
 
     <label for="filterInput">Filter by second column:</label>
-    <input id="filterInput" type="text" onkeyup="table.filter('last', this.value);" /> <br />
+    <input id="filterInput" type="text" onkeyup="table.filter({ column: 'last', keyword: this.value, caseSensitive: false });" /> <br />
 
     <button id="k100button">Add 100,000 records</button> | <button id="wwbutton">Create a web worker</button> |
     <button id="amsbutton">Allow multiple sort</button> | <button id="rcmpbutton">Set random comparator for sorting 4th column</button>
