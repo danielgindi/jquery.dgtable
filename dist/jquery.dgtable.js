@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.14
+ * jquery.dgtable 0.5.15
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -77,7 +77,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _css_util = __webpack_require__(5),
 	    _css_util2 = _interopRequireDefault(_css_util),
 	    _selection_helper = __webpack_require__(6),
-	    _selection_helper2 = _interopRequireDefault(_selection_helper);
+	    _selection_helper2 = _interopRequireDefault(_selection_helper),
+	    _by_column_filter = __webpack_require__(7),
+	    _by_column_filter2 = _interopRequireDefault(_by_column_filter);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -119,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.14';
+	DGTable.VERSION = '0.5.15';
 
 	/**
 	 * @public
@@ -308,6 +310,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /** @private
 	     * @field {Number} height */
 	    o.height = options.height;
+
+	    /** @private
+	     * @field {Function} filter */
+	    o.filter = options.filter;
 
 	    // Prepare columns
 	    that.setColumns(options.columns || [], false);
@@ -896,7 +902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {DocumentFragment} fragment containing all rendered rows
 	 */
 	DGTable.prototype.renderRows = function (first, last) {
-	    for (var that = this, o = that.o, p = that.p, tableClassName = o.tableClassName, rowClassName = tableClassName + '-row', cellClassName = tableClassName + '-cell', rows = p.filteredRows || p.rows, isDataFiltered = !!p.filteredRows, allowCellPreview = o.allowCellPreview, visibleColumns = p.visibleColumns, cellFormatter = o.cellFormatter, isVirtual = o.virtualTable, virtualRowHeightFirst = p.virtualRowHeightFirst, virtualRowHeight = p.virtualRowHeight, top, physicalRowIndex, dataPath, dataPathIndex, colValue, colCount = visibleColumns.length, colIndex = 0, column; colIndex < colCount; colIndex++) {
+	    for (var that = this, o = that.o, p = that.p, tableClassName = o.tableClassName, rowClassName = tableClassName + '-row', cellClassName = tableClassName + '-cell', rows = p.filteredRows || p.rows, isDataFiltered = !!p.filteredRows, allowCellPreview = o.allowCellPreview, visibleColumns = p.visibleColumns, isVirtual = o.virtualTable, virtualRowHeightFirst = p.virtualRowHeightFirst, virtualRowHeight = p.virtualRowHeight, top, physicalRowIndex, colCount = visibleColumns.length, colIndex = 0, column; colIndex < colCount; colIndex++) {
 	        column = visibleColumns[colIndex];
 	        column._finalWidth = column.actualWidthConsideringScrollbarWidth || column.actualWidth;
 	    }
@@ -924,17 +930,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            cellInner = cell.appendChild(createElement('div'));
 
-	            dataPath = column.dataPath;
-	            colValue = rowData[dataPath[0]];
-	            for (dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
-	                colValue = colValue && colValue[dataPath[dataPathIndex]];
-	            }
-
-	            content = cellFormatter(colValue, column.name, rowData);
-	            if (content === undefined) {
-	                content = '';
-	            }
-	            cellInner.innerHTML = content;
+	            cellInner.innerHTML = this._getHtmlForCell(rowData, column);
 	            row.appendChild(cell);
 	        }
 
@@ -1140,27 +1136,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * @public
 	 * @expose
-	 * @param {String} column Name of the column to filter on
-	 * @param {String} filter Check specified column for existence of this string
-	 * @param {Boolean} [caseSensitive=false] Use caseSensitive filtering
+	 * @param {function(row:Object,args:Object):Boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.filter = function (column, filter, caseSensitive) {
+	DGTable.prototype.setFilter = function (filterFunc) {
+	    this.o.filter = filterFunc;
+	    return thisl;
+	};
+
+	/**
+	 * @public
+	 * @expose
+	 * @param {Object|null} opts - Options to pass to the filter function
+	 * @returns {DGTable} self
+	 */
+	DGTable.prototype.filter = function (opts) {
 	    var that = this,
 	        p = that.p,
-	        col = p.columns.get(column);
+	        filterFunc = that.o.filter || _by_column_filter2['default'];
 
-	    if (col) {
-	        var hasFilter = !!p.filteredRows;
-	        if (p.filteredRows) {
-	            p.filteredRows = null; // Release array memory
-	        }
-	        p.filteredRows = p.rows.filteredCollection(column, filter, caseSensitive);
-	        if (hasFilter || p.filteredRows) {
-	            this.clearAndRender();
-	            this.trigger('filter', column, filter, caseSensitive);
-	        }
+	    // Deprecated use of older by-column filter
+	    if (typeof arguments[0] === 'string' && typeof arguments[1] === 'string') {
+	        opts = {
+	            column: arguments[0],
+	            keyword: arguments[1],
+	            caseSensitive: arguments[2]
+	        };
 	    }
+
+	    var hadFilter = !!p.filteredRows;
+	    if (p.filteredRows) {
+	        p.filteredRows = null; // Allow releasing array memory now
+	    }
+
+	    p.filterOpts = opts;
+	    p.filteredRows = p.rows.filteredCollection(filterFunc, opts);
+
+	    if (hadFilter || p.filteredRows) {
+	        this.clearAndRender();
+	        this.trigger('filter', opts);
+	    }
+
 	    return this;
 	};
 
@@ -1172,8 +1188,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var that = this,
 	        p = that.p;
 
-	    if (p.filteredRows) {
-	        p.filteredRows = p.rows.filteredCollection(p.rows.filterColumn, p.rows.filterString, p.rows.filterCaseSensitive);
+	    if (p.filteredRows && p.filterOpts) {
+	        p.filteredRows = p.rows.filteredCollection(p.filterOpts);
 	    }
 	    return this;
 	};
@@ -1707,6 +1723,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (content === undefined) {
 	        content = '';
 	    }
+	    return content;
+	};
+
+	/**
+	 * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+	 * @public
+	 * @expose
+	 * @param {Object} rowData - row data
+	 * @param {Object} column - column data
+	 * @returns {String} HTML string for the specified cell
+	 */
+	DGTable.prototype._getHtmlForCell = function (rowData, column) {
+	    for (var that = this, dataPath = column.dataPath, colValue = rowData[dataPath[0]], dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
+	        if (colValue == null) break;
+	        colValue = colValue && colValue[dataPath[dataPathIndex]];
+	    }
+
+	    var content = this.o.cellFormatter(colValue, column.name, rowData);
+	    if (content === undefined) {
+	        content = '';
+	    }
+
 	    return content;
 	};
 
@@ -2404,7 +2442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @public
 	 * @expose
 	 * @param {Object[]} data array of rows to add to the table
-	 * @param {Boolean?} resort should resort all rows?
+	 * @param {Boolean} [resort=false] should resort all rows?
 	 * @returns {DGTable} self
 	 */
 	DGTable.prototype.setRows = function (data, resort) {
@@ -3853,6 +3891,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
 	 * @property {Element|null|undefined} [el=undefined]
 	 * @property {String|null|undefined} [className=undefined]
+	 * @property {Function|null|undefined} [filter=undefined]
 	 * */
 
 	/**
@@ -4060,15 +4099,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    options = options || {};
 
-	    /** @field {String} filterColumn */
-	    this.filterColumn = null;
-
-	    /** @field {String} filterString */
-	    this.filterString = null;
-
-	    /** @field {Boolean} filterCaseSensitive */
-	    this.filterCaseSensitive = false;
-
 	    /** @field {string} sortColumn */
 	    this.sortColumn = options.sortColumn == null ? [] : options.sortColumn;
 	};
@@ -4111,52 +4141,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
-	 * @param {string} columnName name of the column to filter on
-	 * @param {string} filter keyword to filter by
-	 * @param {boolean=false} caseSensitive is the filter case sensitive?
+	 * @param {Function} filterFunc - Filtering function
+	 * @param {Object|null} args? - Options to pass to the function
 	 * @returns {RowCollection} success result
 	 */
-	RowCollection.prototype.filteredCollection = function (columnName, filter, caseSensitive) {
-	    filter = filter.toString();
-	    if (filter && columnName != null) {
-	        var rows = new RowCollection({ sortColumn: this.sortColumn });
-	        this.filterColumn = columnName;
-	        this.filterString = filter;
-	        this.filterCaseSensitive = caseSensitive;
-	        for (var i = 0, len = this.length, row; i < len; i++) {
+	RowCollection.prototype.filteredCollection = function (filterFunc, args) {
+	    if (filterFunc && args) {
+
+	        for (var rows = new RowCollection({ sortColumn: this.sortColumn }), i = 0, len = this.length, row; i < len; i++) {
 	            row = this[i];
-	            if (this.shouldBeVisible(row)) {
+	            if (filterFunc(row, args)) {
 	                row['__i'] = i;
 	                rows.push(row);
 	            }
 	        }
 	        return rows;
 	    } else {
-	        this.filterColumn = null;
-	        this.filterString = null;
 	        return null;
 	    }
-	};
-
-	/**
-	 * @param {Array} row
-	 * @returns {boolean}
-	 */
-	RowCollection.prototype.shouldBeVisible = function (row) {
-	    if (row && this.filterColumn) {
-	        var actualVal = row[this.filterColumn];
-	        if (actualVal == null) {
-	            return false;
-	        }
-	        actualVal = actualVal.toString();
-	        var filterVal = this.filterString;
-	        if (!this.filterCaseSensitive) {
-	            actualVal = actualVal.toUpperCase();
-	            filterVal = filterVal.toUpperCase();
-	        }
-	        return actualVal.indexOf(filterVal) !== -1;
-	    }
-	    return true;
 	};
 
 	/**
@@ -4649,6 +4651,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 
 	exports['default'] = SelectionHelper;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	function ByColumnFilter(row, args) {
+
+	    var column = args.column,
+	        keyword = args.keyword == null ? '' : args.keyword.toString();
+
+
+	    if (!keyword || !column) return true;
+
+	    var actualVal = row[column];
+	    if (actualVal == null) {
+	        return false;
+	    }
+
+	    actualVal = actualVal.toString();
+
+	    if (!args.caseSensitive) {
+	        actualVal = actualVal.toLowerCase();
+	        keyword = keyword.toLowerCase();
+	    }
+
+	    return actualVal.indexOf(keyword) !== -1;
+	}
+
+	exports['default'] = ByColumnFilter;
 
 /***/ })
 /******/ ])
