@@ -222,27 +222,13 @@ DGTable.prototype.initialize = function (options) {
      * @field {Boolean} relativeWidthShrinksToFillWidth */
     o.relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
-    /**
-     * @private
-     * @field {Function} cellFormatter */
-    o.cellFormatter = options.cellFormatter || function (val) {
-            return val;
-        };
-
-    /**
-     * @private
-     * @field {Function} headerCellFormatter */
-    o.headerCellFormatter = options.headerCellFormatter || function (val) {
-            return val;
-        };
+    this.setCellFormatter(options.cellFormatter);
+    this.setHeaderCellFormatter(options.headerCellFormatter);
+    this.setFilter(options.filter);
 
     /** @private
      * @field {Number} height */
     o.height = options.height;
-
-    /** @private
-     * @field {Function} filter */
-    o.filter = options.filter;
 
     // Prepare columns
     that.setColumns(options.columns || [], false);
@@ -1088,12 +1074,50 @@ DGTable.prototype.removeColumn = function (column, render) {
 };
 
 /**
+ * Sets a new cell formatter.
+ * @public
+ * @expose
+ * @param {function(value: *, columnName: String, row: Object):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setCellFormatter = function (formatter) {
+    /**
+     * @private
+     * @field {Function} cellFormatter */
+    this.o.cellFormatter = formatter || function (val) {
+        return val;
+    };
+
+    return this;
+};
+
+/**
+ * Sets a new header cell formatter.
+ * @public
+ * @expose
+ * @param {function(label: String, columnName: String):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setHeaderCellFormatter = function (formatter) {
+    /**
+     * @private
+     * @field {Function} headerCellFormatter */
+    this.o.headerCellFormatter = formatter || function (val) {
+        return val;
+    };
+        
+    return this;
+};
+
+/**
  * @public
  * @expose
  * @param {function(row:Object,args:Object):Boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
  * @returns {DGTable} self
  */
 DGTable.prototype.setFilter = function (filterFunc) {
+    /** @private
+     * @field {Function} filter */
     this.o.filter = filterFunc;
     return this;
 };

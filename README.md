@@ -174,6 +174,12 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `setFilter({Function(row: Object, args: Object): Boolean} filterFunc) {DGTable}`: Sets a new filtering function, set null for default.
   * **filterFunc**: The filtering function receives a row and an options object, and returns true for any row that passes the filter.
   * *returns* Self, to allow for call chaining.
+* `setCellFormatter({Function(value: *, columnName: String, row: Object):String|null} formatter) {DGTable}`: Sets a new cell formatter.
+  * **formatter**: The cell formatter. Should return an HTML.
+  * *returns* Self, to allow for call chaining.
+* `setHeaderCellFormatter({Function(label: String, columnName: String):String|null} formatter) {DGTable}`: Sets a new header cell formatter.
+  * **formatter**: The cell formatter. Should return an HTML.
+  * *returns* Self, to allow for call chaining.
 * `filter({Object} args) {DGTable}`: Filter the visible rows in the table
   * **args**: Options to pass to the filtering function
   * *returns* Self, to allow for call chaining.
