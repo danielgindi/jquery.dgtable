@@ -238,7 +238,8 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getIndexForFilteredRow({Object} row) {Number}`: Finds the index of the specified row within the filtered results
   * *returns* the index of the specified row
 * `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
-* `getRowElement({Number} physicalRowIndex) {Element?}`: Returns the element of the row specified
+* `getRowElement(physicalRowIndex: Number): Element`: Returns the element of the specified row
+* `getRowYPos(physicalRowIndex: Number): Number?`: Returns the Y pos of the specified row
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
 * `addRows({Object[]} data, {Number} at = -1, {Boolean} resort = false, {Boolean} render = true) {DGTable}`: Adds the specified rows at the specified position, and optionally resorts the data

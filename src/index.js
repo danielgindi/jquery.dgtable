@@ -1709,6 +1709,24 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
 };
 
 /**
+ * Returns the y pos of a row by physical index
+ * @public
+ * @expose
+ * @param {Number} physicalRowIndex - index of the row
+ * @returns {Number|null} Y pos
+ */
+DGTable.prototype.getRowYPos = function (physicalRowIndex) {
+    var that = this, p = that.p;
+    
+    if (that.o.virtualTable) {
+        return physicalRowIndex > 0 ? p.virtualRowHeightFirst + (physicalRowIndex - 1) * p.virtualRowHeight : 0;
+    } else {
+        var row = p.tbody.childNodes[physicalRowIndex];
+        return row ? row.offsetTop : null;
+    }
+};
+
+/**
  * Returns the row data for a specific row
  * @public
  * @expose
