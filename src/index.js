@@ -1095,23 +1095,23 @@ DGTable.prototype.removeColumn = function (column, render) {
  */
 DGTable.prototype.setFilter = function (filterFunc) {
     this.o.filter = filterFunc;
-    return thisl
+    return this;
 };
 
 /**
  * @public
  * @expose
- * @param {Object|null} opts - Options to pass to the filter function
+ * @param {Object|null} args - Options to pass to the filter function
  * @returns {DGTable} self
  */
-DGTable.prototype.filter = function (opts) {
+DGTable.prototype.filter = function (args) {
     var that = this, p = that.p;
     
     var filterFunc = that.o.filter || ByColumnFilter;
     
     // Deprecated use of older by-column filter
     if (typeof arguments[0] === 'string' && typeof arguments[1] === 'string') {
-        opts = {
+        args = {
             column: arguments[0],
             keyword: arguments[1],
             caseSensitive: arguments[2],
@@ -1123,12 +1123,13 @@ DGTable.prototype.filter = function (opts) {
         p.filteredRows = null; // Allow releasing array memory now
     }
 
-    p.filterOpts = opts;
-    p.filteredRows = p.rows.filteredCollection(filterFunc, opts);
+    // Shallow-clone the args, as the filter function may want to modify it for keeping state
+    p.filterArgs = (typeof args === 'object' && !Array.isArray(args)) ? $.extend({}, args) : args;
+    p.filteredRows = p.rows.filteredCollection(filterFunc, args);
 
     if (hadFilter || p.filteredRows) {
         this.clearAndRender();
-        this.trigger('filter', opts);
+        this.trigger('filter', args);
     }
     
     return this;
@@ -1141,8 +1142,8 @@ DGTable.prototype.filter = function (opts) {
 DGTable.prototype._refilter = function() {
     var that = this, p = that.p;
 
-    if (p.filteredRows && p.filterOpts) {
-        p.filteredRows = p.rows.filteredCollection(p.filterOpts);
+    if (p.filteredRows && p.filterArgs) {
+        p.filteredRows = p.rows.filteredCollection(p.filterArgs);
     }
     return this;
 };
