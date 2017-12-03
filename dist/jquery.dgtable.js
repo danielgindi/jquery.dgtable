@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.15
+ * jquery.dgtable 0.5.16
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -121,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.15';
+	DGTable.VERSION = '0.5.16';
 
 	/**
 	 * @public
@@ -293,27 +293,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @field {Boolean} relativeWidthShrinksToFillWidth */
 	    o.relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
-	    /**
-	     * @private
-	     * @field {Function} cellFormatter */
-	    o.cellFormatter = options.cellFormatter || function (val) {
-	        return val;
-	    };
-
-	    /**
-	     * @private
-	     * @field {Function} headerCellFormatter */
-	    o.headerCellFormatter = options.headerCellFormatter || function (val) {
-	        return val;
-	    };
+	    this.setCellFormatter(options.cellFormatter);
+	    this.setHeaderCellFormatter(options.headerCellFormatter);
+	    this.setFilter(options.filter);
 
 	    /** @private
 	     * @field {Number} height */
 	    o.height = options.height;
-
-	    /** @private
-	     * @field {Function} filter */
-	    o.filter = options.filter;
 
 	    // Prepare columns
 	    that.setColumns(options.columns || [], false);
@@ -1134,30 +1120,68 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
+	 * Sets a new cell formatter.
+	 * @public
+	 * @expose
+	 * @param {function(value: *, columnName: String, row: Object):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+	 * @returns {DGTable} self
+	 */
+	DGTable.prototype.setCellFormatter = function (formatter) {
+	    /**
+	     * @private
+	     * @field {Function} cellFormatter */
+	    this.o.cellFormatter = formatter || function (val) {
+	        return val;
+	    };
+
+	    return this;
+	};
+
+	/**
+	 * Sets a new header cell formatter.
+	 * @public
+	 * @expose
+	 * @param {function(label: String, columnName: String):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+	 * @returns {DGTable} self
+	 */
+	DGTable.prototype.setHeaderCellFormatter = function (formatter) {
+	    /**
+	     * @private
+	     * @field {Function} headerCellFormatter */
+	    this.o.headerCellFormatter = formatter || function (val) {
+	        return val;
+	    };
+
+	    return this;
+	};
+
+	/**
 	 * @public
 	 * @expose
 	 * @param {function(row:Object,args:Object):Boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
 	 * @returns {DGTable} self
 	 */
 	DGTable.prototype.setFilter = function (filterFunc) {
+	    /** @private
+	     * @field {Function} filter */
 	    this.o.filter = filterFunc;
-	    return thisl;
+	    return this;
 	};
 
 	/**
 	 * @public
 	 * @expose
-	 * @param {Object|null} opts - Options to pass to the filter function
+	 * @param {Object|null} args - Options to pass to the filter function
 	 * @returns {DGTable} self
 	 */
-	DGTable.prototype.filter = function (opts) {
+	DGTable.prototype.filter = function (args) {
 	    var that = this,
 	        p = that.p,
 	        filterFunc = that.o.filter || _by_column_filter2['default'];
 
 	    // Deprecated use of older by-column filter
 	    if (typeof arguments[0] === 'string' && typeof arguments[1] === 'string') {
-	        opts = {
+	        args = {
 	            column: arguments[0],
 	            keyword: arguments[1],
 	            caseSensitive: arguments[2]
@@ -1169,12 +1193,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.filteredRows = null; // Allow releasing array memory now
 	    }
 
-	    p.filterOpts = opts;
-	    p.filteredRows = p.rows.filteredCollection(filterFunc, opts);
+	    // Shallow-clone the args, as the filter function may want to modify it for keeping state
+	    p.filterArgs = (typeof args === 'undefined' ? 'undefined' : _typeof(args)) === 'object' && !Array.isArray(args) ? $.extend({}, args) : args;
+	    p.filteredRows = p.rows.filteredCollection(filterFunc, args);
 
 	    if (hadFilter || p.filteredRows) {
 	        this.clearAndRender();
-	        this.trigger('filter', opts);
+	        this.trigger('filter', args);
 	    }
 
 	    return this;
@@ -1188,8 +1213,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var that = this,
 	        p = that.p;
 
-	    if (p.filteredRows && p.filterOpts) {
-	        p.filteredRows = p.rows.filteredCollection(p.filterOpts);
+	    if (p.filteredRows && p.filterArgs) {
+	        p.filteredRows = p.rows.filteredCollection(p.filterArgs);
 	    }
 	    return this;
 	};
@@ -1746,6 +1771,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    return content;
+	};
+
+	/**
+	 * Returns the y pos of a row by physical index
+	 * @public
+	 * @expose
+	 * @param {Number} physicalRowIndex - index of the row
+	 * @returns {Number|null} Y pos
+	 */
+	DGTable.prototype.getRowYPos = function (physicalRowIndex) {
+	    var that = this,
+	        p = that.p;
+
+	    if (that.o.virtualTable) {
+	        return physicalRowIndex > 0 ? p.virtualRowHeightFirst + (physicalRowIndex - 1) * p.virtualRowHeight : 0;
+	    } else {
+	        var row = p.tbody.childNodes[physicalRowIndex];
+	        return row ? row.offsetTop : null;
+	    }
 	};
 
 	/**
