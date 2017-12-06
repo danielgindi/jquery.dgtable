@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.16
+ * jquery.dgtable 0.5.17
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -121,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.16';
+	DGTable.VERSION = '0.5.17';
 
 	/**
 	 * @public
@@ -1214,7 +1214,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p = that.p;
 
 	    if (p.filteredRows && p.filterArgs) {
-	        p.filteredRows = p.rows.filteredCollection(p.filterArgs);
+	        var filterFunc = that.o.filter || _by_column_filter2['default'];
+	        p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
 	    }
 	    return this;
 	};
@@ -1394,7 +1395,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (currentSort.length) {
 	        p.rows.sort(!!p.filteredRows);
-	        this._refilter();
+	        if (p.filteredRows) {
+	            p.filteredRows.sort(!!p.filteredRows);
+	        }
 	    }
 
 	    // Build output for event, with option names that will survive compilers
@@ -1430,8 +1433,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        p.rows.sortColumn = currentSort;
 	        if (currentSort.length) {
 	            p.rows.sort(!!p.filteredRows);
+	            if (p.filteredRows) {
+	                p.filteredRows.sort(!!p.filteredRows);
+	            }
 	        }
-	        this._refilter();
 
 	        // Build output for event, with option names that will survive compilers
 	        var sorts = [];
