@@ -1793,6 +1793,17 @@ DGTable.prototype.getIndexForRow = function (rowData) {
 };
 
 /**
+ * Gets the number of filtered rows
+ * @public
+ * @expose
+ * @returns {Number} Filtered row count
+ */
+DGTable.prototype.getFilteredRowCount = function () {
+    var that = this, p = that.p;
+    return (p.filteredRows || p.rows).length;
+};
+
+/**
  * Returns the filtered row index for specific row
  * @public
  * @expose
