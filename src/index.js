@@ -1738,19 +1738,19 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
 };
 
 /**
- * Returns the y pos of a row by physical index
+ * Returns the y pos of a row by index
  * @public
  * @expose
- * @param {Number} physicalRowIndex - index of the row
+ * @param {Number} rowIndex - index of the row
  * @returns {Number|null} Y pos
  */
-DGTable.prototype.getRowYPos = function (physicalRowIndex) {
+DGTable.prototype.getRowYPos = function (rowIndex) {
     var that = this, p = that.p;
     
     if (that.o.virtualTable) {
-        return physicalRowIndex > 0 ? p.virtualRowHeightFirst + (physicalRowIndex - 1) * p.virtualRowHeight : 0;
+        return rowIndex > 0 ? p.virtualRowHeightFirst + (rowIndex - 1) * p.virtualRowHeight : 0;
     } else {
-        var row = p.tbody.childNodes[physicalRowIndex];
+        var row = p.tbody.childNodes[rowIndex];
         return row ? row.offsetTop : null;
     }
 };

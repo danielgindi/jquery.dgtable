@@ -235,15 +235,17 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **row**: Index of row
   * **columnName**: Name of cell
   * *returns* HTML for cell. By default cell content is *not* HTML encoded, you should encode appropriately in your `cellFormatter`.
-* `getDataForRow({Number} row) {Object}`: Gets the row data for a specific row
+* `getDataForRow(row: Number): Object`: Gets the row data for a specific row
   * *returns* row data of the row at physical index **row**
-* `getRowCount() {Number}`: Gets the number of rows
+* `getRowCount(): Number`: Gets the number of rows
   * *returns* the number of rows
-* `getIndexForRow({Object} row) {Number}`: Finds the index of the specified row
+* `getIndexForRow(row: Object): Number`: Finds the index of the specified row
   * *returns* the index of the specified row
-* `getIndexForFilteredRow({Object} row) {Number}`: Finds the index of the specified row within the filtered results
+* `getFilteredRowCount(): Number`: Gets the number of filtered rows
+  * *returns* the number of rows in the filtered set (defaults to full row count if no filtering is active)
+* `getIndexForFilteredRow(row: Object): Number`: Finds the index of the specified row within the filtered results
   * *returns* the index of the specified row
-* `getDataForFilteredRow({Number} row) {Object}`: *Undocumented yet*
+* `getDataForFilteredRow(row: Number): Object`: *Undocumented yet*
 * `getRowElement(physicalRowIndex: Number): Element`: Returns the element of the specified row
 * `getRowYPos(physicalRowIndex: Number): Number?`: Returns the Y pos of the specified row
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
