@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.17
+ * jquery.dgtable 0.5.18
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -121,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.17';
+	DGTable.VERSION = '0.5.18';
 
 	/**
 	 * @public
@@ -1835,6 +1835,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var that = this,
 	        p = that.p;
 	    return p.rows.indexOf(rowData);
+	};
+
+	/**
+	 * Gets the number of filtered rows
+	 * @public
+	 * @expose
+	 * @returns {Number} Filtered row count
+	 */
+	DGTable.prototype.getFilteredRowCount = function () {
+	    var that = this,
+	        p = that.p;
+	    return (p.filteredRows || p.rows).length;
 	};
 
 	/**
