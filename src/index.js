@@ -1167,7 +1167,8 @@ DGTable.prototype._refilter = function() {
     var that = this, p = that.p;
 
     if (p.filteredRows && p.filterArgs) {
-        p.filteredRows = p.rows.filteredCollection(p.filterArgs);
+        var filterFunc = that.o.filter || ByColumnFilter;
+        p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
     }
     return this;
 };
@@ -1343,7 +1344,9 @@ DGTable.prototype.sort = function (column, descending, add) {
     
     if (currentSort.length) {
         p.rows.sort(!!p.filteredRows);
-        this._refilter();
+        if (p.filteredRows) {
+            p.filteredRows.sort(!!p.filteredRows);
+        }
     }
 
     // Build output for event, with option names that will survive compilers
@@ -1379,8 +1382,10 @@ DGTable.prototype.resort = function () {
         p.rows.sortColumn = currentSort;
         if (currentSort.length) {
             p.rows.sort(!!p.filteredRows);
+            if (p.filteredRows) {
+                p.filteredRows.sort(!!p.filteredRows);
+            }
         }
-        this._refilter();
 
         // Build output for event, with option names that will survive compilers
         var sorts = [];
