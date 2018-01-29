@@ -493,7 +493,7 @@ DGTable.prototype.trigger = function (eventName) {
  */
 DGTable.prototype._parseColumnWidth = function (width, minWidth) {
 
-    var widthSize = parseFloat(width),
+    var widthSize = Math.max(0, parseFloat(width)),
         widthMode = ColumnWidthMode.AUTO; // Default
 
     if (widthSize > 0) {
@@ -1920,7 +1920,7 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
         $thisWrapper.remove();
     }
 
-    return detectedWidth;
+    return Math.max(0, detectedWidth);
 };
 
 /**
@@ -2054,7 +2054,7 @@ DGTable.prototype.tableWidthChanged = (function () {
                 }
             }
 
-            detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
+            detectedWidth = Math.max(1, sizeLeft); // Use this as the space to take the relative widths out of
 
             var minColumnWidthRelative = (o.minColumnWidth / detectedWidth);
             if (isNaN(minColumnWidthRelative)) {
@@ -3109,6 +3109,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
                 }
             }
 
+            sizeLeft = Math.max(1, sizeLeft);
             sizeToSet = width / sizeLeft;
 
             if (relatives > 0) {
