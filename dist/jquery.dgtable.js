@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.18
+ * jquery.dgtable 0.5.19
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -121,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.18';
+	DGTable.VERSION = '0.5.19';
 
 	/**
 	 * @public
@@ -562,7 +562,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	DGTable.prototype._parseColumnWidth = function (width, minWidth) {
 
-	    var widthSize = parseFloat(width),
+	    var widthSize = Math.max(0, parseFloat(width)),
 	        widthMode = ColumnWidthMode.AUTO; // Default
 
 	    if (widthSize > 0) {
@@ -1779,20 +1779,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
-	 * Returns the y pos of a row by physical index
+	 * Returns the y pos of a row by index
 	 * @public
 	 * @expose
-	 * @param {Number} physicalRowIndex - index of the row
+	 * @param {Number} rowIndex - index of the row
 	 * @returns {Number|null} Y pos
 	 */
-	DGTable.prototype.getRowYPos = function (physicalRowIndex) {
+	DGTable.prototype.getRowYPos = function (rowIndex) {
 	    var that = this,
 	        p = that.p;
 
 	    if (that.o.virtualTable) {
-	        return physicalRowIndex > 0 ? p.virtualRowHeightFirst + (physicalRowIndex - 1) * p.virtualRowHeight : 0;
+	        return rowIndex > 0 ? p.virtualRowHeightFirst + (rowIndex - 1) * p.virtualRowHeight : 0;
 	    } else {
-	        var row = p.tbody.childNodes[physicalRowIndex];
+	        var row = p.tbody.childNodes[rowIndex];
 	        return row ? row.offsetTop : null;
 	    }
 	};
@@ -1960,7 +1960,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        $thisWrapper.remove();
 	    }
 
-	    return detectedWidth;
+	    return Math.max(0, detectedWidth);
 	};
 
 	/**
@@ -2090,7 +2090,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
-	            detectedWidth = sizeLeft; // Use this as the space to take the relative widths out of
+	            detectedWidth = Math.max(1, sizeLeft); // Use this as the space to take the relative widths out of
 
 	            var minColumnWidthRelative = o.minColumnWidth / detectedWidth;
 	            if (isNaN(minColumnWidthRelative)) {
@@ -3115,6 +3115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
+	            sizeLeft = Math.max(1, sizeLeft);
 	            sizeToSet = width / sizeLeft;
 
 	            if (relatives > 0) {
