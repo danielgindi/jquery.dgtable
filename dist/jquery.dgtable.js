@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.19
+ * jquery.dgtable 0.5.20
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 
@@ -121,7 +121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @expose
 	 * @type {string}
 	 */
-	DGTable.VERSION = '0.5.19';
+	DGTable.VERSION = '0.5.20';
 
 	/**
 	 * @public
@@ -977,7 +977,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cellInner,
 	        colIndex,
 	        column,
-	        $row = $('<div>').addClass(rowClassName).css('float', 'left');
+	        $row = $('<div>').addClass(rowClassName).css('float', 'left'),
+	        sumActualWidth = 0;
 
 	    for (colIndex = 0; colIndex < colCount; colIndex++) {
 	        column = visibleColumns[colIndex];
@@ -987,9 +988,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (column.cellClasses) cell.className += ' ' + column.cellClasses;
 	        cellInner = cell.appendChild(createElement('div'));
 	        $row.append(cell);
+	        sumActualWidth += column.actualWidth;
 	    }
 
-	    var $thisWrapper = $('<div>').addClass(that.el.className).css({ "z-index": -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', 99999).append($row)));
+	    var $thisWrapper = $('<div>').addClass(that.el.className).css({ "z-index": -1, position: 'absolute', left: '0', top: '-9999px', float: 'left', width: '1px', overflow: 'hidden' }).append($('<div>').addClass(tableClassName).append($('<div>').addClass(tableClassName + '-body').css('width', sumActualWidth + 10000).append($row)));
 
 	    $thisWrapper.appendTo(document.body);
 
