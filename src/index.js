@@ -927,6 +927,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
         column;
 
     var $row = $('<div>').addClass(rowClassName).css('float', 'left');
+    var sumActualWidth = 0;
 
     for (colIndex = 0; colIndex < colCount; colIndex++) {
         column = visibleColumns[colIndex];
@@ -936,6 +937,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
         if (column.cellClasses) cell.className += ' ' + column.cellClasses;
         cellInner = cell.appendChild(createElement('div'));
         $row.append(cell);
+        sumActualWidth += column.actualWidth;
     }
 
     var $thisWrapper = $('<div>')
@@ -943,7 +945,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
         .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', 'float': 'left', width: '1px', overflow: 'hidden' })
         .append(
             $('<div>').addClass(tableClassName).append(
-                $('<div>').addClass(tableClassName + '-body').css('width', 99999).append(
+                $('<div>').addClass(tableClassName + '-body').css('width', sumActualWidth + 10000).append(
                     $row
                 )
             )
