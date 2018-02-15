@@ -80,6 +80,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **relativeWidthGrowsToFillWidth**: `Boolean=true` When set, relative width columns automatically grow to fill the table's width.
 * **relativeWidthShrinksToFillWidth**: `Boolean=false` When set, relative width columns automatically shrink to fill the table's width.
 * **convertColumnWidthsToRelative**: `Boolean=false` When set, auto-width columns are automatically converted to relatives.
+* **autoFillTableWidth**: `Boolean=false` When set, columns are stretched proportionally to fill the table width (only if there is space left). Will supersede `relativeWidthGrowsToFillWidth` in the future.
 * **cellClasses**: `String` Classes to add to the DOM element of all cells
 * **sortColumn**: `String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
   * Can be a column or an array of columns.

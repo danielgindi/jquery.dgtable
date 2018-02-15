@@ -166,6 +166,11 @@ DGTable.prototype.initialize = function (options) {
 
     /**
      * @private
+     * @field {Boolean} autoFillTableWidth */
+    o.autoFillTableWidth = options.autoFillTableWidth === undefined ? false : !!options.autoFillTableWidth;
+
+    /**
+     * @private
      * @field {String} cellClasses */
     o.cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
@@ -694,9 +699,11 @@ DGTable.prototype.render = function () {
         var lastScrollTop = p.table ? p.table.scrollTop : 0,
             lastScrollLeft = p.table ? p.table.scrollLeft : 0;
 
-        that.tableWidthChanged(true, false) // Take this chance to calculate required column widths
-            ._renderSkeleton(); // Actual render
-
+        that._renderSkeletonBase()
+            ._renderSkeletonBody()
+            .tableWidthChanged(true, false) // Take this chance to calculate required column widths
+            ._renderSkeletonHeaderCells();
+            
         if (!o.virtualTable) {
             var rows = p.filteredRows || p.rows;
             rowCount = rows.length;
@@ -2056,9 +2063,12 @@ DGTable.prototype.tableWidthChanged = (function () {
                 }
             }
 
-            detectedWidth = Math.max(1, sizeLeft); // Use this as the space to take the relative widths out of
+            var sizeLeftForRelative = Math.max(0, sizeLeft); // Use this as the space to take the relative widths out of
+            if (sizeLeftForRelative === 0) {
+                sizeLeftForRelative = p.table.clientWidth;
+            }
 
-            var minColumnWidthRelative = (o.minColumnWidth / detectedWidth);
+            var minColumnWidthRelative = (o.minColumnWidth / sizeLeftForRelative);
             if (isNaN(minColumnWidthRelative)) {
                 minColumnWidthRelative = 0;
             }
@@ -2090,11 +2100,45 @@ DGTable.prototype.tableWidthChanged = (function () {
                     }
                 }
             }
-
+            
+            // Try to fill width
+            if (o.autoFillTableWidth && sizeLeft > 0) {
+                var nonResizableTotal = 0;
+                var sizeLeftToFill = sizeLeft;
+                
+                for (i = 0; i < p.visibleColumns.length; i++) {
+                    col = p.visibleColumns[i];
+                    if (!col.resizable && col.widthMode === ColumnWidthMode.ABSOLUTE)
+                        nonResizableTotal += col.width;
+                    
+                    if (col.widthMode === ColumnWidthMode.RELATIVE)
+                        sizeLeftToFill -= Math.round(sizeLeftForRelative * col.width);
+                }
+                
+                var conv = ((detectedWidth - nonResizableTotal) / (detectedWidth - sizeLeftToFill - nonResizableTotal)) || NaN;
+                for (i = 0; i < p.visibleColumns.length && sizeLeftToFill > 0; i++) {
+                    col = p.visibleColumns[i];
+                    if (!col.resizable && col.widthMode === ColumnWidthMode.ABSOLUTE)
+                        continue;
+                    
+                    if (col.widthMode === ColumnWidthMode.RELATIVE) {
+                        col.width *= conv;
+                    } else {
+                        var width = col.actualWidth * conv;
+                        if (col.actualWidth !== width) {
+                            col.actualWidth = width;
+                            if (changedColumnIndexes.indexOf(i) === -1)
+                                changedColumnIndexes.push(i);
+                        }
+                    } 
+                }
+            }
+            
+            // Materialize relative sizes
             for (i = 0; i < p.visibleColumns.length; i++) {
                 col = p.visibleColumns[i];
                 if (col.widthMode === ColumnWidthMode.RELATIVE) {
-                    width = Math.round(detectedWidth * col.width);
+                    width = Math.round(sizeLeftForRelative * col.width);
                     sizeLeft -= width;
                     relatives--;
 
@@ -3318,17 +3362,32 @@ DGTable.prototype._destroyHeaderCells = function() {
  * @private
  * @returns {DGTable} self
  */
-DGTable.prototype._renderSkeleton = function () {
+DGTable.prototype._renderSkeletonBase = function () {
     var that = this,
-        p = that.p;
-
+        p = that.p,
+        o = that.o;
+    
+    // Clean up old elements
+    
+    if (p.$table && o.virtualTable) {
+        p.$table.remove();
+        if (p.$tbody) {
+            var rows = p.$tbody[0].childNodes;
+            for (var i = 0, len = rows.length; i < len; i++) {
+                that.trigger('rowdestroy', rows[i]);
+                that._unbindCellEventsForRow(rows[i]);
+            }
+        }
+        p.$table = p.table = p.$tbody = p.tbody = null;
+    }
+    
     that._destroyHeaderCells();
     p.currentTouchId = null;
+    if (p.$header) {
+        p.$header.remove();
+    }    
 
-    var o = that.o,
-        allowCellPreview = o.allowCellPreview,
-        allowHeaderCellPreview = o.allowHeaderCellPreview;
-
+    // Create new base elements
     var tableClassName = o.tableClassName,
         headerCellClassName = tableClassName + '-header-cell',
         header = createElement('div'),
@@ -3338,6 +3397,47 @@ DGTable.prototype._renderSkeleton = function () {
 
     header.className = tableClassName + '-header';
     headerRow.className = tableClassName + '-header-row';
+    
+    p.$header = $header;
+    p.header = header;
+    p.$headerRow = $headerRow;
+    p.headerRow = headerRow;
+    $headerRow.appendTo(p.$header);
+    $header.prependTo(this.$el);
+    
+    relativizeElement(that.$el);
+    
+    if (o.width == DGTable.Width.SCROLL) {
+        this.el.style.overflow = 'hidden';
+    } else {
+        this.el.style.overflow = '';
+    }
+    
+    if (!o.height && o.virtualTable) {
+        o.height = CssUtil.innerHeight(this.$el);
+    }
+    
+    return this;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._renderSkeletonHeaderCells = function () {
+    var that = this,
+        p = that.p,
+        o = that.o;
+        
+    var allowCellPreview = o.allowCellPreview,
+        allowHeaderCellPreview = o.allowHeaderCellPreview;
+
+    var tableClassName = o.tableClassName,
+        headerCellClassName = tableClassName + '-header-cell',
+        header = p.header,
+        $header = p.$header,
+        headerRow = p.headerRow,
+        $headerRow = p.$headerRow;
 
     var ieDragDropHandler;
     if (hasIeDragAndDropBug) {
@@ -3350,6 +3450,7 @@ DGTable.prototype._renderSkeleton = function () {
 
     var preventDefault = function (event) { event.preventDefault(); };
 
+    // Create header cells
     for (var i = 0, column, cell, cellInside, $cell; i < p.visibleColumns.length; i++) {
         column = p.visibleColumns[i];
         if (column.visible) {
@@ -3396,42 +3497,22 @@ DGTable.prototype._renderSkeleton = function () {
         }
     }
 
-    if (p.$header) {
-        p.$header.remove();
-    }
-    p.$header = $header;
-    p.header = header;
-    p.$headerRow = $headerRow;
-    p.headerRow = headerRow;
-    $headerRow.appendTo(p.$header);
-    $header.prependTo(this.$el);
-
     this.trigger('headerrowcreate', headerRow);
 
-    if (o.width == DGTable.Width.SCROLL) {
-        this.el.style.overflow = 'hidden';
-    } else {
-        this.el.style.overflow = '';
-    }
+    return this;
+};
 
-    if (p.$table && o.virtualTable) {
-        p.$table.remove();
-        if (p.$tbody) {
-            var rows = p.$tbody[0].childNodes;
-            for (var i = 0, len = rows.length; i < len; i++) {
-                that.trigger('rowdestroy', rows[i]);
-                that._unbindCellEventsForRow(rows[i]);
-            }
-        }
-        p.$table = p.table = p.$tbody = p.tbody = null;
-    }
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._renderSkeletonBody = function () {
+    var that = this,
+        p = that.p,
+        o = that.o;
 
-    relativizeElement(that.$el);
-
-    if (!o.height && o.virtualTable) {
-        o.height = CssUtil.innerHeight(this.$el);
-    }
-
+    var tableClassName = o.tableClassName;
+        
     // Calculate virtual row heights
     if (o.virtualTable && !p.virtualRowHeight) {
         var createDummyRow = function() {
@@ -3470,19 +3551,21 @@ DGTable.prototype._renderSkeleton = function () {
         $dummyWrapper.remove();
     }
 
-    // Create table skeleton
+    // Create inner table and tbody
     if (!p.$table) {
 
         var fragment = document.createDocumentFragment();
+        
+        // Create the inner table element
         var table = createElement('div');
         var $table = $(table);
-        table.className = o.tableClassName;
+        table.className = tableClassName;
 
         if (o.virtualTable) {
             table.className += ' virtual';
         }
 
-        var tableHeight = (o.height - CssUtil.outerHeight($headerRow));
+        var tableHeight = (o.height - CssUtil.outerHeight(p.$headerRow));
         if ($table.css('box-sizing') !== 'border-box') {
             tableHeight -= parseFloat($table.css('border-top-width')) || 0;
             tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
@@ -3496,6 +3579,7 @@ DGTable.prototype._renderSkeleton = function () {
         table.style.overflowX = o.width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
         fragment.appendChild(table);
 
+        // Create the "tbody" element
         var tbody = createElement('div');
         var $tbody = $(tbody);
         tbody.className = o.tableClassName + '-body';
@@ -3517,6 +3601,16 @@ DGTable.prototype._renderSkeleton = function () {
         that.el.appendChild(fragment);
     }
 
+    return this;
+};
+
+/**
+ * @private
+ * @returns {DGTable} self
+ */
+DGTable.prototype._renderSkeleton = function () {
+    var that = this,
+        p = that.p;
     return that;
 };
 
@@ -3972,6 +4066,7 @@ DGTable.Width = {
  * @property {Boolean|null|undefined} [relativeWidthGrowsToFillWidth=true]
  * @property {Boolean|null|undefined} [relativeWidthShrinksToFillWidth=false]
  * @property {Boolean|null|undefined} [convertColumnWidthsToRelative=false]
+ * @property {Boolean|null|undefined} [autoFillTableWidth=false]
  * @property {String|null|undefined} [cellClasses]
  * @property {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} [sortColumn]
  * @property {Function|null|undefined} [cellFormatter=null]
