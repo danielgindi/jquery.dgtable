@@ -293,7 +293,7 @@ DGTable.prototype.initialize = function (options) {
         evt = evt || event;
         var relatedTarget = evt.fromElement || evt.relatedTarget;
         if (relatedTarget == this || $.contains(this, relatedTarget)) return;
-        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
+        if (this['__previewCell'] && (relatedTarget == this['__previewCell'] || $.contains(this['__previewCell'], relatedTarget))) return;
         that._cellMouseOverEvent.call(that, this);
     };
 
@@ -305,7 +305,7 @@ DGTable.prototype.initialize = function (options) {
         evt = evt || event;
         var relatedTarget = evt.toElement || evt.relatedTarget;
         if (relatedTarget == this || $.contains(this, relatedTarget)) return;
-        if (this['__previewEl'] && (relatedTarget == this['__previewEl'] || $.contains(this['__previewEl'], relatedTarget))) return;
+        if (this['__previewCell'] && (relatedTarget == this['__previewCell'] || $.contains(this['__previewCell'], relatedTarget))) return;
         that._cellMouseOutEvent.call(that, this);
     };
 
@@ -3730,20 +3730,20 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         p.abortCellPreview = false;
 
         var $el = $(el), $elInner = $(elInner);
-        var div = createElement('div'), $div = $(div);
-        div.innerHTML = el.innerHTML;
-        div.className = o.cellPreviewClassName;
+        var previewCell = createElement('div'), $previewCell = $(previewCell);
+        previewCell.innerHTML = el.innerHTML;
+        previewCell.className = o.cellPreviewClassName;
 
         var isHeaderCell = $el.hasClass(o.tableClassName + '-header-cell');
         if (isHeaderCell) {
-            div.className += ' header';
+            previewCell.className += ' header';
             if ($el.hasClass('sortable')) {
-                div.className += ' sortable';
+                previewCell.className += ' sortable';
             }
 
-            div.draggable = true;
+            previewCell.draggable = true;
 
-            $(div).on('mousedown', bind(that._onMouseDownColumnHeader, that))
+            $(previewCell).on('mousedown', bind(that._onMouseDownColumnHeader, that))
                 .on('mousemove', bind(that._onMouseMoveColumnHeader, that))
                 .on('mouseup', bind(that._onMouseUpColumnHeader, that))
                 .on('mouseleave', bind(that._onMouseLeaveColumnHeader, that))
@@ -3751,18 +3751,18 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
                 .on('dragstart', bind(that._onStartDragColumnHeader, that))
                 .on('click', bind(that._onClickColumnHeader, that))
                 .on('contextmenu.dgtable', function (event) { event.preventDefault(); });
-            $(div.firstChild)
+            $(previewCell.firstChild)
                 .on('dragenter', bind(that._onDragEnterColumnHeader, that))
                 .on('dragover', bind(that._onDragOverColumnHeader, that))
                 .on('dragleave', bind(that._onDragLeaveColumnHeader, that))
                 .on('drop', bind(that._onDropColumnHeader, that));
 
             if (hasIeDragAndDropBug) {
-                $(div).on('selectstart', bind(function(evt) {
+                $(previewCell).on('selectstart', bind(function(evt) {
                     evt.preventDefault();
                     this.dragDrop();
                     return false;
-                }, div));
+                }, previewCell));
             }
         }
 
@@ -3775,10 +3775,10 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
         var borderBox = $el.css('box-sizing') === 'border-box';
         if (borderBox) {
-            $div.css('box-sizing', 'border-box');
+            $previewCell.css('box-sizing', 'border-box');
         } else {
             requiredWidth -= paddingL + paddingR;
-            $div.css('margin-top', parseFloat($(el).css('border-top-width')) || 0);
+            $previewCell.css('margin-top', parseFloat($(el).css('border-top-width')) || 0);
         }
 
         if (!p.transparentBgColor1) {
@@ -3817,18 +3817,18 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             css['background-color'] = bgColor;
         }
 
-        $div.css(css);
+        $previewCell.css(css);
 
-        that.el.appendChild(div);
+        that.el.appendChild(previewCell);
 
-        $(div.firstChild).css({
+        $(previewCell.firstChild).css({
             'direction': $elInner.css('direction'),
             'white-space': $elInner.css('white-space')
         });
 
         if (isHeaderCell) {
             // Disable these to allow our own context menu events without interruption
-            $div.css({
+            $previewCell.css({
                 '-webkit-touch-callout': 'none',
                 '-webkit-user-select': 'none',
                 '-moz-user-select': 'none',
@@ -3838,26 +3838,27 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             });
         }
 
-        div['rowIndex'] = el.parentNode['rowIndex'];
-        var physicalRowIndex = div['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
-        div['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
+        previewCell['rowIndex'] = el.parentNode['rowIndex'];
+        var physicalRowIndex = previewCell['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
+        previewCell['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
 
         try {
             let selection = SelectionHelper.saveSelection(el);
             if (selection)
-                SelectionHelper.restoreSelection(div, selection);
+                SelectionHelper.restoreSelection(previewCell, selection);
         } catch (ex) { }
         
         that.trigger(
             'cellpreview',
-            div.firstChild,
+            previewCell.firstChild,
             physicalRowIndex == null ? null : physicalRowIndex,
-            div['columnName'],
-            physicalRowIndex == null ? null : p.rows[physicalRowIndex]
+            previewCell['columnName'],
+            physicalRowIndex == null ? null : p.rows[physicalRowIndex],
+            el
         );
 
         if (p.abortCellPreview) {
-            $div.remove();
+            $previewCell.remove();
             return;
         }
 
@@ -3892,7 +3893,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
         // Constrain horizontally
         var minHorz = 0,
-            maxHorz = $parent - CssUtil.outerWidth($div);
+            maxHorz = $parent - CssUtil.outerWidth($previewCell);
         offset[prop] = offset[prop] < minHorz ?
             minHorz :
             (offset[prop] > maxHorz ? maxHorz : offset[prop]);
@@ -3911,16 +3912,16 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         };
         previewCss[prop] = offset[prop];
 
-        $div.css(previewCss);
+        $previewCell.css(previewCss);
 
-        div['__cell'] = el;
-        p.$cellPreviewEl = $div;
-        el['__previewEl'] = div;
+        previewCell['__cell'] = el;
+        p.$cellPreviewCell = $previewCell;
+        el['__previewCell'] = previewCell;
 
         p._bindCellHoverOut(el);
-        p._bindCellHoverOut(div);
+        p._bindCellHoverOut(previewCell);
 
-        $div.on('mousewheel', function (event) {
+        $previewCell.on('mousewheel', function (event) {
             var originalEvent = event.originalEvent;
             var xy = originalEvent.wheelDelta || -originalEvent.detail,
                 x = originalEvent.wheelDeltaX || (originalEvent.axis == 1 ? xy : 0),
@@ -3961,29 +3962,30 @@ DGTable.prototype._cellMouseOutEvent = function(el) {
 DGTable.prototype.hideCellPreview = function() {
     var that = this, p = that.p;
     
-    if (p.$cellPreviewEl) {
-        var div = p.$cellPreviewEl[0];
+    if (p.$cellPreviewCell) {
+        var previewCell = p.$cellPreviewCell[0];
+        var origCell = previewCell['__cell'];
         var selection;
         
         try {
-            selection = SelectionHelper.saveSelection(div['__cell']['__previewEl']);
+            selection = SelectionHelper.saveSelection(previewCell);
         } catch (ex) { }
         
-        p.$cellPreviewEl.remove();
-        p._unbindCellHoverOut(div['__cell']);
-        p._unbindCellHoverOut(div);
+        p.$cellPreviewCell.remove();
+        p._unbindCellHoverOut(origCell);
+        p._unbindCellHoverOut(previewCell);
         
         try {
             if (selection)
-                SelectionHelper.restoreSelection(div['__cell'], selection);
+                SelectionHelper.restoreSelection(origCell, selection);
         } catch (ex) { }
 
-        div['__cell']['__previewEl'] = null;
-        div['__cell'] = null;
+        this.trigger('cellpreviewdestroy', previewCell.firstChild, previewCell['physicalRowIndex'], previewCell['columnName'], origCell);
 
-        this.trigger('cellpreviewdestroy', div.firstChild, div['physicalRowIndex'], div['columnName']);
+        origCell['__previewCell'] = null;
+        previewCell['__cell'] = null;
 
-        p.$cellPreviewEl = null;
+        p.$cellPreviewCell = null;
         p.abortCellPreview = false;
     } else {
         p.abortCellPreview = true;

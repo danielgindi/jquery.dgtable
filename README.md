@@ -112,11 +112,13 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Row's index - or null for header
   * 3rd argument: Column's name
   * 4th argument: Row's data - if applicable
+  * 5th argument: Cell's DOM element
   * At this stage you can prevent showing the preview, by calling `table.hideCellPreview`
 * `cellpreviewdestroy`: Cell preview element is about to be destroyed after hiding
   * 1st argument: Preview's DOM element
   * 2nd argument: Row's index
   * 3rd argument: Column's name
+  * 4th argument: Cell's DOM element
   * You can use this event to release any resources that you may have used in `cellPreview` event.
 * `headerrowcreate`: The header row has just been created
   * 1st argument: Row's DOM element
