@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.23
+ * jquery.dgtable 0.5.24
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 import jQuery from 'jquery';
