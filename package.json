@@ -16,7 +16,9 @@
     "node": ">=8"
   },
   "scripts": {
-    "build": "node ./scripts/build.js"
+    "build": "npm run lint && node ./scripts/build.js",
+    "lint": "eslint ./",
+    "lint-fix": "eslint --fix ./"
   },
   "bugs": {
     "url": "https://github.com/danielgindi/jquery.dgtable/issues"
@@ -36,7 +38,9 @@
     "@babel/runtime": "^7.4.4",
     "babelify": "^10.0.0",
     "core-js": "^3.0.1",
+    "eslint": "^6.0.1",
     "fs-extra": "^8.0.1",
+    "husky": "^2.7.0",
     "rollup": "^1.11.3",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^10.0.0",

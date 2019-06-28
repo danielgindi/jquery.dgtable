@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 const FsExtra = require('fs-extra');
 const Path = require('path');
 
@@ -32,7 +34,7 @@ const Path = require('path');
         babelTargets: '> 0.25%, not dead',
         minified: false,
         ecmaVersion: 6,
-        outputName: 'i18n'
+        outputName: 'i18n',
     }, {
         dest: 'dist/jquery.dgtable.umd.min.js',
         sourceMap: true,
@@ -40,25 +42,25 @@ const Path = require('path');
         babelTargets: '> 0.25%, not dead',
         minified: true,
         ecmaVersion: 6,
-        outputName: 'i18n'
+        outputName: 'i18n',
     }, {
         dest: 'dist/jquery.dgtable.cjs.js',
         sourceMap: true,
         outputFormat: 'cjs',
         babelTargets: {
-            node: 10
+            node: 10,
         },
         minified: false,
-        ecmaVersion: 6
+        ecmaVersion: 6,
     }, {
         dest: 'dist/jquery.dgtable.cjs.min.js',
         sourceMap: true,
         outputFormat: 'cjs',
         babelTargets: {
-            node: 10
+            node: 10,
         },
         minified: true,
-        ecmaVersion: 6
+        ecmaVersion: 6,
     }];
 
     const inputFile = 'src/index.js';
@@ -70,7 +72,7 @@ const Path = require('path');
             require('rollup-plugin-node-resolve')({
                 mainFields: ['module', 'main'],
             }),
-            require('rollup-plugin-commonjs')({})
+            require('rollup-plugin-commonjs')({}),
         ];
 
         const pkg = require('../package.json');
@@ -78,7 +80,7 @@ const Path = require('path');
             `/*!`,
             ` * ${pkg.name} ${pkg.version}`,
             ` * ${pkg.repository.url}`,
-            ' */\n'
+            ' */\n',
         ].join('\n');
 
         if (task.babelTargets) {
@@ -105,14 +107,14 @@ const Path = require('path');
                 compress: {
                     ecma: task.ecmaVersion,
                     passes: 2,
-                }
+                },
             }));
         }
 
         plugins.push({
             name: 'banner',
 
-            renderChunk(code, chunk, outputOptions = {}) {
+            renderChunk(code, chunk, _outputOptions = {}) {
 
                 const magicString = new (require('magic-string'))(code);
                 magicString.prepend(banner);
@@ -145,7 +147,7 @@ const Path = require('path');
             output: {
                 globals: {
                     jquery: 'jQuery',
-                }
+                },
             },
         });
 

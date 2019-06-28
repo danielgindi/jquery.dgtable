@@ -14,7 +14,7 @@ export const bind = function bind (what, oThis) {
         throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
     }
 
-    var aArgs   = Array.prototype.slice.call(arguments, 1),
+    let aArgs   = Array.prototype.slice.call(arguments, 1),
         fToBind = this,
         fNOP    = function() {},
         fBound  = function() {
@@ -42,19 +42,19 @@ export const indexOf = function indexOf (array, searchElement, fromIndex) {
         return array.indexOf(searchElement, fromIndex);
     }
 
-    var k;
+    let k;
 
     if (array == null) {
       throw new TypeError('"this" is null or not defined');
     }
 
-    var len = array.length >>> 0;
+    let len = array.length >>> 0;
 
     if (len === 0) {
       return -1;
     }
 
-    var n = fromIndex | 0;
+    let n = fromIndex | 0;
 
     if (n >= len) {
       return -1;
@@ -78,7 +78,7 @@ export const contains = function contains (array, item) {
 
 export const find = function find (array, predicate) {
 
-    for (var i = 0, len = array.length; i >= 0 && i < len; i += 1) {
+    for (let i = 0, len = array.length; i >= 0 && i < len; i += 1) {
         if (predicate(array[i], i, array))
             return array[i];
     }
@@ -88,18 +88,17 @@ export const find = function find (array, predicate) {
 const nativeForEach = Function.prototype.forEach;
 
 export const forEach = function forEach (array, callback, thisArg) {
-
     if (nativeForEach) {
         return array.forEach(callback, thisArg);
     }
 
-    var T, k;
+    let T, k;
 
     if (this === null) {
         throw new TypeError(' this is null or not defined');
     }
 
-    var len = array.length >>> 0;
+    let len = array.length >>> 0;
 
     if (typeof callback !== "function") {
         throw new TypeError(callback + ' is not a function');
@@ -112,11 +111,8 @@ export const forEach = function forEach (array, callback, thisArg) {
     k = 0;
 
     while (k < len) {
-
-        var kValue;
-
         if (k in array) {
-            kValue = array[k];
+            let kValue = array[k];
             callback.call(T, kValue, k, array);
         }
 

@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 'use strict';
 
 import jQuery from 'jquery';
@@ -12,24 +14,24 @@ const cssExpands = {
     'width': [
         'Left',
         'Right',
-        'Width'
+        'Width',
     ],
     'height': [
         'Top',
         'Bottom',
-        'Height'
-    ]
+        'Height',
+    ],
 };
 
 const sizeKeys = ['width', 'height'];
 
 const CssUtil = {};
 
-var generateSizeFunction = function (key, cssExpand, inner, outer) {
+let generateSizeFunction = function (key, cssExpand, inner, outer) {
 
     return function () {
-        var el = arguments[0];
-        var value = arguments[1];
+        let el = arguments[0];
+        let value = arguments[1];
 
         if (el && !(el instanceof Element) && 'length' in el) {
             el = el[0];
@@ -39,10 +41,10 @@ var generateSizeFunction = function (key, cssExpand, inner, outer) {
             return null;
         }
 
-        var style = hasComputedStyle ? document.defaultView.getComputedStyle(el) : el.currentStyle;
-        var isBoxing = style['boxSizing'] === 'border-box';
-        var size, border, padding;
-        var includeMargins = outer && arguments[2] === true || arguments[1] === true;
+        let style = hasComputedStyle ? document.defaultView.getComputedStyle(el) : el.currentStyle;
+        let isBoxing = style['boxSizing'] === 'border-box';
+        let size, border, padding;
+        let includeMargins = outer && arguments[2] === true || arguments[1] === true;
 
         if (isBoxing || outer || inner) {
             border = parseFloat(style['border' + cssExpand[0] + 'Width'] || 0)
@@ -52,7 +54,7 @@ var generateSizeFunction = function (key, cssExpand, inner, outer) {
                 + parseFloat(style['padding' + cssExpand[1]] || 0);
         }
 
-        var margin = includeMargins ?
+        let margin = includeMargins ?
             (parseFloat(style['margin' + cssExpand[0]] || 0)
             + parseFloat(style['margin' + cssExpand[1]] || 0)) : 0;
 
@@ -136,14 +138,14 @@ var generateSizeFunction = function (key, cssExpand, inner, outer) {
     };
 };
 
-var generatejQueryFunction = function (key) {
+let generatejQueryFunction = function (key) {
     return function () {
-        var collection = arguments[0];
+        let collection = arguments[0];
         if (!$.isArray(collection) && !(collection instanceof $)) {
             collection = [collection];
         }
         
-        var ret = $.fn[key].apply(collection, Array.prototype.slice.call(arguments, 1));
+        let ret = $.fn[key].apply(collection, Array.prototype.slice.call(arguments, 1));
         
         if (arguments.length > 1) {
             return this;
@@ -153,9 +155,9 @@ var generatejQueryFunction = function (key) {
     };
 };
 
-for (var i = 0; i < sizeKeys.length; i++) {
-    var key = sizeKeys[i];
-    var cssExpand = cssExpands[key];
+for (let i = 0; i < sizeKeys.length; i++) {
+    let key = sizeKeys[i];
+    let cssExpand = cssExpands[key];
 
     if (jQuerySupportsFractions) {
 

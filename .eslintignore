@@ -1,0 +1,17 @@
+# Ignore test artifacts
+/tests/**/*
+/test/**/*
+
+# But lint actual testing code
+!tests/**/*tests.js
+!test/**/*tests.js
+!tests/**/*_test.js
+!test/**/*_test.js
+!tests/**/*_helpers.js
+!test/**/*_helpers.js
+
+# Ignore compiled code
+/dist/**/*
+
+# Ignore example
+/example/**/*

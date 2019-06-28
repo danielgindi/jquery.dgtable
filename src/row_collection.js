@@ -7,7 +7,7 @@ function RowCollection () {
 
     // Instantiate an Array. Seems like the `.length = ` of an inherited Array does not work well.
     // I will not use the IFRAME solution either in fear of memory leaks, and we're supporting large datasets...
-    var collection = [];
+    let collection = [];
 
     // Synthetically set the 'prototype'
     Object.assign(collection, RowCollection.prototype);
@@ -34,7 +34,7 @@ RowCollection.prototype.initialize = function (options) {
  * @param {number?} at - position to insert rows at
  */
 RowCollection.prototype.add = function (rows, at) {
-    var isArray = ('splice' in rows && 'length' in rows), i, len;
+    let isArray = ('splice' in rows && 'length' in rows), i, len;
     if (isArray) {
         if (at) {
             for (i = 0, len = rows.length; i < len; i++) {
@@ -71,9 +71,9 @@ RowCollection.prototype.reset = function (rows) {
  */
 RowCollection.prototype.filteredCollection = function (filterFunc, args) {
     if (filterFunc && args) {
-        var rows = new RowCollection({ sortColumn: this.sortColumn });
+        let rows = new RowCollection({ sortColumn: this.sortColumn });
         
-        for (var i = 0, len = this.length, row; i < len; i++) {
+        for (let i = 0, len = this.length, row; i < len; i++) {
             row = this[i];
             if (filterFunc(row, args)) {
                 row['__i'] = i;
@@ -96,21 +96,21 @@ RowCollection.prototype.onComparatorRequired = null;
  */
 RowCollection.prototype.onSort = null;
 
-var nativeSort = RowCollection.prototype.sort;
+let nativeSort = RowCollection.prototype.sort;
 
 function getDefaultComparator(column, descending) {
-    var columnName = column.column;
-    var comparePath = column.comparePath || columnName;
+    let columnName = column.column;
+    let comparePath = column.comparePath || columnName;
     if (typeof comparePath === 'string') {
         comparePath = comparePath.split('.');
     }
-    var pathLength = comparePath.length,
+    let pathLength = comparePath.length,
         hasPath = pathLength > 1,
         i;
 
-    var lessVal = descending ? 1 : -1, moreVal = descending ? -1 : 1;
+    let lessVal = descending ? 1 : -1, moreVal = descending ? -1 : 1;
     return function(leftRow, rightRow) {
-        var leftVal = leftRow[comparePath[0]],
+        let leftVal = leftRow[comparePath[0]],
             rightVal = rightRow[comparePath[0]];
         if (hasPath) {
             for (i = 1; i < pathLength; i++) {
@@ -131,7 +131,7 @@ function getDefaultComparator(column, descending) {
  */
 RowCollection.prototype.sort = function (silent) {
     if (this.sortColumn.length) {
-        var comparators = [], i, comparator;
+        let comparators = [], i, comparator;
 
         for (i = 0; i < this.sortColumn.length; i++) {
             comparator = null;
@@ -147,7 +147,7 @@ RowCollection.prototype.sort = function (silent) {
         if (comparators.length === 1) {
             nativeSort.call(this, comparators[0]);
         } else {
-            var len = comparators.length,
+            let len = comparators.length,
                 value;
 
             comparator = function(leftRow, rightRow) {
@@ -172,4 +172,4 @@ RowCollection.prototype.sort = function (silent) {
     return this;
 };
 
-export default RowCollection
+export default RowCollection;

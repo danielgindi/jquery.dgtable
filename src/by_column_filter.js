@@ -2,12 +2,12 @@
 
 function ByColumnFilter (row, args) {
     
-    var column = args.column;
-    var keyword = args.keyword == null ? '' : args.keyword.toString();
+    let column = args.column;
+    let keyword = args.keyword == null ? '' : args.keyword.toString();
     
     if (!keyword || !column) return true;
 
-    var actualVal = row[column];
+    let actualVal = row[column];
     if (actualVal == null) {
         return false;
     }
@@ -22,4 +22,4 @@ function ByColumnFilter (row, args) {
     return actualVal.indexOf(keyword) !== -1;
 }
 
-export default ByColumnFilter
+export default ByColumnFilter;

@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 'use strict';
 
 // saveSelection/restoreSelection courtesy of Tim Down, with my improvements
@@ -23,7 +25,7 @@ class SelectionHelper {
 
         return {
             start: start,
-            end: start + range.toString().length
+            end: start + range.toString().length,
         };
     }
     
@@ -32,7 +34,7 @@ class SelectionHelper {
         let nodeStack = [el], node, foundStart = false, stop = false;
         let range = document.createRange();
         range.setStart(el, 0);
-        range.collapse(true)
+        range.collapse(true);
         
         while (!stop && (node = nodeStack.pop())) {
             if (node.nodeType == 3) {

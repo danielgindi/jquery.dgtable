@@ -5,7 +5,7 @@ function ColumnCollection () {
 
     // Instantiate an Array. Seems like the `.length = ` of an inherited Array does not work well.
     // I will not use the IFRAME solution either in fear of memory leaks, and we're supporting large datasets...
-    var collection = [];
+    let collection = [];
 
     // Synthetically set the 'prototype'
     Object.assign(collection, ColumnCollection.prototype);
@@ -29,7 +29,7 @@ ColumnCollection.prototype.initialize = function () {
  * @returns {Object} the column object
  */
 ColumnCollection.prototype.get = function (column) {
-    for (var i = 0, len = this.length; i < len; i++) {
+    for (let i = 0, len = this.length; i < len; i++) {
         if (this[i].name == column) {
             return this[i];
         }
@@ -43,7 +43,7 @@ ColumnCollection.prototype.get = function (column) {
  * @returns {int} the index of this column
  */
 ColumnCollection.prototype.indexOf = function (column) {
-    for (var i = 0, len = this.length; i < len; i++) {
+    for (let i = 0, len = this.length; i < len; i++) {
         if (this[i].name == column) {
             return i;
         }
@@ -57,7 +57,7 @@ ColumnCollection.prototype.indexOf = function (column) {
  * @returns {Object} the column object
  */
 ColumnCollection.prototype.getByOrder = function (order) {
-    for (var i = 0, len = this.length; i < len; i++) {
+    for (let i = 0, len = this.length; i < len; i++) {
         if (this[i].order == order) {
             return this[i];
         }
@@ -70,7 +70,7 @@ ColumnCollection.prototype.getByOrder = function (order) {
  * @returns {ColumnCollection} self
  */
 ColumnCollection.prototype.normalizeOrder = function () {
-    var ordered = [], i;
+    let ordered = [], i;
     for (i = 0; i < this.length; i++) {
         ordered.push(this[i]);
     }
@@ -86,14 +86,14 @@ ColumnCollection.prototype.normalizeOrder = function () {
  * @returns {Array<Object>} ordered array of visible columns
  */
 ColumnCollection.prototype.getVisibleColumns = function () {
-    var visible = [];
-    for (var i = 0, column; i < this.length; i++) {
+    let visible = [];
+    for (let i = 0, column; i < this.length; i++) {
         column = this[i];
         if (column.visible) {
             visible.push(column);
         }
     }
-    visible.sort(function(col1, col2){ return col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0); });
+    visible.sort((col1, col2) => col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0));
     return visible;
 };
 
@@ -101,8 +101,8 @@ ColumnCollection.prototype.getVisibleColumns = function () {
  * @returns {int} maximum order currently in the array
  */
 ColumnCollection.prototype.getMaxOrder = function () {
-    var order = 0;
-    for (var i = 0, column; i < this.length; i++) {
+    let order = 0;
+    for (let i = 0, column; i < this.length; i++) {
         column = this[i];
         if (column.order > order) {
             order = column.order;
@@ -119,7 +119,7 @@ ColumnCollection.prototype.getMaxOrder = function () {
  */
 ColumnCollection.prototype.moveColumn = function (src, dest) {
     if (src && dest) {
-        var srcOrder = src.order, destOrder = dest.order, i, col;
+        let srcOrder = src.order, destOrder = dest.order, i, col;
         if (srcOrder < destOrder) {
             for (i = srcOrder + 1; i <= destOrder; i++) {
                 col = this.getByOrder(i);
@@ -136,4 +136,4 @@ ColumnCollection.prototype.moveColumn = function (src, dest) {
     return this;
 };
 
-export default ColumnCollection
+export default ColumnCollection;
