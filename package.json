@@ -3,7 +3,9 @@
   "title": "jquery.dgtable",
   "description": "High-performance table View for jQuery",
   "version": "0.5.23",
-  "main": "dist/jquery.dgtable.js",
+  "main": "dist/jquery.dgtable.cjs.min.js",
+  "module": "dist/jquery.dgtable.es6.min.js",
+  "broswer": "dist/jquery.dgtable.umd.min.js",
   "author": {
     "name": "Daniel Cohen Gindi",
     "email": "danielgindi@gmail.com"
