@@ -12,3 +12,12 @@ export const find = function find (array, predicate) {
             return array[i];
     }
 };
+
+export const htmlEncode = function htmlEncode (text) {
+    return text.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/'/g, "&#39;")
+        .replace(/"/g, "&quot;")
+        .replace(/\n/g, '<br />');
+};

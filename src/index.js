@@ -3,7 +3,7 @@
 'use strict';
 
 import jQuery from 'jquery';
-import { includes, find } from './util';
+import { includes, find, htmlEncode } from './util';
 import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
@@ -1096,7 +1096,7 @@ DGTable.prototype.setCellFormatter = function (formatter) {
      * @private
      * @field {Function} cellFormatter */
     this.o.cellFormatter = formatter || function (val) {
-        return val;
+        return (typeof val === 'string') ? htmlEncode(val) : val;
     };
 
     return this;
@@ -1114,7 +1114,7 @@ DGTable.prototype.setHeaderCellFormatter = function (formatter) {
      * @private
      * @field {Function} headerCellFormatter */
     this.o.headerCellFormatter = formatter || function (val) {
-        return val;
+        return (typeof val === 'string') ? htmlEncode(val) : val;
     };
         
     return this;
@@ -1705,17 +1705,7 @@ DGTable.prototype.getHtmlForCell = function (row, columnName) {
     if (!column) return null;
     let rowData = p.rows[row];
 
-    let dataPath = column.dataPath;
-    let colValue = rowData[dataPath[0]];
-    for (let dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
-        colValue = colValue[dataPath[dataPathIndex]];
-    }
-
-    let content = this.o.cellFormatter(colValue, column.name, rowData);
-    if (content === undefined) {
-        content = '';
-    }
-    return content;
+    return this._getHtmlForCell(rowData, column);
 };
 
 /**
