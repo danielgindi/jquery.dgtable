@@ -955,9 +955,9 @@ DGTable.prototype._calculateTbodyWidth = function () {
         .append(
             $('<div>').addClass(tableClassName).append(
                 $('<div>').addClass(tableClassName + '-body').css('width', sumActualWidth + 10000).append(
-                    $row
-                )
-            )
+                    $row,
+                ),
+            ),
         );
 
     $thisWrapper.appendTo(document.body);
@@ -1940,10 +1940,10 @@ DGTable.prototype.tableWidthChanged = (function () {
             $('<div>').addClass(tableClassName + '-header').append(
                 $('<div>').addClass(tableClassName + '-header-row').append(
                     $cell = $('<div>').addClass(tableClassName + '-header-cell').append(
-                        $('<div>').text(text)
-                    )
-                )
-            )
+                        $('<div>').text(text),
+                    ),
+                ),
+            ),
         ).css({ 'position': 'absolute', top: '-9999px', 'visibility': 'hidden' });
         $tableWrapper.appendTo(document.body);
 
@@ -3532,8 +3532,8 @@ DGTable.prototype._renderSkeletonBody = function () {
             .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' })
             .append(
                 $('<div>').addClass(tableClassName).append(
-                    $dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999)
-                )
+                    $dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999),
+                ),
             );
 
         $dummyWrapper.appendTo(document.body);
@@ -3848,7 +3848,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             physicalRowIndex == null ? null : physicalRowIndex,
             previewCell['columnName'],
             physicalRowIndex == null ? null : p.rows[physicalRowIndex],
-            el
+            el,
         );
 
         if (p.abortCellPreview) {
