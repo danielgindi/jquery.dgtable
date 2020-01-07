@@ -1,127 +1,29 @@
 /*!
- * jquery.dgtable 0.5.24
+ * jquery.dgtable 0.5.25
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 import jQuery from 'jquery';
 
-const nativeBind = Function.prototype.bind;
+const indexOf = Array.prototype.indexOf;
 
-const bind = function bind(what, oThis) {
-
-  if (nativeBind) {
-    return what.bind(oThis);
-  }
-
-  if (typeof this !== 'function') {
-    // closest thing possible to the ECMAScript 5
-    // internal IsCallable function
-    throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
-  }
-
-  let aArgs = Array.prototype.slice.call(arguments, 1),
-  fToBind = this,
-  fNOP = function () {},
-  fBound = function () {
-    return fToBind.apply(this instanceof fNOP ?
-    this :
-    oThis,
-    aArgs.concat(Array.prototype.slice.call(arguments)));
-  };
-
-  if (this.prototype) {
-    // Function.prototype doesn't have a prototype property
-    fNOP.prototype = this.prototype;
-  }
-
-  fBound.prototype = new fNOP();
-
-  return fBound;
-};
-
-const nativeIndexOf = Function.prototype.indexOf;
-
-const indexOf = function indexOf(array, searchElement, fromIndex) {
-
-  if (nativeIndexOf) {
-    return array.indexOf(searchElement, fromIndex);
-  }
-
-  let k;
-
-  if (array == null) {
-    throw new TypeError('"this" is null or not defined');
-  }
-
-  let len = array.length >>> 0;
-
-  if (len === 0) {
-    return -1;
-  }
-
-  let n = fromIndex | 0;
-
-  if (n >= len) {
-    return -1;
-  }
-
-  k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-  while (k < len) {
-    if (k in array && array[k] === searchElement) {
-      return k;
-    }
-    k++;
-  }
-
-  return -1;
-};
-
-const contains = function contains(array, item) {
-  return indexOf(array, item) >= 0;
+const includes = function includes(array, item) {
+  return indexOf.call(array, item) >= 0;
 };
 
 const find = function find(array, predicate) {
-
   for (let i = 0, len = array.length; i >= 0 && i < len; i += 1) {
     if (predicate(array[i], i, array))
     return array[i];
   }
-
 };
 
-const nativeForEach = Function.prototype.forEach;
-
-const forEach = function forEach(array, callback, thisArg) {
-  if (nativeForEach) {
-    return array.forEach(callback, thisArg);
-  }
-
-  let T, k;
-
-  if (this === null) {
-    throw new TypeError(' this is null or not defined');
-  }
-
-  let len = array.length >>> 0;
-
-  if (typeof callback !== "function") {
-    throw new TypeError(callback + ' is not a function');
-  }
-
-  if (arguments.length > 1) {
-    T = thisArg;
-  }
-
-  k = 0;
-
-  while (k < len) {
-    if (k in array) {
-      let kValue = array[k];
-      callback.call(T, kValue, k, array);
-    }
-
-    k++;
-  }
+const htmlEncode = function htmlEncode(text) {
+  return text.replace(/&/g, "&amp;").
+  replace(/</g, "&lt;").
+  replace(/>/g, "&gt;").
+  replace(/'/g, "&#39;").
+  replace(/"/g, "&quot;").
+  replace(/\n/g, '<br />');
 };
 
 // Define class RowCollection
@@ -263,7 +165,7 @@ RowCollection.prototype.sort = function (silent) {
       if (!comparator) {
         comparator = getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending);
       }
-      comparators.push(bind(comparator, this));
+      comparators.push(comparator.bind(this));
     }
 
     if (comparators.length === 1) {
@@ -690,12 +592,13 @@ function ByColumnFilter(row, args) {
 
 /* eslint-env browser */
 
+const nativeIndexOf = Array.prototype.indexOf;
 const $$1 = jQuery;
 
 let userAgent = navigator.userAgent;
 let ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
 let hasIeDragAndDropBug = ieVersion && ieVersion < 10;
-let createElement = bind(document.createElement, document);
+let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function webkitRenderBugfix(el) {
@@ -710,7 +613,7 @@ function webkitRenderBugfix(el) {
 }
 
 function relativizeElement($el) {
-  if (!contains(['relative', 'absolute', 'fixed'], $el.css('position'))) {
+  if (!includes(['relative', 'absolute', 'fixed'], $el.css('position'))) {
     $el.css('position', 'relative');
   }
 }
@@ -791,9 +694,9 @@ DGTable.prototype.initialize = function (options) {
     that.destroy();
   });
 
-  p.onMouseMoveResizeAreaBound = bind(this._onMouseMoveResizeArea, this);
-  p.onEndDragColumnHeaderBound = bind(this._onEndDragColumnHeader, this);
-  p.onTableScrolledHorizontallyBound = bind(this._onTableScrolledHorizontally, this);
+  p.onMouseMoveResizeAreaBound = this._onMouseMoveResizeArea.bind(this);
+  p.onEndDragColumnHeaderBound = this._onEndDragColumnHeader.bind(this);
+  p.onTableScrolledHorizontallyBound = this._onTableScrolledHorizontally.bind(this);
 
   this.$el.on('dragend', p.onEndDragColumnHeaderBound);
 
@@ -999,7 +902,7 @@ DGTable.prototype.initialize = function (options) {
                                       * */
     p._bindCellHoverIn = function (el) {
       if (!el['__hoverIn']) {
-        el.addEventListener('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+        el.addEventListener('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
       }
     };
 
@@ -1019,7 +922,7 @@ DGTable.prototype.initialize = function (options) {
         * */
     p._bindCellHoverOut = function (el) {
       if (!el['__hoverOut']) {
-        el.addEventListener('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+        el.addEventListener('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
       }
       return this;
     };
@@ -1043,7 +946,7 @@ DGTable.prototype.initialize = function (options) {
            * */
     p._bindCellHoverIn = function (el) {
       if (!el['__hoverIn']) {
-        el.attachEvent('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+        el.attachEvent('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
       }
     };
 
@@ -1062,7 +965,7 @@ DGTable.prototype.initialize = function (options) {
         * */
     p._bindCellHoverOut = function (el) {
       if (!el['__hoverOut']) {
-        el.attachEvent('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+        el.attachEvent('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
       }
     };
 
@@ -1416,7 +1319,7 @@ DGTable.prototype.render = function () {
     this.trigger('renderskeleton');
 
     if (o.virtualTable) {
-      p.$table.on('scroll', bind(this._onVirtualTableScrolled, this));
+      p.$table.on('scroll', this._onVirtualTableScrolled.bind(this));
       this.render();
     }
 
@@ -1775,7 +1678,7 @@ DGTable.prototype.setCellFormatter = function (formatter) {
                                                             * @private
                                                             * @field {Function} cellFormatter */
   this.o.cellFormatter = formatter || function (val) {
-    return val;
+    return typeof val === 'string' ? htmlEncode(val) : val;
   };
 
   return this;
@@ -1793,7 +1696,7 @@ DGTable.prototype.setHeaderCellFormatter = function (formatter) {
                                                                   * @private
                                                                   * @field {Function} headerCellFormatter */
   this.o.headerCellFormatter = formatter || function (val) {
-    return val;
+    return typeof val === 'string' ? htmlEncode(val) : val;
   };
 
   return this;
@@ -2384,17 +2287,7 @@ DGTable.prototype.getHtmlForCell = function (row, columnName) {
   if (!column) return null;
   let rowData = p.rows[row];
 
-  let dataPath = column.dataPath;
-  let colValue = rowData[dataPath[0]];
-  for (let dataPathIndex = 1; dataPathIndex < dataPath.length; dataPathIndex++) {
-    colValue = colValue[dataPath[dataPathIndex]];
-  }
-
-  let content = this.o.cellFormatter(colValue, column.name, rowData);
-  if (content === undefined) {
-    content = '';
-  }
-  return content;
+  return this._getHtmlForCell(rowData, column);
 };
 
 /**
@@ -3092,7 +2985,7 @@ DGTable.prototype.refreshRow = function (physicalRowIndex) {
 
   // Find out if the row is in the rendered dataset
   let rowIndex = -1;
-  if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+  if (p.filteredRows && (rowIndex = p.filteredRows.indexOf(p.rows[physicalRowIndex])) === -1) return this;
 
   if (rowIndex === -1) {
     rowIndex = physicalRowIndex;
@@ -3145,7 +3038,7 @@ DGTable.prototype.getRowElement = function (physicalRowIndex) {
 
   // Find out if the row is in the rendered dataset
   let rowIndex = -1;
-  if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+  if (p.filteredRows && (rowIndex = p.filteredRows.indexOf(p.rows[physicalRowIndex])) === -1) return this;
 
   if (rowIndex === -1) {
     rowIndex = physicalRowIndex;
@@ -3950,12 +3843,12 @@ DGTable.prototype._clearSortArrows = function () {
     let tableClassName = this.o.tableClassName;
     let sortedColumns = p.$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
     let arrows = sortedColumns.find('>div>.sort-arrow');
-    forEach(arrows, bind(function (arrow) {
+    for (let arrow of arrows) {
       let col = p.columns.get(arrow.parentNode.parentNode['columnName']);
       if (col) {
         col.arrowProposedWidth = 0;
       }
-    }, this));
+    }
     arrows.remove();
     sortedColumns.removeClass('sorted').removeClass('desc');
   }
@@ -4153,22 +4046,22 @@ DGTable.prototype._renderSkeletonHeaderCells = function () {
 
       p.visibleColumns[i].element = $cell;
 
-      $cell.on('mousedown.dgtable', bind(that._onMouseDownColumnHeader, that)).
-      on('mousemove.dgtable', bind(that._onMouseMoveColumnHeader, that)).
-      on('mouseup.dgtable', bind(that._onMouseUpColumnHeader, that)).
-      on('mouseleave.dgtable', bind(that._onMouseLeaveColumnHeader, that)).
-      on('touchstart.dgtable', bind(that._onTouchStartColumnHeader, that)).
-      on('dragstart.dgtable', bind(that._onStartDragColumnHeader, that)).
-      on('click.dgtable', bind(that._onClickColumnHeader, that)).
+      $cell.on('mousedown.dgtable', that._onMouseDownColumnHeader.bind(that)).
+      on('mousemove.dgtable', that._onMouseMoveColumnHeader.bind(that)).
+      on('mouseup.dgtable', that._onMouseUpColumnHeader.bind(that)).
+      on('mouseleave.dgtable', that._onMouseLeaveColumnHeader.bind(that)).
+      on('touchstart.dgtable', that._onTouchStartColumnHeader.bind(that)).
+      on('dragstart.dgtable', that._onStartDragColumnHeader.bind(that)).
+      on('click.dgtable', that._onClickColumnHeader.bind(that)).
       on('contextmenu.dgtable', preventDefault);
       $$1(cellInside).
-      on('dragenter.dgtable', bind(that._onDragEnterColumnHeader, that)).
-      on('dragover.dgtable', bind(that._onDragOverColumnHeader, that)).
-      on('dragleave.dgtable', bind(that._onDragLeaveColumnHeader, that)).
-      on('drop.dgtable', bind(that._onDropColumnHeader, that));
+      on('dragenter.dgtable', that._onDragEnterColumnHeader.bind(that)).
+      on('dragover.dgtable', that._onDragOverColumnHeader.bind(that)).
+      on('dragleave.dgtable', that._onDragLeaveColumnHeader.bind(that)).
+      on('drop.dgtable', that._onDropColumnHeader.bind(that));
 
       if (hasIeDragAndDropBug) {
-        $cell.on('selectstart.dgtable', bind(ieDragDropHandler, cell));
+        $cell.on('selectstart.dgtable', ieDragDropHandler.bind(cell));
       }
 
       // Disable these to allow our own context menu events without interruption
@@ -4416,26 +4309,26 @@ DGTable.prototype._cellMouseOverEvent = function (el) {
 
       previewCell.draggable = true;
 
-      $$1(previewCell).on('mousedown', bind(this._onMouseDownColumnHeader, this)).
-      on('mousemove', bind(this._onMouseMoveColumnHeader, this)).
-      on('mouseup', bind(this._onMouseUpColumnHeader, this)).
-      on('mouseleave', bind(this._onMouseLeaveColumnHeader, this)).
-      on('touchstart', bind(this._onTouchStartColumnHeader, this)).
-      on('dragstart', bind(this._onStartDragColumnHeader, this)).
-      on('click', bind(this._onClickColumnHeader, this)).
+      $$1(previewCell).on('mousedown', this._onMouseDownColumnHeader.bind(this)).
+      on('mousemove', this._onMouseMoveColumnHeader.bind(this)).
+      on('mouseup', this._onMouseUpColumnHeader.bind(this)).
+      on('mouseleave', this._onMouseLeaveColumnHeader.bind(this)).
+      on('touchstart', this._onTouchStartColumnHeader.bind(this)).
+      on('dragstart', this._onStartDragColumnHeader.bind(this)).
+      on('click', this._onClickColumnHeader.bind(this)).
       on('contextmenu.dgtable', function (event) {event.preventDefault();});
       $$1(previewCell.firstChild).
-      on('dragenter', bind(this._onDragEnterColumnHeader, this)).
-      on('dragover', bind(this._onDragOverColumnHeader, this)).
-      on('dragleave', bind(this._onDragLeaveColumnHeader, this)).
-      on('drop', bind(this._onDropColumnHeader, this));
+      on('dragenter', this._onDragEnterColumnHeader.bind(this)).
+      on('dragover', this._onDragOverColumnHeader.bind(this)).
+      on('dragleave', this._onDragLeaveColumnHeader.bind(this)).
+      on('drop', this._onDropColumnHeader.bind(this));
 
       if (hasIeDragAndDropBug) {
-        $$1(previewCell).on('selectstart', bind(function (evt) {
+        $$1(previewCell).on('selectstart', function (evt) {
           evt.preventDefault();
           this.dragDrop();
           return false;
-        }, previewCell));
+        }.bind(previewCell));
       }
     }
 
@@ -4513,7 +4406,7 @@ DGTable.prototype._cellMouseOverEvent = function (el) {
 
     previewCell['rowIndex'] = el.parentNode['rowIndex'];
     let physicalRowIndex = previewCell['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
-    previewCell['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
+    previewCell['columnName'] = p.visibleColumns[nativeIndexOf.call(el.parentNode.childNodes, el)].name;
 
     try {
       let selection = SelectionHelper.saveSelection(el);
