@@ -3,19 +3,20 @@
 'use strict';
 
 import jQuery from 'jquery';
-import { bind, indexOf, contains, find, forEach } from './util';
+import { includes, find } from './util';
 import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
 import SelectionHelper from './selection_helper';
 import ByColumnFilter from './by_column_filter';
 
+const nativeIndexOf = Array.prototype.indexOf;
 const $ = jQuery;
 
 let userAgent = navigator.userAgent;
 let ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
 let hasIeDragAndDropBug = ieVersion && ieVersion < 10;
-let createElement = bind(document.createElement, document);
+let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function webkitRenderBugfix(el) {
@@ -30,7 +31,7 @@ function webkitRenderBugfix(el) {
 }
 
 function relativizeElement($el) {
-    if (!contains(['relative', 'absolute', 'fixed'], $el.css('position'))) {
+    if (!includes(['relative', 'absolute', 'fixed'], $el.css('position'))) {
         $el.css('position', 'relative');
     }
 }
@@ -111,9 +112,9 @@ DGTable.prototype.initialize = function (options) {
         that.destroy();
     });
 
-    p.onMouseMoveResizeAreaBound = bind(this._onMouseMoveResizeArea, this);
-    p.onEndDragColumnHeaderBound = bind(this._onEndDragColumnHeader, this);
-    p.onTableScrolledHorizontallyBound = bind(this._onTableScrolledHorizontally, this);
+    p.onMouseMoveResizeAreaBound = this._onMouseMoveResizeArea.bind(this);
+    p.onEndDragColumnHeaderBound = this._onEndDragColumnHeader.bind(this);
+    p.onTableScrolledHorizontallyBound = this._onTableScrolledHorizontally.bind(this);
 
     this.$el.on('dragend', p.onEndDragColumnHeaderBound);
 
@@ -319,7 +320,7 @@ DGTable.prototype.initialize = function (options) {
          * */
         p._bindCellHoverIn = function (el) {
             if (!el['__hoverIn']) {
-                el.addEventListener('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+                el.addEventListener('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
             }
         };
 
@@ -339,7 +340,7 @@ DGTable.prototype.initialize = function (options) {
          * */
         p._bindCellHoverOut = function (el) {
             if (!el['__hoverOut']) {
-                el.addEventListener('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+                el.addEventListener('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
             }
             return this;
         };
@@ -363,7 +364,7 @@ DGTable.prototype.initialize = function (options) {
          * */
         p._bindCellHoverIn = function (el) {
             if (!el['__hoverIn']) {
-                el.attachEvent('mouseover', el['__hoverIn'] = bind(hoverMouseOverHandler, el));
+                el.attachEvent('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
             }
         };
 
@@ -382,7 +383,7 @@ DGTable.prototype.initialize = function (options) {
          * */
         p._bindCellHoverOut = function (el) {
             if (!el['__hoverOut']) {
-                el.attachEvent('mouseout', el['__hoverOut'] = bind(hoverMouseOutHandler, el['__cell'] || el));
+                el.attachEvent('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
             }
         };
 
@@ -736,7 +737,7 @@ DGTable.prototype.render = function () {
         this.trigger('renderskeleton');
 
         if (o.virtualTable) {
-            p.$table.on('scroll', bind(this._onVirtualTableScrolled, this));
+            p.$table.on('scroll', this._onVirtualTableScrolled.bind(this));
             this.render();
         }
 
@@ -2412,7 +2413,7 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
 
     // Find out if the row is in the rendered dataset
     let rowIndex = -1;
-    if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+    if (p.filteredRows && (rowIndex = p.filteredRows.indexOf(p.rows[physicalRowIndex])) === -1) return this;
 
     if (rowIndex === -1) {
         rowIndex = physicalRowIndex;
@@ -2465,7 +2466,7 @@ DGTable.prototype.getRowElement = function(physicalRowIndex) {
 
     // Find out if the row is in the rendered dataset
     let rowIndex = -1;
-    if (p.filteredRows && (rowIndex = indexOf(p.filteredRows, p.rows[physicalRowIndex])) === -1) return this;
+    if (p.filteredRows && (rowIndex = p.filteredRows.indexOf(p.rows[physicalRowIndex])) === -1) return this;
 
     if (rowIndex === -1) {
         rowIndex = physicalRowIndex;
@@ -3270,12 +3271,12 @@ DGTable.prototype._clearSortArrows = function () {
         let tableClassName = this.o.tableClassName;
         let sortedColumns = p.$headerRow.find('>div.' + tableClassName + '-header-cell.sorted');
         let arrows = sortedColumns.find('>div>.sort-arrow');
-        forEach(arrows, bind(function(arrow){
+        for (let arrow of arrows) {
             let col = p.columns.get(arrow.parentNode.parentNode['columnName']);
             if (col) {
                 col.arrowProposedWidth = 0;
             }
-        }, this));
+        }
         arrows.remove();
         sortedColumns.removeClass('sorted').removeClass('desc');
     }
@@ -3474,22 +3475,22 @@ DGTable.prototype._renderSkeletonHeaderCells = function () {
 
             p.visibleColumns[i].element = $cell;
 
-            $cell.on('mousedown.dgtable', bind(that._onMouseDownColumnHeader, that))
-                .on('mousemove.dgtable', bind(that._onMouseMoveColumnHeader, that))
-                .on('mouseup.dgtable', bind(that._onMouseUpColumnHeader, that))
-                .on('mouseleave.dgtable', bind(that._onMouseLeaveColumnHeader, that))
-                .on('touchstart.dgtable', bind(that._onTouchStartColumnHeader, that))
-                .on('dragstart.dgtable', bind(that._onStartDragColumnHeader, that))
-                .on('click.dgtable', bind(that._onClickColumnHeader, that))
+            $cell.on('mousedown.dgtable', that._onMouseDownColumnHeader.bind(that))
+                .on('mousemove.dgtable', that._onMouseMoveColumnHeader.bind(that))
+                .on('mouseup.dgtable', that._onMouseUpColumnHeader.bind(that))
+                .on('mouseleave.dgtable', that._onMouseLeaveColumnHeader.bind(that))
+                .on('touchstart.dgtable', that._onTouchStartColumnHeader.bind(that))
+                .on('dragstart.dgtable', that._onStartDragColumnHeader.bind(that))
+                .on('click.dgtable', that._onClickColumnHeader.bind(that))
                 .on('contextmenu.dgtable', preventDefault);
             $(cellInside)
-                .on('dragenter.dgtable', bind(that._onDragEnterColumnHeader, that))
-                .on('dragover.dgtable', bind(that._onDragOverColumnHeader, that))
-                .on('dragleave.dgtable', bind(that._onDragLeaveColumnHeader, that))
-                .on('drop.dgtable', bind(that._onDropColumnHeader, that));
+                .on('dragenter.dgtable', that._onDragEnterColumnHeader.bind(that))
+                .on('dragover.dgtable', that._onDragOverColumnHeader.bind(that))
+                .on('dragleave.dgtable', that._onDragLeaveColumnHeader.bind(that))
+                .on('drop.dgtable', that._onDropColumnHeader.bind(that));
 
             if (hasIeDragAndDropBug) {
-                $cell.on('selectstart.dgtable', bind(ieDragDropHandler, cell));
+                $cell.on('selectstart.dgtable', ieDragDropHandler.bind(cell));
             }
 
             // Disable these to allow our own context menu events without interruption
@@ -3737,26 +3738,26 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
             previewCell.draggable = true;
 
-            $(previewCell).on('mousedown', bind(this._onMouseDownColumnHeader, this))
-                .on('mousemove', bind(this._onMouseMoveColumnHeader, this))
-                .on('mouseup', bind(this._onMouseUpColumnHeader, this))
-                .on('mouseleave', bind(this._onMouseLeaveColumnHeader, this))
-                .on('touchstart', bind(this._onTouchStartColumnHeader, this))
-                .on('dragstart', bind(this._onStartDragColumnHeader, this))
-                .on('click', bind(this._onClickColumnHeader, this))
+            $(previewCell).on('mousedown', this._onMouseDownColumnHeader.bind(this))
+                .on('mousemove', this._onMouseMoveColumnHeader.bind(this))
+                .on('mouseup', this._onMouseUpColumnHeader.bind(this))
+                .on('mouseleave', this._onMouseLeaveColumnHeader.bind(this))
+                .on('touchstart', this._onTouchStartColumnHeader.bind(this))
+                .on('dragstart', this._onStartDragColumnHeader.bind(this))
+                .on('click', this._onClickColumnHeader.bind(this))
                 .on('contextmenu.dgtable', function (event) { event.preventDefault(); });
             $(previewCell.firstChild)
-                .on('dragenter', bind(this._onDragEnterColumnHeader, this))
-                .on('dragover', bind(this._onDragOverColumnHeader, this))
-                .on('dragleave', bind(this._onDragLeaveColumnHeader, this))
-                .on('drop', bind(this._onDropColumnHeader, this));
+                .on('dragenter', this._onDragEnterColumnHeader.bind(this))
+                .on('dragover', this._onDragOverColumnHeader.bind(this))
+                .on('dragleave', this._onDragLeaveColumnHeader.bind(this))
+                .on('drop', this._onDropColumnHeader.bind(this));
 
             if (hasIeDragAndDropBug) {
-                $(previewCell).on('selectstart', bind(function(evt) {
+                $(previewCell).on('selectstart', (function(evt) {
                     evt.preventDefault();
                     this.dragDrop();
                     return false;
-                }, previewCell));
+                }).bind(previewCell));
             }
         }
 
@@ -3834,7 +3835,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
         previewCell['rowIndex'] = el.parentNode['rowIndex'];
         let physicalRowIndex = previewCell['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
-        previewCell['columnName'] = p.visibleColumns[indexOf(el.parentNode.childNodes, el)].name;
+        previewCell['columnName'] = p.visibleColumns[nativeIndexOf.call(el.parentNode.childNodes, el)].name;
 
         try {
             let selection = SelectionHelper.saveSelection(el);

@@ -1,7 +1,5 @@
 'use strict';
 
-import { bind } from './util';
-
 // Define class RowCollection
 function RowCollection () {
 
@@ -141,7 +139,7 @@ RowCollection.prototype.sort = function (silent) {
             if (!comparator) {
                 comparator = getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending);
             }
-            comparators.push(bind(comparator, this));
+            comparators.push(comparator.bind(this));
         }
 
         if (comparators.length === 1) {
