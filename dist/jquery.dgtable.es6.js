@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.25
+ * jquery.dgtable 0.5.26
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 import jQuery from 'jquery';
@@ -846,7 +846,7 @@ DGTable.prototype.initialize = function (options) {
         let col = p.columns.get(sortColumn.column);
         sortColumns.push({
           column: sortColumn.column,
-          comparePath: col.comparePath,
+          comparePath: col.comparePath || col.dataPath,
           descending: sortColumn.descending });
 
       }
@@ -1904,7 +1904,7 @@ DGTable.prototype.sort = function (column, descending, add) {
     // Set the required column in the front of the stack
     currentSort.push({
       column: col.name,
-      comparePath: col.comparePath,
+      comparePath: col.comparePath || col.dataPath,
       descending: !!descending });
 
   } else {
