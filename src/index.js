@@ -7,7 +7,8 @@ import { includes, find, htmlEncode } from './util';
 import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
-import SelectionHelper from './selection_helper';
+import SelectionHelper from './SelectionHelper';
+import ScrollHelper from './ScrollHelper';
 import ByColumnFilter from './by_column_filter';
 
 const nativeIndexOf = Array.prototype.indexOf;
@@ -700,8 +701,8 @@ DGTable.prototype.render = function () {
             this._clearSortArrows();
         }
 
-        let lastScrollTop = p.table ? p.table.scrollTop : 0,
-            lastScrollLeft = p.table ? p.table.scrollLeft : 0;
+        let lastScrollTop = p.table ? p.table.scrollTop : NaN,
+            lastScrollLeft = p.table ? ScrollHelper.scrollLeftNormalized(p.table) : NaN;
 
         this._renderSkeletonBase()
             ._renderSkeletonBody()
@@ -729,9 +730,13 @@ DGTable.prototype.render = function () {
             this.tableWidthChanged();
         }
 
-        p.table.scrollTop = lastScrollTop;
-        p.table.scrollLeft = lastScrollLeft;
-        p.header.scrollLeft = lastScrollLeft;
+        if (!isNaN(lastScrollTop))
+          p.table.scrollTop = lastScrollTop;
+
+        if (!isNaN(lastScrollLeft)) {
+          ScrollHelper.scrollLeftNormalized(p.table, lastScrollLeft);
+          ScrollHelper.scrollLeftNormalized(p.header, lastScrollLeft);
+        }
 
         this.trigger('renderskeleton');
 
