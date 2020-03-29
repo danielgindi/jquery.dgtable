@@ -713,10 +713,9 @@ DGTable.prototype.render = function () {
             rowCount = rows.length;
             renderedRows = this.renderRows(0, rowCount - 1);
             p.$tbody.html('').append(renderedRows);
-            this._updateLastCellWidthFromScrollbar(true);
-        } else {
-            this._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
         }
+
+        this._updateLastCellWidthFromScrollbar(true);
 
         this._updateTableWidth(true);
 
