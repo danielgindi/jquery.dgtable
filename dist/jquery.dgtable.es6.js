@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.26
+ * jquery.dgtable 0.5.27
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 import jQuery from 'jquery';
@@ -1295,14 +1295,9 @@ DGTable.prototype.render = function () {
       rowCount = rows.length;
       renderedRows = this.renderRows(0, rowCount - 1);
       p.$tbody.html('').append(renderedRows);
-      this._updateLastCellWidthFromScrollbar(true);
-    } else {
-      this._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
     }
 
-    p.table.scrollTop = lastScrollTop;
-    p.table.scrollLeft = lastScrollLeft;
-    p.header.scrollLeft = lastScrollLeft;
+    this._updateLastCellWidthFromScrollbar(true);
 
     this._updateTableWidth(true);
 
@@ -1315,6 +1310,10 @@ DGTable.prototype.render = function () {
     } else if (!o.virtualTable) {
       this.tableWidthChanged();
     }
+
+    p.table.scrollTop = lastScrollTop;
+    p.table.scrollLeft = lastScrollLeft;
+    p.header.scrollLeft = lastScrollLeft;
 
     this.trigger('renderskeleton');
 
@@ -1742,7 +1741,7 @@ DGTable.prototype.filter = function (args) {
 
   // Shallow-clone the args, as the filter function may want to modify it for keeping state
   p.filterArgs = typeof args === 'object' && !Array.isArray(args) ? $$1.extend({}, args) : args;
-  p.filteredRows = p.rows.filteredCollection(filterFunc, args);
+  p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
 
   if (hadFilter || p.filteredRows) {
     this.clearAndRender();
