@@ -718,10 +718,6 @@ DGTable.prototype.render = function () {
             this._updateLastCellWidthFromScrollbar(); // Detect vertical scrollbar height
         }
 
-        p.table.scrollTop = lastScrollTop;
-        p.table.scrollLeft = lastScrollLeft;
-        p.header.scrollLeft = lastScrollLeft;
-
         this._updateTableWidth(true);
 
         // Show sort arrows
@@ -733,6 +729,10 @@ DGTable.prototype.render = function () {
         } else if (!o.virtualTable) {
             this.tableWidthChanged();
         }
+
+        p.table.scrollTop = lastScrollTop;
+        p.table.scrollLeft = lastScrollLeft;
+        p.header.scrollLeft = lastScrollLeft;
 
         this.trigger('renderskeleton');
 

@@ -319,7 +319,7 @@
     <label for="filterInput">Filter by second column:</label>
     <input id="filterInput" type="text" onkeyup="table.filter({ column: 'last', keyword: this.value, caseSensitive: false });" /> <br />
 
-    <button id="k100button">Add 100,000 records</button> | <button id="wwbutton">Create a web worker</button> |
+    <button id="k100button">Add 100,000 records</button> | <button id="resetButton">Reset to initial records</button> | <button id="wwbutton">Create a web worker</button> |
     <button id="amsbutton">Allow multiple sort</button> | <button id="rcmpbutton">Set random comparator for sorting 4th column</button>
 
     <hr />
@@ -377,6 +377,10 @@
 
             console.log('100,000 rows generated in ' + ((generatedTime - startTime) / 1000).toFixed(2) + ' seconds');
             console.log('100,000 rows added to table in ' + ((addTime - generatedTime) / 1000).toFixed(2) + ' seconds');
+        });
+
+        $('#resetButton').on('click', function(){
+            table.setRows(sampleData);
         });
 
         $('#wwbutton').on('click', function(){
