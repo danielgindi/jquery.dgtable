@@ -34,7 +34,7 @@ const Path = require('path');
         babelTargets: '> 0.25%, not dead',
         minified: false,
         ecmaVersion: 6,
-        outputName: 'i18n',
+        outputName: 'DGTable',
     }, {
         dest: 'dist/jquery.dgtable.umd.min.js',
         sourceMap: true,
@@ -42,7 +42,7 @@ const Path = require('path');
         babelTargets: '> 0.25%, not dead',
         minified: true,
         ecmaVersion: 6,
-        outputName: 'i18n',
+        outputName: 'DGTable',
     }, {
         dest: 'dist/jquery.dgtable.cjs.js',
         sourceMap: true,
@@ -85,7 +85,7 @@ const Path = require('path');
 
         if (task.babelTargets) {
             plugins.push(require('rollup-plugin-babel')({
-                sourceMap: task.sourceMap,
+                sourceMap: task.sourceMap ? true : false,
                 presets: [
                     ['@babel/env', {
                         targets: task.babelTargets,
@@ -141,24 +141,20 @@ const Path = require('path');
             });
 
         let generated = await bundle.generate({
-            format: task.outputFormat,
-            sourcemap: !!task.sourceMap,
             name: task.outputName,
-            output: {
-                globals: {
-                    jquery: 'jQuery',
-                },
+            sourcemap: task.sourceMap,
+            format: task.outputFormat,
+            globals: {
+                jquery: 'jQuery',
             },
         });
 
         let code = generated.output[0].code;
 
-        if (task.sourceMap === true) {
+        if (task.sourceMap === true && generated.output[0].map) {
             let sourceMapOutPath = task.dest + '.map';
             FsExtra.writeFileSync(sourceMapOutPath, generated.output[0].map.toString());
             code += '\n//# sourceMappingURL=' + Path.basename(sourceMapOutPath);
-        } else if (task.sourceMap === 'inline') {
-            code += '\n//# sourceMappingURL=' + generated.output[0].map.toUrl();
         }
 
         FsExtra.writeFileSync(task.dest, code);
