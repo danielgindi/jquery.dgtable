@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.28
+ * jquery.dgtable 0.5.29
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 (function (global, factory) {
@@ -5745,12 +5745,39 @@
 	  }
 
 	  // Shallow-clone the args, as the filter function may want to modify it for keeping state
-	  p.filterArgs = _typeof(args) === 'object' && !Array.isArray(args) ? $$1.extend({}, args) : args;
-	  p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
+	  p.filterArgs = args == null ? null : _typeof(args) === 'object' && !Array.isArray(args) ? $$1.extend({}, args) : args;
 
-	  if (hadFilter || p.filteredRows) {
+	  if (p.filterArgs !== null) {
+	    p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
+
+	    if (hadFilter || p.filteredRows) {
+	      this.clearAndRender();
+	      this.trigger('filter', args);
+	    }
+	  } else
+	  {
+	    p.filterArgs = null;
+	    p.filteredRows = null;
 	    this.clearAndRender();
-	    this.trigger('filter', args);
+	    this.trigger('filterclear', {});
+	  }
+
+	  return this;
+	};
+
+	/**
+	    * @public
+	    * @expose
+	    * @returns {DGTable} self
+	    */
+	DGTable.prototype.clearFilter = function () {
+	  var p = this.p;
+
+	  if (p.filteredRows) {
+	    p.filterArgs = null;
+	    p.filteredRows = null;
+	    this.clearAndRender();
+	    this.trigger('filterclear', {});
 	  }
 
 	  return this;
