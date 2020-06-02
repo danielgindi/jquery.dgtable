@@ -1163,12 +1163,21 @@ DGTable.prototype.filter = function (args) {
     }
 
     // Shallow-clone the args, as the filter function may want to modify it for keeping state
-    p.filterArgs = (typeof args === 'object' && !Array.isArray(args)) ? $.extend({}, args) : args;
-    p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
+    p.filterArgs = args == null ? null : ((typeof args === 'object' && !Array.isArray(args)) ? $.extend({}, args) : args);
+    
+    if (p.filterArgs !== null) {
+        p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
 
-    if (hadFilter || p.filteredRows) {
+        if (hadFilter || p.filteredRows) {
+            this.clearAndRender();
+            this.trigger('filter', args);
+        }
+    }
+    else {
+        p.filterArgs = null;
+        p.filteredRows = null;
         this.clearAndRender();
-        this.trigger('filter', args);
+        this.trigger('filterclear', {});
     }
     
     return this;
