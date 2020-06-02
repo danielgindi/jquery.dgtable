@@ -152,6 +152,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 3nd argument: New width
 * `filter`: A filter was applied
   * 1st argument: The options passed to the filter method
+* `filterclear`: A filter was cleared
 * `sort`: The data was sorted
   * 1st argument: Array of sort constructs `[{ "column": "column's name", "descending": true/false }, ...]`
 * `headercontextmenu`: A context menu should be shown for a header cell
@@ -190,6 +191,8 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **args.column**: Name of the column to filter on
   * **args.keyword**: Tests the specified column if contains this keyword
   * **args.caseSensitive**: Use caseSensitive filtering
+  * *returns* Self, to allow for call chaining.
+* `clearFilter() {DGTable}`: Clears the current filter
   * *returns* Self, to allow for call chaining.
 * `setColumnLabel({String} column, {String} label) {DGTable}`: Set a new label to a column
   * **column**: Name of the column

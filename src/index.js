@@ -1175,6 +1175,24 @@ DGTable.prototype.filter = function (args) {
 };
 
 /**
+ * @public
+ * @expose
+ * @returns {DGTable} self
+ */
+DGTable.prototype.clearFilter = function () {
+    const p = this.p;
+    
+    if (p.filteredRows) {
+        p.filterArgs = null;
+        p.filteredRows = null;
+        this.clearAndRender();
+        this.trigger('filterclear', {});
+    }
+    
+    return this;
+};
+
+/**
  * @private
  * @returns {DGTable} self
  */
