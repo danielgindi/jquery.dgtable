@@ -47,6 +47,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.cjs.js',
         sourceMap: true,
         outputFormat: 'cjs',
+        outputExports: 'auto',
         babelTargets: {
             node: 10,
         },
@@ -56,6 +57,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.cjs.min.js',
         sourceMap: true,
         outputFormat: 'cjs',
+        outputExports: 'auto',
         babelTargets: {
             node: 10,
         },
@@ -129,16 +131,16 @@ const Path = require('path');
         });
 
         const bundle = await Rollup.rollup({
-                preserveSymlinks: true,
-                treeshake: true,
-                onwarn(warning, warn) {
-                    if (warning.code === 'THIS_IS_UNDEFINED') return;
-                    warn(warning);
-                },
-                input: inputFile,
-                plugins: plugins,
-                external: ['jquery', 'jQuery'],
-            });
+            preserveSymlinks: true,
+            treeshake: true,
+            onwarn(warning, warn) {
+                if (warning.code === 'THIS_IS_UNDEFINED') return;
+                warn(warning);
+            },
+            input: inputFile,
+            plugins: plugins,
+            external: ['jquery', 'jQuery'],
+        });
 
         let generated = await bundle.generate({
             name: task.outputName,
@@ -147,6 +149,7 @@ const Path = require('path');
             globals: {
                 jquery: 'jQuery',
             },
+            exports: task.outputExports,
         });
 
         let code = generated.output[0].code;
