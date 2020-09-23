@@ -1,12 +1,14 @@
 /*!
- * jquery.dgtable 0.5.29
+ * jquery.dgtable 0.5.31
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 'use strict';
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+var jQuery = require('jquery');
 
-var jQuery = _interopDefault(require('jquery'));
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var jQuery__default = /*#__PURE__*/_interopDefaultLegacy(jQuery);
 
 const indexOf = Array.prototype.indexOf;
 
@@ -64,7 +66,7 @@ RowCollection.prototype.initialize = function (options) {
 RowCollection.prototype.add = function (rows, at) {
   let isArray = 'splice' in rows && 'length' in rows,i,len;
   if (isArray) {
-    if (at) {
+    if (typeof at === 'number') {
       for (i = 0, len = rows.length; i < len; i++) {
         this.splice(at++, 0, rows[i]);
       }
@@ -74,7 +76,7 @@ RowCollection.prototype.add = function (rows, at) {
       }
     }
   } else {
-    if (at) {
+    if (typeof at === 'number') {
       this.splice(at, 0, rows);
     } else {
       this.push(rows);
@@ -338,7 +340,7 @@ ColumnCollection.prototype.moveColumn = function (src, dest) {
 
 /* eslint-env browser */
 
-const $ = jQuery;
+const $ = jQuery__default['default'];
 
 const hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle;
 
@@ -750,7 +752,7 @@ function ByColumnFilter(row, args) {
 /* eslint-env browser */
 
 const nativeIndexOf = Array.prototype.indexOf;
-const $$1 = jQuery;
+const $$1 = jQuery__default['default'];
 
 let userAgent = navigator.userAgent;
 let ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;

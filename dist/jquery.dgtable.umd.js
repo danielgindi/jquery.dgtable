@@ -1,14 +1,16 @@
 /*!
- * jquery.dgtable 0.5.29
+ * jquery.dgtable 0.5.31
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('jquery')) :
 	typeof define === 'function' && define.amd ? define(['jquery'], factory) :
-	(global = global || self, global.DGTable = factory(global.jQuery));
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.DGTable = factory(global.jQuery));
 }(this, (function (jQuery) { 'use strict';
 
-	jQuery = jQuery && Object.prototype.hasOwnProperty.call(jQuery, 'default') ? jQuery['default'] : jQuery;
+	function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+	var jQuery__default = /*#__PURE__*/_interopDefaultLegacy(jQuery);
 
 	var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -223,7 +225,7 @@
 	(module.exports = function (key, value) {
 	  return sharedStore[key] || (sharedStore[key] = value !== undefined ? value : {});
 	})('versions', []).push({
-	  version: '3.6.4',
+	  version: '3.6.5',
 	  mode:  'global',
 	  copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
 	});
@@ -2623,7 +2625,7 @@
 	var INVALID_PORT = 'Invalid port';
 
 	var ALPHA = /[A-Za-z]/;
-	var ALPHANUMERIC = /[\d+\-.A-Za-z]/;
+	var ALPHANUMERIC = /[\d+-.A-Za-z]/;
 	var DIGIT = /\d/;
 	var HEX_START = /^(0x|0X)/;
 	var OCT = /^[0-7]+$/;
@@ -3641,7 +3643,7 @@
 	  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
 	  var n = Object.prototype.toString.call(o).slice(8, -1);
 	  if (n === "Object" && o.constructor) n = o.constructor.name;
-	  if (n === "Map" || n === "Set") return Array.from(n);
+	  if (n === "Map" || n === "Set") return Array.from(o);
 	  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
 	}
 
@@ -3653,9 +3655,12 @@
 	  return arr2;
 	}
 
-	function _createForOfIteratorHelper(o) {
+	function _createForOfIteratorHelper(o, allowArrayLike) {
+	  var it;
+
 	  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
-	    if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) {
+	    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+	      if (it) o = it;
 	      var i = 0;
 
 	      var F = function () {};
@@ -3681,8 +3686,7 @@
 	    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 	  }
 
-	  var it,
-	      normalCompletion = true,
+	  var normalCompletion = true,
 	      didErr = false,
 	      err;
 	  return {
@@ -3895,7 +3899,7 @@
 	RowCollection.prototype.add = function (rows, at) {
 	  var isArray = 'splice' in rows && 'length' in rows,i,len;
 	  if (isArray) {
-	    if (at) {
+	    if (typeof at === 'number') {
 	      for (i = 0, len = rows.length; i < len; i++) {
 	        this.splice(at++, 0, rows[i]);
 	      }
@@ -3905,7 +3909,7 @@
 	      }
 	    }
 	  } else {
-	    if (at) {
+	    if (typeof at === 'number') {
 	      this.splice(at, 0, rows);
 	    } else {
 	      this.push(rows);
@@ -4168,7 +4172,7 @@
 
 	/* eslint-env browser */
 
-	var $ = jQuery;
+	var $ = jQuery__default['default'];
 
 	var hasComputedStyle = document.defaultView && document.defaultView.getComputedStyle;
 
@@ -4594,7 +4598,7 @@
 	/* eslint-env browser */
 
 	var nativeIndexOf$1 = Array.prototype.indexOf;
-	var $$1 = jQuery;
+	var $$1 = jQuery__default['default'];
 
 	var userAgent = navigator.userAgent;
 	var ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;

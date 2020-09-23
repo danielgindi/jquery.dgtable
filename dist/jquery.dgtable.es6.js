@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.29
+ * jquery.dgtable 0.5.31
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 import jQuery from 'jquery';
@@ -60,7 +60,7 @@ RowCollection.prototype.initialize = function (options) {
 RowCollection.prototype.add = function (rows, at) {
   let isArray = 'splice' in rows && 'length' in rows,i,len;
   if (isArray) {
-    if (at) {
+    if (typeof at === 'number') {
       for (i = 0, len = rows.length; i < len; i++) {
         this.splice(at++, 0, rows[i]);
       }
@@ -70,7 +70,7 @@ RowCollection.prototype.add = function (rows, at) {
       }
     }
   } else {
-    if (at) {
+    if (typeof at === 'number') {
       this.splice(at, 0, rows);
     } else {
       this.push(rows);
