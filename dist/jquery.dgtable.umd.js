@@ -1,5 +1,5 @@
 /*!
- * jquery.dgtable 0.5.31
+ * jquery.dgtable 0.5.32
  * git://github.com/danielgindi/jquery.dgtable.git
  */
 (function (global, factory) {
@@ -4505,7 +4505,7 @@
 	      if (rtl) {
 	        switch (rtlScrollType) {
 	          case 'negative':
-	            return value + el.scrollWidth - el.clientWidth;
+	            return value - el.scrollWidth + el.clientWidth;
 
 	          case 'reverse':
 	            return el.scrollWidth - value - el.clientWidth;
