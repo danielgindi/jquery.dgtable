@@ -83,7 +83,7 @@ class ScrollHelper {
         if (rtl) {
             switch (rtlScrollType) {
                 case 'negative':
-                    return value + el.scrollWidth - el.clientWidth;
+                    return value - el.scrollWidth + el.clientWidth;
 
                 case 'reverse':
                     return el.scrollWidth - value - el.clientWidth;
