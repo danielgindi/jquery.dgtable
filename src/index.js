@@ -1724,17 +1724,17 @@ DGTable.prototype.getSortedColumns = function () {
  * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
  * @public
  * @expose
- * @param {Number} row - index of the row
- * @param {String} columnName - name of the column
- * @returns {String} HTML string for the specified cell
+ * @param {number} rowIndex - index of the row
+ * @param {string} columnName - name of the column
+ * @returns {string} HTML string for the specified cell
  */
-DGTable.prototype.getHtmlForCell = function (row, columnName) {
+DGTable.prototype.getHtmlForRowCell = function (rowIndex, columnName) {
     const p = this.p;
 
-    if (row < 0 || row > p.rows.length - 1) return null;
+    if (rowIndex < 0 || rowIndex > p.rows.length - 1) return null;
     let column = p.columns.get(columnName);
     if (!column) return null;
-    let rowData = p.rows[row];
+    let rowData = p.rows[rowIndex];
 
     return this._getHtmlForCell(rowData, column);
 };
@@ -1745,7 +1745,24 @@ DGTable.prototype.getHtmlForCell = function (row, columnName) {
  * @expose
  * @param {Object} rowData - row data
  * @param {Object} column - column data
- * @returns {String} HTML string for the specified cell
+ * @returns {string|null} HTML string for the specified cell
+ */
+DGTable.prototype.getHtmlForRowDataCell = function (rowData, columnName) {
+    const p = this.p;
+    
+    let column = p.columns.get(columnName);
+    if (!column) return null;
+    
+    return this._getHtmlForCell(rowData, column);
+};
+
+/**
+ * Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+ * @private
+ * @expose
+ * @param {Object} rowData - row data
+ * @param {Object} column - column data
+ * @returns {string} HTML string for the specified cell
  */
 DGTable.prototype._getHtmlForCell = function (rowData, column) {
     let dataPath = column.dataPath;
@@ -1756,7 +1773,7 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
     }
 
     let content = this.o.cellFormatter(colValue, column.name, rowData);
-    if (content === undefined) {
+    if (content === undefined || content === null) {
         content = '';
     }
     

@@ -237,10 +237,14 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getColumnConfig({String} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
-* `getHtmlForCell(row: Number, columnName: String) {String}`: Returns the HTML for specified cell in a row.
+* `getHtmlForRowCell(row: Number, columnName: String) {String}`: Returns the HTML for specified cell in a row.
   * **row**: Index of row
   * **columnName**: Name of cell
   * *returns* HTML for cell. By default cell content is *not* HTML encoded, you should encode appropriately in your `cellFormatter`.
+* `getHtmlForRowDataCell(rowData: Object, columnName: String) {string|null}`: Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+  * **rowData**: Actual row data
+  * **columnName**: Name of column
+  * *returns*  string for the specified cell
 * `getDataForRow(row: Number): Object`: Gets the row data for a specific row
   * *returns* row data of the row at physical index **row**
 * `getRowCount(): Number`: Gets the number of rows
