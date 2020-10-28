@@ -702,7 +702,7 @@ DGTable.prototype.render = function () {
         }
 
         let lastScrollTop = p.table && p.table.parentNode ? p.table.scrollTop : NaN,
-            lastScrollHorz = p.table && p.table.parentNode ? ScrollHelper.normalizeScrollHorz(p.table) : NaN;
+            lastScrollHorz = p.table && p.table.parentNode ? ScrollHelper.scrollHorzNormalized(p.table) : NaN;
 
         this._renderSkeletonBase()
             ._renderSkeletonBody()
@@ -731,11 +731,11 @@ DGTable.prototype.render = function () {
         }
 
         if (!isNaN(lastScrollTop))
-          p.table.scrollTop = lastScrollTop;
+            p.table.scrollTop = lastScrollTop;
 
         if (!isNaN(lastScrollHorz)) {
-          ScrollHelper.denormalizeScrollHorz(p.table, undefined, lastScrollHorz);
-          ScrollHelper.denormalizeScrollHorz(p.header, undefined, lastScrollHorz);
+            ScrollHelper.scrollHorzNormalized(p.table, lastScrollHorz);
+            ScrollHelper.scrollHorzNormalized(p.header, lastScrollHorz);
         }
 
         this.trigger('renderskeleton');
