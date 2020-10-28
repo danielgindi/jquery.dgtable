@@ -21,7 +21,7 @@ let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 function webkitRenderBugfix(el) {
-    // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars 
+    // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars
     //   are still calculated even though they are not there yet. This is the last resort.
     let oldDisplay = el.style.display;
     el.style.display = 'none';
@@ -98,7 +98,7 @@ DGTable.prototype.initialize = function (options) {
      * @expose
      * */
     let $el = that.$el = $(that.el);
-    
+
     if (that.el !== options.el) {
         $el.addClass(options.className || 'dgtable-wrapper');
     }
@@ -638,7 +638,7 @@ DGTable.prototype.close = DGTable.prototype.remove = DGTable.prototype.destroy =
  */
 DGTable.prototype._unbindCellEventsForTable = function() {
     const p = this.p;
-    
+
     if (p.headerRow) {
         for (let i = 0, rows = p.headerRow.childNodes, rowCount = rows.length; i < rowCount; i++) {
             let rowToClean = rows[i];
@@ -647,13 +647,13 @@ DGTable.prototype._unbindCellEventsForTable = function() {
             }
         }
     }
-    
+
     if (p.tbody) {
         for (let i = 0, rows = p.tbody.childNodes, rowCount = rows.length; i < rowCount; i++) {
             this._unbindCellEventsForRow(rows[i]);
         }
     }
-    
+
     return this;
 };
 
@@ -696,19 +696,19 @@ DGTable.prototype.render = function () {
     if (p.tableSkeletonNeedsRendering === true) {
         p.tableSkeletonNeedsRendering = false;
 
-        if (o.width == DGTable.Width.AUTO) {
+        if (o.width === DGTable.Width.AUTO) {
             // We need to do this to return to the specified widths instead. The arrows added to the column widths...
             this._clearSortArrows();
         }
 
-        let lastScrollTop = p.table ? p.table.scrollTop : NaN,
-            lastScrollLeft = p.table ? ScrollHelper.scrollLeftNormalized(p.table) : NaN;
+        let lastScrollTop = p.table && p.table.parentNode ? p.table.scrollTop : NaN,
+            lastScrollHorz = p.table && p.table.parentNode ? ScrollHelper.normalizeScrollHorz(p.table) : NaN;
 
         this._renderSkeletonBase()
             ._renderSkeletonBody()
             .tableWidthChanged(true, false) // Take this chance to calculate required column widths
             ._renderSkeletonHeaderCells();
-            
+
         if (!o.virtualTable) {
             let rows = p.filteredRows || p.rows;
             rowCount = rows.length;
@@ -733,9 +733,9 @@ DGTable.prototype.render = function () {
         if (!isNaN(lastScrollTop))
           p.table.scrollTop = lastScrollTop;
 
-        if (!isNaN(lastScrollLeft)) {
-          ScrollHelper.scrollLeftNormalized(p.table, lastScrollLeft);
-          ScrollHelper.scrollLeftNormalized(p.header, lastScrollLeft);
+        if (!isNaN(lastScrollHorz)) {
+          ScrollHelper.denormalizeScrollHorz(p.table, lastScrollHorz);
+          ScrollHelper.denormalizeScrollHorz(p.header, lastScrollHorz);
         }
 
         this.trigger('renderskeleton');
@@ -828,7 +828,7 @@ DGTable.prototype.clearAndRender = function (render) {
  */
 DGTable.prototype.renderRows = function (first, last) {
     const o = this.o, p = this.p;
-        
+
     let tableClassName = o.tableClassName,
         rowClassName = tableClassName + '-row',
         cellClassName = tableClassName + '-cell',
@@ -876,10 +876,10 @@ DGTable.prototype.renderRows = function (first, last) {
             if (allowCellPreview) {
                 p._bindCellHoverIn(cell);
             }
-            
+
             let cellInner = cell.appendChild(createElement('div'));
             cellInner.innerHTML = this._getHtmlForCell(rowData, column);
-            
+
             row.appendChild(cell);
         }
 
@@ -929,7 +929,7 @@ DGTable.prototype._calculateVirtualHeight = function () {
  */
 DGTable.prototype._calculateTbodyWidth = function () {
     const p = this.p;
-        
+
     let tableClassName = this.o.tableClassName,
         rowClassName = tableClassName + '-row',
         cellClassName = tableClassName + '-cell',
@@ -993,7 +993,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
  */
 DGTable.prototype.setColumns = function (columns, render) {
     const p = this.p;
-        
+
     columns = columns || [];
 
     let normalizedCols = new ColumnCollection();
@@ -1017,7 +1017,7 @@ DGTable.prototype.setColumns = function (columns, render) {
 
     p.columns = normalizedCols;
     p.visibleColumns = normalizedCols.getVisibleColumns();
-    
+
     this._ensureVisibleColumns().clearAndRender(render);
 
     return this;
@@ -1120,7 +1120,7 @@ DGTable.prototype.setHeaderCellFormatter = function (formatter) {
     this.o.headerCellFormatter = formatter || function (val) {
         return (typeof val === 'string') ? htmlEncode(val) : val;
     };
-        
+
     return this;
 };
 
@@ -1145,9 +1145,9 @@ DGTable.prototype.setFilter = function (filterFunc) {
  */
 DGTable.prototype.filter = function (args) {
     const p = this.p;
-    
+
     let filterFunc = this.o.filter || ByColumnFilter;
-    
+
     // Deprecated use of older by-column filter
     if (typeof arguments[0] === 'string' && typeof arguments[1] === 'string') {
         args = {
@@ -1156,7 +1156,7 @@ DGTable.prototype.filter = function (args) {
             caseSensitive: arguments[2],
         };
     }
-    
+
     let hadFilter = !!p.filteredRows;
     if (p.filteredRows) {
         p.filteredRows = null; // Allow releasing array memory now
@@ -1164,7 +1164,7 @@ DGTable.prototype.filter = function (args) {
 
     // Shallow-clone the args, as the filter function may want to modify it for keeping state
     p.filterArgs = args == null ? null : ((typeof args === 'object' && !Array.isArray(args)) ? $.extend({}, args) : args);
-    
+
     if (p.filterArgs !== null) {
         p.filteredRows = p.rows.filteredCollection(filterFunc, p.filterArgs);
 
@@ -1179,7 +1179,7 @@ DGTable.prototype.filter = function (args) {
         this.clearAndRender();
         this.trigger('filterclear', {});
     }
-    
+
     return this;
 };
 
@@ -1190,14 +1190,14 @@ DGTable.prototype.filter = function (args) {
  */
 DGTable.prototype.clearFilter = function () {
     const p = this.p;
-    
+
     if (p.filteredRows) {
         p.filterArgs = null;
         p.filteredRows = null;
         this.clearAndRender();
         this.trigger('filterclear', {});
     }
-    
+
     return this;
 };
 
@@ -1253,7 +1253,7 @@ DGTable.prototype.setColumnLabel = function (column, label) {
  */
 DGTable.prototype.moveColumn = function (src, dest) {
     const o = this.o, p = this.p;
-        
+
     let columns = p.columns,
         col, destCol;
 
@@ -1314,12 +1314,12 @@ DGTable.prototype.moveColumn = function (src, dest) {
  */
 DGTable.prototype.sort = function (column, descending, add) {
     const o = this.o, p = this.p;
-    
+
     let columns = p.columns,
         col = columns.get(column);
 
     let currentSort = p.rows.sortColumn;
-        
+
     if (col) {
 
         if (currentSort.length && currentSort[currentSort.length - 1].column == column) {
@@ -1381,7 +1381,7 @@ DGTable.prototype.sort = function (column, descending, add) {
     }
 
     p.rows.sortColumn = currentSort;
-    
+
     if (currentSort.length) {
         p.rows.sort(!!p.filteredRows);
         if (p.filteredRows) {
@@ -1395,7 +1395,7 @@ DGTable.prototype.sort = function (column, descending, add) {
         sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
     }
     this.trigger('sort', sorts);
-    
+
     return this;
 };
 
@@ -1411,13 +1411,13 @@ DGTable.prototype.resort = function () {
 
     let currentSort = p.rows.sortColumn;
     if (currentSort.length) {
-        
+
         for (let i = 0; i < currentSort.length; i++) {
             if (!columns.get(currentSort[i].column)) {
                 currentSort.splice(i--, 1);
             }
         }
-        
+
         p.rows.sortColumn = currentSort;
         if (currentSort.length) {
             p.rows.sort(!!p.filteredRows);
@@ -1433,8 +1433,8 @@ DGTable.prototype.resort = function () {
         }
         this.trigger('sort', sorts);
     }
-    
-    
+
+
     return this;
 };
 
@@ -1749,10 +1749,10 @@ DGTable.prototype.getHtmlForRowCell = function (rowIndex, columnName) {
  */
 DGTable.prototype.getHtmlForRowDataCell = function (rowData, columnName) {
     const p = this.p;
-    
+
     let column = p.columns.get(columnName);
     if (!column) return null;
-    
+
     return this._getHtmlForCell(rowData, column);
 };
 
@@ -1776,7 +1776,7 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
     if (content === undefined || content === null) {
         content = '';
     }
-    
+
     return content;
 };
 
@@ -1789,7 +1789,7 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
  */
 DGTable.prototype.getRowYPos = function (rowIndex) {
     const p = this.p;
-    
+
     if (this.o.virtualTable) {
         return rowIndex > 0 ? p.virtualRowHeightFirst + (rowIndex - 1) * p.virtualRowHeight : 0;
     } else {
@@ -2132,27 +2132,27 @@ DGTable.prototype.tableWidthChanged = (function () {
                     }
                 }
             }
-            
+
             // Try to fill width
             if (o.autoFillTableWidth && sizeLeft > 0) {
                 let nonResizableTotal = 0;
                 let sizeLeftToFill = sizeLeft;
-                
+
                 for (let i = 0; i < p.visibleColumns.length; i++) {
                     let col = p.visibleColumns[i];
                     if (!col.resizable && col.widthMode === ColumnWidthMode.ABSOLUTE)
                         nonResizableTotal += col.width;
-                    
+
                     if (col.widthMode === ColumnWidthMode.RELATIVE)
                         sizeLeftToFill -= Math.round(sizeLeftForRelative * col.width);
                 }
-                
+
                 let conv = ((detectedWidth - nonResizableTotal) / (detectedWidth - sizeLeftToFill - nonResizableTotal)) || NaN;
                 for (let i = 0; i < p.visibleColumns.length && sizeLeftToFill > 0; i++) {
                     let col = p.visibleColumns[i];
                     if (!col.resizable && col.widthMode === ColumnWidthMode.ABSOLUTE)
                         continue;
-                    
+
                     if (col.widthMode === ColumnWidthMode.RELATIVE) {
                         col.width *= conv;
                     } else {
@@ -2162,10 +2162,10 @@ DGTable.prototype.tableWidthChanged = (function () {
                             if (changedColumnIndexes.indexOf(i) === -1)
                                 changedColumnIndexes.push(i);
                         }
-                    } 
+                    }
                 }
             }
-            
+
             // Materialize relative sizes
             for (let i = 0; i < p.visibleColumns.length; i++) {
                 let col = p.visibleColumns[i];
@@ -2268,44 +2268,44 @@ DGTable.prototype.tableHeightChanged = function () {
 DGTable.prototype.addRows = function (data, at, resort, render) {
     let that = this,
         p = that.p;
-        
+
     if (typeof at === 'boolean') {
         render = resort;
         resort = at;
         at = -1;
     }
-    
+
     if (typeof at !== 'number')
         at = -1;
-    
+
     if (at < 0 || at > p.rows.length)
         at = p.rows.length;
-    
+
     render = (render === undefined) ? true : !!render;
 
     if (data) {
         p.rows.add(data, at);
-        
+
         if (p.filteredRows || (resort && p.rows.sortColumn.length)) {
-            
+
             if (resort && p.rows.sortColumn.length) {
                 this.resort();
             } else {
                 this._refilter();
             }
-            
+
             p.tableSkeletonNeedsRendering = true;
-            
+
             if (render) {
                 // Render the skeleton with all rows from scratch
                 this.render();
             }
-            
+
         } else if (render) {
             let childNodes = p.tbody.childNodes;
-            
+
             if (that.o.virtualTable) {
-                
+
                 while (p.tbody.firstChild) {
                     this.trigger('rowdestroy', p.tbody.firstChild);
                     this._unbindCellEventsForRow(p.tbody.firstChild);
@@ -2316,21 +2316,21 @@ DGTable.prototype.addRows = function (data, at, resort, render) {
                     ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height
                     .render()
                     ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
-                
+
             } else if (p.$tbody) {
-                
+
                 let firstRow = at,
                     lastRow = at + data.length - 1;
-                
+
                 let renderedRows = that.renderRows(firstRow, lastRow);
                 p.tbody.insertBefore(renderedRows, childNodes[at] || null);
-                
+
                 for (let i = lastRow + 1; i < childNodes.length; i++) {
                     let row = childNodes[i];
                     row['rowIndex'] += data.length;
                     row['physicalRowIndex'] += data.length;
                 }
-                               
+
                 this.render()
                     ._updateLastCellWidthFromScrollbar() // Detect vertical scrollbar height, and update existing last cells
                     ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
@@ -2355,51 +2355,51 @@ DGTable.prototype.addRows = function (data, at, resort, render) {
 DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
     let that = this,
         p = that.p;
-        
+
     if (typeof count !== 'number' || count <= 0) return this;
 
     if (physicalRowIndex < 0 || physicalRowIndex > p.rows.length - 1) return this;
 
     p.rows.splice(physicalRowIndex, count);
     render = (render === undefined) ? true : !!render;
-    
+
     if (p.filteredRows) {
-        
+
         this._refilter();
-        
+
         p.tableSkeletonNeedsRendering = true;
-        
+
         if (render) {
             // Render the skeleton with all rows from scratch
             this.render();
         }
-        
+
     } else if (render) {
-        
+
         let childNodes = p.tbody.childNodes;
-        
+
         if (this.o.virtualTable) {
-                
+
             while (p.tbody.firstChild) {
                 this.trigger('rowdestroy', p.tbody.firstChild);
                 this._unbindCellEventsForRow(p.tbody.firstChild);
                 p.tbody.removeChild(p.tbody.firstChild);
             }
-            
+
             this._calculateVirtualHeight()
                 ._updateLastCellWidthFromScrollbar()
                 .render()
                 ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
-                
-                
+
+
         } else {
-            
+
             let countRemoved = 0, lastRowIndex = physicalRowIndex + count - 1;
-            
+
             for (let i = 0; i < childNodes.length; i++) {
                 let row = childNodes[i];
                 let index = row['physicalRowIndex'];
-                
+
                 if (index >= physicalRowIndex) {
                     if (index <= lastRowIndex) {
                         this.trigger('rowdestroy', row);
@@ -2413,14 +2413,14 @@ DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
                     row['rowIndex'] = i;
                 }
             }
-                        
+
             this.render()
                 ._updateLastCellWidthFromScrollbar()
                 ._updateTableWidth(true); // Update table width to suit the required width considering vertical scrollbar
-                
+
         }
     }
-    
+
     return this;
 };
 
@@ -2463,7 +2463,7 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
         // Now make sure that the row actually rendered, as this is a virtual table
         let isRowVisible = false;
         let i = 0;
-        
+
         for (; i < childNodes.length; i++) {
             if (childNodes[i]['physicalRowIndex'] === physicalRowIndex) {
                 isRowVisible = true;
@@ -2473,7 +2473,7 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
                 break;
             }
         }
-        
+
         if (isRowVisible) {
             let renderedRow = this.renderRows(rowIndex, rowIndex);
             p.tbody.insertBefore(renderedRow, childNodes[i] || null);
@@ -2540,7 +2540,7 @@ DGTable.prototype.refreshAllVirtualRows = function () {
         // Now make sure that the row actually rendered, as this is a virtual table
         let rowsToRender = [];
         let childNodes = p.tbody.childNodes;
-        
+
         for (let i = 0, rowCount = childNodes.length; i < rowCount; i++) {
             rowsToRender.push(childNodes[i]['physicalRowIndex']);
             this.trigger('rowdestroy', childNodes[i]);
@@ -2549,7 +2549,7 @@ DGTable.prototype.refreshAllVirtualRows = function () {
             i--;
             rowCount--;
         }
-        
+
         for (let i = 0; i < rowsToRender.length; i++) {
             let renderedRow = this.renderRows(rowsToRender[i], rowsToRender[i]);
             p.tbody.appendChild(renderedRow);
@@ -2789,7 +2789,7 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
     let startPos = { x: startTouch.pageX, y: startTouch.pageY },
         currentPos = startPos,
         distanceTreshold = 9;
-        
+
     let tapAndHoldTimeout;
 
     let unbind = function () {
@@ -2939,7 +2939,7 @@ DGTable.prototype._onMouseDownColumnHeader = function (event) {
                 'top': posCol.top,
                 'height': CssUtil.height(this.$el),
             })[0]['columnName'] = selectedHeaderCell[0]['columnName'];
-            
+
         try { p.$resizer[0].style.zIndex = ''; }
         catch (ignored) { /* we're ok with this */ }
 
@@ -3065,9 +3065,9 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
     posCol.left -= posRelative.left;
     let resizerWidth = CssUtil.outerWidth(p.$resizer);
-    
+
     let isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
-    
+
     let actualX = event.pageX - posRelative.left;
     let minX = posCol.left;
 
@@ -3087,7 +3087,7 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
         }
     } else {
         minX += column.ignoreMin ? 0 : this.o.minColumnWidth;
-        
+
         if (!isBoxing) {
             minX += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
             minX += this._horizontalPadding(selectedHeaderCell[0]);
@@ -3126,7 +3126,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
         posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
         posCol.left -= posRelative.left;
         let resizerWidth = CssUtil.outerWidth(p.$resizer);
-        
+
         let isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
 
         let actualX = event.pageX - posRelative.left;
@@ -3144,7 +3144,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
             }
 
             baseX += CssUtil.outerWidth(selectedHeaderCell);
-            
+
             minX = baseX - (column.ignoreMin ? 0 : this.o.minColumnWidth);
             if (actualX > minX) {
                 actualX = minX;
@@ -3166,7 +3166,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
 
             width = actualX - baseX;
         }
-        
+
         p.$resizer.remove();
         p.$resizer = null;
 
@@ -3211,7 +3211,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
                     sizeToSet = unNormalizedSizeToSet;
                 }
             }
-            
+
             sizeToSet *= 100;
             sizeToSet += '%';
         }
@@ -3334,7 +3334,7 @@ DGTable.prototype._showSortArrow = function (column, descending) {
 
     let col = p.columns.get(column);
     if (!col) return false;
-    
+
     let arrow = createElement('span');
     arrow.className = 'sort-arrow';
 
@@ -3404,9 +3404,9 @@ DGTable.prototype._renderSkeletonBase = function () {
     let that = this,
         p = that.p,
         o = that.o;
-    
+
     // Clean up old elements
-    
+
     if (p.$table && o.virtualTable) {
         p.$table.remove();
         if (p.$tbody) {
@@ -3418,12 +3418,12 @@ DGTable.prototype._renderSkeletonBase = function () {
         }
         p.$table = p.table = p.$tbody = p.tbody = null;
     }
-    
+
     that._destroyHeaderCells();
     p.currentTouchId = null;
     if (p.$header) {
         p.$header.remove();
-    }    
+    }
 
     // Create new base elements
     let tableClassName = o.tableClassName,
@@ -3435,26 +3435,26 @@ DGTable.prototype._renderSkeletonBase = function () {
 
     header.className = tableClassName + '-header';
     headerRow.className = tableClassName + '-header-row';
-    
+
     p.$header = $header;
     p.header = header;
     p.$headerRow = $headerRow;
     p.headerRow = headerRow;
     $headerRow.appendTo(p.$header);
     $header.prependTo(this.$el);
-    
+
     relativizeElement(that.$el);
-    
+
     if (o.width == DGTable.Width.SCROLL) {
         this.el.style.overflow = 'hidden';
     } else {
         this.el.style.overflow = '';
     }
-    
+
     if (!o.height && o.virtualTable) {
         o.height = CssUtil.innerHeight(this.$el);
     }
-    
+
     return this;
 };
 
@@ -3466,7 +3466,7 @@ DGTable.prototype._renderSkeletonHeaderCells = function () {
     let that = this,
         p = that.p,
         o = that.o;
-        
+
     let allowCellPreview = o.allowCellPreview,
         allowHeaderCellPreview = o.allowHeaderCellPreview;
 
@@ -3502,7 +3502,7 @@ DGTable.prototype._renderSkeletonHeaderCells = function () {
             }
             cell['columnName'] = column.name;
             cell.setAttribute('data-column', column.name);
-            
+
             let cellInside = createElement('div');
             cellInside.innerHTML = o.headerCellFormatter(column.label, column.name);
             cell.appendChild(cellInside);
@@ -3551,7 +3551,7 @@ DGTable.prototype._renderSkeletonBody = function () {
         o = that.o;
 
     let tableClassName = o.tableClassName;
-        
+
     // Calculate virtual row heights
     if (o.virtualTable && !p.virtualRowHeight) {
         let createDummyRow = function() {
@@ -3594,7 +3594,7 @@ DGTable.prototype._renderSkeletonBody = function () {
     if (!p.$table) {
 
         let fragment = document.createDocumentFragment();
-        
+
         // Create the inner table element
         let table = createElement('div');
         let $table = $(table);
@@ -3615,7 +3615,7 @@ DGTable.prototype._renderSkeletonBody = function () {
         table.style.height = o.height ? tableHeight + 'px' : 'auto';
         table.style.display = 'block';
         table.style.overflowY = 'auto';
-        table.style.overflowX = o.width == DGTable.Width.SCROLL ? 'auto' : 'hidden';
+        table.style.overflowX = o.width === DGTable.Width.SCROLL ? 'auto' : 'hidden';
         fragment.appendChild(table);
 
         // Create the "tbody" element
@@ -3880,7 +3880,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             if (selection)
                 SelectionHelper.restoreSelection(previewCell, selection);
         } catch (ignored) { /* we're ok with this */ }
-        
+
         this.trigger(
             'cellpreview',
             previewCell.firstChild,
@@ -3994,20 +3994,20 @@ DGTable.prototype._cellMouseOutEvent = function(_el) {
  */
 DGTable.prototype.hideCellPreview = function() {
     const p = this.p;
-    
+
     if (p.$cellPreviewCell) {
         let previewCell = p.$cellPreviewCell[0];
         let origCell = previewCell['__cell'];
         let selection;
-        
+
         try {
             selection = SelectionHelper.saveSelection(previewCell);
         } catch (ignored) { /* we're ok with this */ }
-        
+
         p.$cellPreviewCell.remove();
         p._unbindCellHoverOut(origCell);
         p._unbindCellHoverOut(previewCell);
-        
+
         try {
             if (selection)
                 SelectionHelper.restoreSelection(origCell, selection);
@@ -4023,7 +4023,7 @@ DGTable.prototype.hideCellPreview = function() {
     } else {
         p.abortCellPreview = true;
     }
-    
+
     return this;
 };
 
