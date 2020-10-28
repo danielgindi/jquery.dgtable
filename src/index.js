@@ -734,8 +734,8 @@ DGTable.prototype.render = function () {
           p.table.scrollTop = lastScrollTop;
 
         if (!isNaN(lastScrollHorz)) {
-          ScrollHelper.denormalizeScrollHorz(p.table, lastScrollHorz);
-          ScrollHelper.denormalizeScrollHorz(p.header, lastScrollHorz);
+          ScrollHelper.denormalizeScrollHorz(p.table, undefined, lastScrollHorz);
+          ScrollHelper.denormalizeScrollHorz(p.header, undefined, lastScrollHorz);
         }
 
         this.trigger('renderskeleton');
