@@ -31,6 +31,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.umd.js',
         sourceMap: true,
         outputFormat: 'umd',
+        outputExports: 'default',
         babelTargets: '> 0.25%, not dead',
         minified: false,
         ecmaVersion: 6,
@@ -39,6 +40,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.umd.min.js',
         sourceMap: true,
         outputFormat: 'umd',
+        outputExports: 'default',
         babelTargets: '> 0.25%, not dead',
         minified: true,
         ecmaVersion: 6,
@@ -47,7 +49,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.cjs.js',
         sourceMap: true,
         outputFormat: 'cjs',
-        outputExports: 'auto',
+        outputExports: 'default',
         babelTargets: {
             node: 10,
         },
@@ -57,7 +59,7 @@ const Path = require('path');
         dest: 'dist/jquery.dgtable.cjs.min.js',
         sourceMap: true,
         outputFormat: 'cjs',
-        outputExports: 'auto',
+        outputExports: 'default',
         babelTargets: {
             node: 10,
         },
