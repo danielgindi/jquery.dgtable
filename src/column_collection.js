@@ -82,19 +82,33 @@ ColumnCollection.prototype.normalizeOrder = function () {
 };
 
 /**
+ * Get the array of columns, order by the order property
+ * @returns {Array<Object>} ordered array of columns
+ */
+ColumnCollection.prototype.getColumns = function () {
+    let cols = [];
+    for (let i = 0, column; i < this.length; i++) {
+        column = this[i];
+        cols.push(column);
+    }
+    cols.sort((col1, col2) => col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0));
+    return cols;
+};
+
+/**
  * Get the array of visible columns, order by the order property
  * @returns {Array<Object>} ordered array of visible columns
  */
 ColumnCollection.prototype.getVisibleColumns = function () {
-    let visible = [];
+    let cols = [];
     for (let i = 0, column; i < this.length; i++) {
         column = this[i];
         if (column.visible) {
-            visible.push(column);
+            cols.push(column);
         }
     }
-    visible.sort((col1, col2) => col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0));
-    return visible;
+    cols.sort((col1, col2) => col1.order < col2.order ? -1 : (col1.order > col2.order ? 1 : 0));
+    return cols;
 };
 
 /**

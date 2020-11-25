@@ -198,9 +198,10 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * **column**: Name of the column
   * **label**: New label for the column
   * *returns* Self, to allow for call chaining.
-* `moveColumn({String|Number} src, {String|Number} dest) {DGTable}`: Move a column to a new position
+* `moveColumn({String|Number} src, {String|Number} dest, visibleOnly = true) {DGTable}`: Move a column to a new position
   * **src**: Name or position of the column to be moved
   * **dest**: Name of the column currently in the desired position, or the position itself
+  * **visibleOnly**: Should consider only visible columns and visible-relative indexes
   * *returns* Self, to allow for call chaining.
 * `sort({String?} column, {Boolean?} descending, {Boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
   * **src**: Name of the column to sort on

@@ -1247,54 +1247,63 @@ DGTable.prototype.setColumnLabel = function (column, label) {
  * Move a column to a new position
  * @public
  * @expose
- * @param {String|Number} src Name or position of the column to be moved
- * @param {String|Number} dest Name of the column currently in the desired position, or the position itself
+ * @param {string|number} src Name or position of the column to be moved
+ * @param {string|number} dest Name of the column currently in the desired position, or the position itself
+ * @param {boolean} [visibleOnly=true] Should consider only visible columns and visible-relative indexes
  * @returns {DGTable} self
  */
-DGTable.prototype.moveColumn = function (src, dest) {
+DGTable.prototype.moveColumn = function (src, dest, visibleOnly = true) {
     const o = this.o, p = this.p;
 
     let columns = p.columns,
         col, destCol;
+        
+    let columnsArray = visibleOnly ? p.visibleColumns : columns.getColumns();
 
     if (typeof src === 'string') {
         col = columns.get(src);
     } else if (typeof src === 'number') {
-        col = p.visibleColumns[src];
+        col = columnsArray[src];
     }
     if (typeof dest === 'string') {
         destCol = columns.get(dest);
     } else if (typeof dest === 'number') {
-        destCol = p.visibleColumns[dest];
+        destCol = columnsArray[dest];
     }
 
     if (col && destCol && src !== dest) {
         let srcOrder = col.order, destOrder = destCol.order;
 
-        p.visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
-        this._ensureVisibleColumns();
+        let visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
+        
+        if (p.visibleColumns.length !== visibleColumns.length ||
+            p.visibleColumns.some((x, i) => x !== visibleColumns[i])) {
+            
+            p.visibleColumns = visibleColumns;
+            this._ensureVisibleColumns();
 
-        if (o.virtualTable) {
-            this.clearAndRender()
-                ._updateLastCellWidthFromScrollbar(true);
-        } else {
-            let headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
-            let beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
-                fromPos = srcOrder;
-            headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
+            if (o.virtualTable) {
+                this.clearAndRender()
+                    ._updateLastCellWidthFromScrollbar(true);
+            } else {
+                let headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
+                let beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
+                    fromPos = srcOrder;
+                headerCell[0].parentNode.insertBefore(headerCell[fromPos], headerCell[beforePos]);
 
-            let srcWidth = p.visibleColumns[srcOrder];
-            srcWidth = (srcWidth.actualWidthConsideringScrollbarWidth || srcWidth.actualWidth) + 'px';
-            let destWidth = p.visibleColumns[destOrder];
-            destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
+                let srcWidth = p.visibleColumns[srcOrder];
+                srcWidth = (srcWidth.actualWidthConsideringScrollbarWidth || srcWidth.actualWidth) + 'px';
+                let destWidth = p.visibleColumns[destOrder];
+                destWidth = (destWidth.actualWidthConsideringScrollbarWidth || destWidth.actualWidth) + 'px';
 
-            let tbodyChildren = p.$tbody[0].childNodes;
-            for (let i = 0, count = tbodyChildren.length; i < count; i++) {
-                let row = tbodyChildren[i];
-                if (row.nodeType !== 1) continue;
-                row.insertBefore(row.childNodes[fromPos], row.childNodes[beforePos]);
-                row.childNodes[destOrder].firstChild.style.width = destWidth;
-                row.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                let tbodyChildren = p.$tbody[0].childNodes;
+                for (let i = 0, count = tbodyChildren.length; i < count; i++) {
+                    let row = tbodyChildren[i];
+                    if (row.nodeType !== 1) continue;
+                    row.insertBefore(row.childNodes[fromPos], row.childNodes[beforePos]);
+                    row.childNodes[destOrder].firstChild.style.width = destWidth;
+                    row.childNodes[srcOrder].firstChild.style.width = srcWidth;
+                }
             }
         }
 
