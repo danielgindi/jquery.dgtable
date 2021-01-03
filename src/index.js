@@ -2611,7 +2611,7 @@ DGTable.prototype.getUrlForElementContent = function (id) {
         if (typeof Blob === 'function') {
             blob = new Blob([data]);
         } else {
-            let BlobBuilder = global.BlobBuilder || global.WebKitBlobBuilder || global.MozBlobBuilder || global.MSBlobBuilder;
+            let BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
             if (!BlobBuilder) {
                 return null;
             }
@@ -2619,7 +2619,7 @@ DGTable.prototype.getUrlForElementContent = function (id) {
             builder.append(data);
             blob = builder.getBlob();
         }
-        return (global.URL || global.webkitURL).createObjectURL(blob);
+        return (window.URL || window.webkitURL).createObjectURL(blob);
     }
     return null;
 };
@@ -2630,7 +2630,7 @@ DGTable.prototype.getUrlForElementContent = function (id) {
  * @returns {Boolean} A value indicating whether Web Workers are supported
  */
 DGTable.prototype.isWorkerSupported = function() {
-    return global['Worker'] instanceof Function;
+    return window['Worker'] instanceof Function;
 };
 
 /**

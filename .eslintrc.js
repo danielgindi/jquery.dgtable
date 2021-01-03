@@ -1,8 +1,8 @@
 module.exports = {
     env: {
         es6: true,
-        browser: false,
-        node: true,
+        browser: true,
+        node: false,
     },
     parserOptions: {
         ecmaVersion: 2018,
@@ -73,6 +73,17 @@ module.exports = {
             ],
             rules: {
                 "no-console": "off",
+            },
+        },
+        {
+            files: [
+                "scripts/**/*.js",
+                ".eslintrc.js",
+            ],
+            env: {
+                es6: true,
+                browser: false,
+                node: true,
             },
         },
     ],
