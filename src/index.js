@@ -2020,6 +2020,8 @@ DGTable.prototype.tableWidthChanged = (function () {
             sizeLeft = detectedWidth,
             relatives = 0;
 
+        if (!p.$table) return this;
+
         renderColumns = renderColumns === undefined || renderColumns;
 
         let tableWidthBeforeCalculations = 0;
