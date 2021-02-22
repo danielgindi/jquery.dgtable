@@ -37,6 +37,8 @@ function relativizeElement($el) {
     }
 }
 
+const isInputElementEvent = event => /^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName);
+
 /** @class DGTable */
 let DGTable = function DGTable () {
     if (!(this instanceof DGTable)) {
@@ -2827,7 +2829,7 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
         $eventTarget
             .one('touchend', (event) => {
                 // Prevent simulated mouse events after touchend
-                if (/^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName))
+                if (!isInputElementEvent(event))
                     event.preventDefault();
 
                 $eventTarget.off('touchend').off('touchcancel');
@@ -2853,7 +2855,7 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
             unbind();
 
             // Prevent simulated mouse events after touchend
-            if (/^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName))
+            if (!isInputElementEvent(event))
                 event.preventDefault();
 
             currentPos = { x: touch.pageX, y: touch.pageY };
