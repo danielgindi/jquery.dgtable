@@ -37,7 +37,7 @@ function relativizeElement($el) {
     }
 }
 
-const isInputElementEvent = event => /^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName);
+const isInputElementEvent = event => /^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.target.tagName);
 
 /** @class DGTable */
 let DGTable = function DGTable () {
