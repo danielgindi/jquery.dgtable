@@ -19,8 +19,11 @@
   "scripts": {
     "build": "npm run lint && node ./scripts/build.js",
     "prepublish": "npm run build",
-    "lint": "eslint ./",
-    "lint-fix": "eslint --fix ./"
+    "lint": "eslint -f codeframe ./",
+    "lint-fix": "eslint -f codeframe --fix ./",
+    "postinstall": "husky install",
+    "prepublishOnly": "pinst --disable",
+    "postpublish": "pinst --enable"
   },
   "bugs": {
     "url": "https://github.com/danielgindi/jquery.dgtable/issues"
@@ -33,17 +36,18 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.12.10",
-    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/core": "^7.12.17",
+    "@babel/plugin-transform-runtime": "^7.12.17",
     "@babel/polyfill": "^7.12.1",
-    "@babel/preset-env": "^7.12.11",
-    "@babel/runtime": "^7.12.5",
+    "@babel/preset-env": "^7.12.17",
+    "@babel/runtime": "^7.12.18",
     "babelify": "^10.0.0",
-    "core-js": "^3.8.3",
-    "eslint": "^7.18.0",
+    "core-js": "^3.9.0",
+    "eslint": "^7.20.0",
     "fs-extra": "^9.1.0",
-    "husky": "^4.3.8",
-    "rollup": "^2.38.0",
+    "husky": "^5.1.0",
+    "pinst": "^2.1.4",
+    "rollup": "^2.39.0",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
