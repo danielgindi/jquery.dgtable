@@ -15,7 +15,7 @@ const nativeIndexOf = Array.prototype.indexOf;
 const $ = jQuery;
 
 let userAgent = navigator.userAgent;
-let ieVersion = userAgent.indexOf('MSIE ') != -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
+let ieVersion = userAgent.indexOf('MSIE ') !== -1 ? parseFloat(userAgent.substr(userAgent.indexOf('MSIE ') + 5)) : null;
 let hasIeDragAndDropBug = ieVersion && ieVersion < 10;
 let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -1257,7 +1257,7 @@ DGTable.prototype.moveColumn = function (src, dest, visibleOnly = true) {
 
     let columns = p.columns,
         col, destCol;
-        
+
     let columnsArray = visibleOnly ? p.visibleColumns : columns.getColumns();
 
     if (typeof src === 'string') {
@@ -1275,10 +1275,10 @@ DGTable.prototype.moveColumn = function (src, dest, visibleOnly = true) {
         let srcOrder = col.order, destOrder = destCol.order;
 
         let visibleColumns = columns.moveColumn(col, destCol).getVisibleColumns();
-        
+
         if (p.visibleColumns.length !== visibleColumns.length ||
             p.visibleColumns.some((x, i) => x !== visibleColumns[i])) {
-            
+
             p.visibleColumns = visibleColumns;
             this._ensureVisibleColumns();
 
@@ -2829,10 +2829,12 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
     tapAndHoldTimeout = setTimeout(() => {
         unbind();
 
-        // Prevent simulated mouse events after touchend
         $eventTarget
             .one('touchend', (event) => {
-                event.preventDefault();
+                // Prevent simulated mouse events after touchend
+                if (/^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName))
+                    event.preventDefault();
+
                 $eventTarget.off('touchend').off('touchcancel');
             })
             .one('touchcancel', (_event) => {
@@ -2855,7 +2857,9 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
 
             unbind();
 
-            event.preventDefault(); // Prevent simulated mouse events
+            // Prevent simulated mouse events after touchend
+            if (/^(?:INPUT|TEXTAREA|BUTTON|SELECT)$/.test(event.tagName))
+                event.preventDefault();
 
             currentPos = { x: touch.pageX, y: touch.pageY };
             let distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
