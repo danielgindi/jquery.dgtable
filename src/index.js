@@ -2809,19 +2809,18 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
     let fakeEvent = function (name) {
         let fakeEvent = $.Event(name);
         let extendObjects = Array.prototype.slice.call(arguments, 1);
-        $.each(['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY', 'which'],
-            function () {
-                fakeEvent[this] = event[this];
-                for (let i = 0; i < extendObjects.length; i++) {
-                    if (extendObjects[i][this] != null) {
-                        fakeEvent[this] = extendObjects[i][this];
-                    }
+        for (let key of ['target', 'clientX', 'clientY', 'offsetX', 'offsetY', 'screenX', 'screenY', 'pageX', 'pageY', 'which']) {
+            fakeEvent[key] = event[key];
+            for (let i = 0; i < extendObjects.length; i++) {
+                if (extendObjects[i][key] != null) {
+                    fakeEvent[key] = extendObjects[i][key];
                 }
-            });
+            }
+        }
         return fakeEvent;
     };
 
-    $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { 'which': 1 }));
+    $eventTarget.trigger(fakeEvent('mousedown', event.originalEvent.changedTouches[0], { 'which': 1, target: event.target }));
 
     tapAndHoldTimeout = setTimeout(() => {
         unbind();
@@ -2842,7 +2841,7 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
 
         if (distanceTravelled < distanceTreshold) {
             this.cancelColumnResize();
-            $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3 }));
+            $eventTarget.trigger(fakeEvent('mouseup', event.originalEvent.changedTouches[0], { 'which': 3, target: event.target }));
         }
 
     }, 500);
@@ -2862,8 +2861,8 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
             let distanceTravelled = Math.sqrt(Math.pow(Math.abs(currentPos.x - startPos.x), 2) + Math.pow(Math.abs(currentPos.y - startPos.y), 2));
 
             if (distanceTravelled < distanceTreshold || p.$resizer) {
-                $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1 }));
-                $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1 }));
+                $eventTarget.trigger(fakeEvent('mouseup', touch, { 'which': 1, target: event.target }));
+                $eventTarget.trigger(fakeEvent('click', touch, { 'which': 1, target: event.target }));
             }
 
         })
@@ -2880,7 +2879,7 @@ DGTable.prototype._onTouchStartColumnHeader = function (event) {
             if (p.$resizer) {
                 event.preventDefault();
 
-                $eventTarget.trigger(fakeEvent('mousemove', touch));
+                $eventTarget.trigger(fakeEvent('mousemove', touch, { target: event.target }));
             }
         });
 };
@@ -3012,6 +3011,9 @@ DGTable.prototype._onMouseLeaveColumnHeader = function (event) {
  * @param {jQuery_Event} event event
  */
 DGTable.prototype._onClickColumnHeader = function (event) {
+    if (isInputElementEvent(event))
+        return;
+
     if (!this._getColumnByResizePosition(event)) {
 
         let that = this,
