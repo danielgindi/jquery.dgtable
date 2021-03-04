@@ -141,7 +141,7 @@ const Path = require('path');
             },
             input: inputFile,
             plugins: plugins,
-            external: ['jquery', 'jQuery'],
+            external: ['jquery', 'jQuery', /^@danielgindi\/dom-utils(\/|$)/],
         });
 
         let generated = await bundle.generate({
@@ -150,6 +150,7 @@ const Path = require('path');
             format: task.outputFormat,
             globals: {
                 jquery: 'jQuery',
+                '@danielgindi/dom-utils/lib/ScrollHelper': 'domUtilsScrollHelper',
             },
             exports: task.outputExports,
         });
