@@ -5,16 +5,15 @@ module.exports = {
         node: false,
     },
     parserOptions: {
-        ecmaVersion: 2018,
+        ecmaVersion: 2020,
         sourceType: "module",
     },
-    globals: {
-        "__base": true,
-    },
+    globals: {},
     extends: ["eslint:recommended"],
     rules: {
         "semi": ["warn", "always"], // Require (but only warn). In some cases this could actually prevent bugs.
         "comma-dangle": ["warn", "always-multiline"],
+        "comma-style": ["warn", "last"],
         "no-var": ["warn"],
         "arrow-spacing": ["warn", { "before": true, "after": true }],
         "space-infix-ops": ["warn", { "int32Hint": true }],
