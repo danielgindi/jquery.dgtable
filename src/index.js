@@ -8,7 +8,10 @@ import RowCollection from './row_collection';
 import ColumnCollection from './column_collection';
 import CssUtil from './css_util';
 import SelectionHelper from './SelectionHelper';
-import ScrollHelper from './ScrollHelper';
+import {
+    getScrollHorz,
+    setScrollHorz,
+} from '@danielgindi/dom-utils/lib/ScrollHelper';
 import ByColumnFilter from './by_column_filter';
 
 const nativeIndexOf = Array.prototype.indexOf;
@@ -704,7 +707,7 @@ DGTable.prototype.render = function () {
         }
 
         let lastScrollTop = p.table && p.table.parentNode ? p.table.scrollTop : NaN,
-            lastScrollHorz = p.table && p.table.parentNode ? ScrollHelper.scrollHorzNormalized(p.table) : NaN;
+            lastScrollHorz = p.table && p.table.parentNode ? getScrollHorz(p.table) : NaN;
 
         this._renderSkeletonBase()
             ._renderSkeletonBody()
@@ -736,8 +739,8 @@ DGTable.prototype.render = function () {
             p.table.scrollTop = lastScrollTop;
 
         if (!isNaN(lastScrollHorz)) {
-            ScrollHelper.scrollHorzNormalized(p.table, lastScrollHorz);
-            ScrollHelper.scrollHorzNormalized(p.header, lastScrollHorz);
+            setScrollHorz(p.table, lastScrollHorz);
+            setScrollHorz(p.header, lastScrollHorz);
         }
 
         this.trigger('renderskeleton');
