@@ -27,6 +27,23 @@ const sizeKeys = ['width', 'height'];
 
 const CssUtil = {};
 
+let _isTransformSupported = null;
+
+CssUtil.getSupportedTransform = () => {
+    if (_isTransformSupported === null) {
+        let prefixes = ['transform', 'WebkitTransform', 'MozTransform', 'OTransform', 'msTransform'];
+        let div = document.createElement('div');
+        _isTransformSupported = false;
+        for (let item of prefixes) {
+            if (div && div.style[item] !== undefined) {
+                _isTransformSupported = item;
+                break;
+            }
+        }
+    }
+    return _isTransformSupported;
+};
+
 let generateSizeFunction = function (key, cssExpand, inner, outer) {
 
     return function () {
@@ -144,13 +161,13 @@ let generatejQueryFunction = function (key) {
         if (!$.isArray(collection) && !(collection instanceof $)) {
             collection = [collection];
         }
-        
+
         let ret = $.fn[key].apply(collection, Array.prototype.slice.call(arguments, 1));
-        
+
         if (arguments.length > 1) {
             return this;
         }
-        
+
         return ret;
     };
 };

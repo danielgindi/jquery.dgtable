@@ -858,6 +858,8 @@ DGTable.prototype.renderRows = function (first, last) {
     let isRtl = this._isTableRtl(),
         virtualRowXAttr = isRtl ? 'right' : 'left';
 
+    const supportedTransform = CssUtil.getSupportedTransform();
+
     for (let i = first, rowCount = rows.length;
          i < rowCount && i <= last;
          i++) {
@@ -892,7 +894,13 @@ DGTable.prototype.renderRows = function (first, last) {
             top = i > 0 ? virtualRowHeightFirst + (i - 1) * virtualRowHeight : 0;
             row.style.position = 'absolute';
             row.style[virtualRowXAttr] = 0;
-            row.style.top = top + 'px';
+
+            if (supportedTransform === false) {
+                row.style.top = `${top}px`;
+            } else {
+                row.style.top = '0px';
+                row.style[supportedTransform] = `translateY(${top}px)`;
+            }
         }
 
         bodyFragment.appendChild(row);
