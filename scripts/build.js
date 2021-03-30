@@ -73,10 +73,10 @@ const Path = require('path');
         console.info('Generating ' + task.dest + '...');
 
         let plugins = [
-            require('rollup-plugin-node-resolve')({
+            require('@rollup/plugin-node-resolve').nodeResolve({
                 mainFields: ['module', 'main'],
             }),
-            require('rollup-plugin-commonjs')({}),
+            require('@rollup/plugin-commonjs')({}),
         ];
 
         const pkg = require('../package.json');
@@ -88,8 +88,8 @@ const Path = require('path');
         ].join('\n');
 
         if (task.babelTargets) {
-            plugins.push(require('rollup-plugin-babel')({
-                sourceMap: task.sourceMap ? true : false,
+            plugins.push(require('@rollup/plugin-babel').babel({
+                sourceMap: !!task.sourceMap,
                 presets: [
                     ['@babel/env', {
                         targets: task.babelTargets,
@@ -101,6 +101,7 @@ const Path = require('path');
                 minified: false,
                 comments: true,
                 retainLines: true,
+                babelHelpers: 'bundled',
                 exclude: 'node_modules/**/core-js/**/*',
             }));
         }
