@@ -118,6 +118,7 @@ function getDefaultComparator(column, descending) {
         }
         if (leftVal === rightVal) return 0;
         if (leftVal == null) return lessVal;
+        if (rightVal == null) return moreVal;
         if (leftVal < rightVal) return lessVal;
         return moreVal;
     };
