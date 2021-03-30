@@ -12,6 +12,11 @@ import {
     getScrollHorz,
     setScrollHorz,
 } from '@danielgindi/dom-utils/lib/ScrollHelper';
+import {
+    getElementWidth,
+    getElementHeight,
+    setElementWidth,
+} from '@danielgindi/dom-utils/lib/Css';
 import ByColumnFilter from './by_column_filter';
 
 const nativeIndexOf = Array.prototype.indexOf;
@@ -985,7 +990,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
     let hasFractions = Math.round(fractionValue) !== fractionValue;
     fractionTest.remove();
 
-    let width = CssUtil.outerWidth($row);
+    let width = getElementWidth($row[0], true, true, true);
     width -= p.scrollbarWidth || 0;
 
     if (hasFractions) {
@@ -1942,7 +1947,7 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
         }
     }
 
-    let detectedWidth = CssUtil.width(this.$el);
+    let detectedWidth = getElementWidth(this.$el[0]);
 
     if (p.$table) {
         if (o.virtualTable) {
@@ -2008,7 +2013,7 @@ DGTable.prototype.tableWidthChanged = (function () {
         ).css({ 'position': 'absolute', top: '-9999px', 'visibility': 'hidden' });
         $tableWrapper.appendTo(document.body);
 
-        let width = CssUtil.width($cell);
+        let width = getElementWidth($cell[0]);
 
         $tableWrapper.remove();
 
@@ -2258,7 +2263,7 @@ DGTable.prototype.tableHeightChanged = function () {
         return that;
     }
 
-    let height = CssUtil.innerHeight(that.$el)
+    let height = getElementHeight(that.$el[0], true)
         - (parseFloat(p.$table.css('border-top-width')) || 0) // Subtract top border of inner element
         - (parseFloat(p.$table.css('border-bottom-width')) || 0); // Subtract bottom border of inner element
 
@@ -2268,7 +2273,7 @@ DGTable.prototype.tableHeightChanged = function () {
 
         if (p.tbody) {
             // At least 1 pixel - to show scrollers correctly.
-            p.tbody.style.height = Math.max(o.height - CssUtil.outerHeight(p.$headerRow), 1) + 'px';
+            p.tbody.style.height = Math.max(o.height - getElementHeight(p.$headerRow[0], true, true, true), 1) + 'px';
         }
 
         if (o.virtualTable) {
@@ -2776,7 +2781,7 @@ DGTable.prototype._getColumnByResizePosition = function (e) {
     let mouseX = ((e.pageX != null ? e.pageX : e.originalEvent.pageX) || e.originalEvent.clientX) - $headerCell.offset().left;
 
     if (rtl) {
-        if (!firstCol && CssUtil.outerWidth($headerCell) - mouseX <= o.resizeAreaWidth / 2) {
+        if (!firstCol && getElementWidth($headerCell[0], true, true, true) - mouseX <= o.resizeAreaWidth / 2) {
             return previousElementSibling['columnName'];
         } else if (mouseX <= o.resizeAreaWidth / 2) {
             return headerCell['columnName'];
@@ -2784,7 +2789,7 @@ DGTable.prototype._getColumnByResizePosition = function (e) {
     } else {
         if (!firstCol && mouseX <= o.resizeAreaWidth / 2) {
             return previousElementSibling['columnName'];
-        } else if (CssUtil.outerWidth($headerCell) - mouseX <= o.resizeAreaWidth / 2) {
+        } else if (getElementWidth($headerCell[0], true, true, true) - mouseX <= o.resizeAreaWidth / 2) {
             return headerCell['columnName'];
         }
     }
@@ -2943,12 +2948,12 @@ DGTable.prototype._onMouseDownColumnHeader = function (event) {
         posCol.left -= posRelative.left;
         posCol.top -= posRelative.top;
         posCol.top -= parseFloat(selectedHeaderCell.css('border-top-width')) || 0;
-        let resizerWidth = CssUtil.outerWidth(p.$resizer);
+        let resizerWidth = getElementWidth(p.$resizer[0], true, true, true);
         if (rtl) {
             posCol.left -= Math.ceil((parseFloat(selectedHeaderCell.css('border-left-width')) || 0) / 2);
             posCol.left -= Math.ceil(resizerWidth / 2);
         } else {
-            posCol.left += CssUtil.outerWidth(selectedHeaderCell);
+            posCol.left += getElementWidth(selectedHeaderCell[0], true, true, true);
             posCol.left += Math.ceil((parseFloat(selectedHeaderCell.css('border-right-width')) || 0) / 2);
             posCol.left -= Math.ceil(resizerWidth / 2);
         }
@@ -2959,7 +2964,7 @@ DGTable.prototype._onMouseDownColumnHeader = function (event) {
                 'visibility': 'visible',
                 'left': posCol.left,
                 'top': posCol.top,
-                'height': CssUtil.height(this.$el),
+                'height': getElementHeight(this.$el[0]),
             })[0]['columnName'] = selectedHeaderCell[0]['columnName'];
 
         try { p.$resizer[0].style.zIndex = ''; }
@@ -3000,8 +3005,8 @@ DGTable.prototype._onMouseUpColumnHeader = function (event) {
         let o = this.o;
         let $headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName);
         let bounds = $headerCell.offset();
-        bounds['width'] = CssUtil.outerWidth($headerCell);
-        bounds['height'] = CssUtil.outerHeight($headerCell);
+        bounds['width'] = getElementWidth($headerCell[0], true, true, true);
+        bounds['height'] = getElementHeight($headerCell[0], true, true, true);
         this.trigger('headercontextmenu', $headerCell[0]['columnName'], event.pageX, event.pageY, bounds);
     }
     return this;
@@ -3089,7 +3094,7 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
     let posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
     posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
     posCol.left -= posRelative.left;
-    let resizerWidth = CssUtil.outerWidth(p.$resizer);
+    let resizerWidth = getElementWidth(p.$resizer[0], true, true, true);
 
     let isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
 
@@ -3099,7 +3104,7 @@ DGTable.prototype._onMouseMoveResizeArea = function (event) {
     minX -= Math.ceil(resizerWidth / 2);
 
     if (rtl) {
-        minX += CssUtil.outerWidth(selectedHeaderCell);
+        minX += getElementWidth(selectedHeaderCell[0], true, true, true);
         minX -= column.ignoreMin ? 0 : this.o.minColumnWidth;
 
         if (!isBoxing) {
@@ -3150,7 +3155,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
         let posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
         posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
         posCol.left -= posRelative.left;
-        let resizerWidth = CssUtil.outerWidth(p.$resizer);
+        let resizerWidth = getElementWidth(p.$resizer[0], true, true, true);
 
         let isBoxing = selectedHeaderCell.css('box-sizing') === 'border-box';
 
@@ -3168,7 +3173,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
                 actualX += parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
             }
 
-            baseX += CssUtil.outerWidth(selectedHeaderCell);
+            baseX += getElementWidth(selectedHeaderCell[0], true, true, true);
 
             minX = baseX - (column.ignoreMin ? 0 : this.o.minColumnWidth);
             if (actualX > minX) {
@@ -3475,7 +3480,7 @@ DGTable.prototype._renderSkeletonBase = function () {
     }
 
     if (!o.height && o.virtualTable) {
-        o.height = CssUtil.innerHeight(this.$el);
+        o.height = getElementHeight(this.$el[0], true);
     }
 
     return this;
@@ -3600,9 +3605,9 @@ DGTable.prototype._renderSkeletonBody = function () {
         let row1 = createDummyRow(), row2 = createDummyRow(), row3 = createDummyRow();
         $dummyTbody.append(row1, row2, row3);
 
-        p.virtualRowHeightFirst = CssUtil.outerHeight(row1);
-        p.virtualRowHeight = CssUtil.outerHeight(row2);
-        p.virtualRowHeightLast = CssUtil.outerHeight(row3);
+        p.virtualRowHeightFirst = getElementHeight(row1, true, true, true);
+        p.virtualRowHeight = getElementHeight(row2, true, true, true);
+        p.virtualRowHeightLast = getElementHeight(row3, true, true, true);
 
         p.virtualRowHeightMin = Math.min(Math.min(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
         p.virtualRowHeightMax = Math.max(Math.max(p.virtualRowHeightFirst, p.virtualRowHeight), p.virtualRowHeightLast);
@@ -3624,7 +3629,7 @@ DGTable.prototype._renderSkeletonBody = function () {
             table.className += ' virtual';
         }
 
-        let tableHeight = (o.height - CssUtil.outerHeight(p.$headerRow));
+        let tableHeight = (o.height - getElementHeight(p.$headerRow[0], true, true, true));
         if ($table.css('box-sizing') !== 'border-box') {
             tableHeight -= parseFloat($table.css('border-top-width')) || 0;
             tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
@@ -3725,8 +3730,8 @@ DGTable.prototype._updateTableWidth = function (parentSizeMayHaveChanged) {
     if (o.width === DGTable.Width.AUTO) {
         // Update wrapper element's size to fully contain the table body
 
-        CssUtil.width(p.$table, CssUtil.outerWidth(p.$tbody));
-        CssUtil.width(this.$el, CssUtil.outerWidth(p.$table));
+        setElementWidth(p.$table[0], getElementWidth(p.$tbody[0], true, true, true));
+        setElementWidth(this.$el[0], getElementWidth(p.$table[0], true, true, true));
 
     } else if (o.width === DGTable.Width.SCROLL) {
 
@@ -3846,7 +3851,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         let css = {
             'box-sizing': borderBox ? 'border-box' : 'content-box',
             'width': requiredWidth,
-            'min-height': CssUtil.height($el),
+            'min-height': getElementHeight($el[0]),
             'padding-left': paddingL,
             'padding-right': paddingR,
             'padding-top': paddingT,
@@ -3926,8 +3931,8 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         // Handle RTL, go from the other side
         if (rtl) {
             let windowWidth = $(window).width();
-            offset.right = windowWidth - (offset.left + CssUtil.outerWidth($el));
-            parentOffset.right = windowWidth - (parentOffset.left + CssUtil.outerWidth($parent));
+            offset.right = windowWidth - (offset.left + getElementWidth($el[0], true, true, true));
+            parentOffset.right = windowWidth - (parentOffset.left + getElementWidth($parent[0], true, true, true));
         }
 
         // If the parent has borders, then it would offset the offset...
@@ -3946,14 +3951,14 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
 
         // Constrain horizontally
         let minHorz = 0,
-            maxHorz = $parent - CssUtil.outerWidth($previewCell);
+            maxHorz = $parent - getElementWidth($previewCell[0], true, true, true);
         offset[prop] = offset[prop] < minHorz ?
             minHorz :
             (offset[prop] > maxHorz ? maxHorz : offset[prop]);
 
         // Constrain vertically
-        let totalHeight = CssUtil.outerHeight($el);
-        let maxTop = $scrollParent.scrollTop() + CssUtil.innerHeight($parent) - totalHeight;
+        let totalHeight = getElementHeight($el[0], true, true, true);
+        let maxTop = $scrollParent.scrollTop() + getElementHeight($parent[0], true) - totalHeight;
         if (offset.top > maxTop) {
             offset.top = Math.max(0, maxTop);
         }
