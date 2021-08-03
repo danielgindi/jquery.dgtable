@@ -273,6 +273,8 @@ DGTable.prototype.initialize = function (options) {
                     sortColumn = { column: sortColumn, descending: false };
                 }
                 let col = p.columns.get(sortColumn.column);
+                if (!col) continue;
+
                 sortColumns.push({
                     column: sortColumn.column,
                     comparePath: col.comparePath || col.dataPath,
