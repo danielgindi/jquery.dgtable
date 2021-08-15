@@ -1423,7 +1423,7 @@ DGTable.prototype.sort = function (column, descending, add) {
     for (let i = 0; i < currentSort.length; i++) {
         sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
     }
-    this.trigger('sort', sorts);
+    this.trigger('sort', sorts, true /* direct sort */);
 
     return this;
 };
@@ -1460,7 +1460,7 @@ DGTable.prototype.resort = function () {
         for (let i = 0; i < currentSort.length; i++) {
             sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
         }
-        this.trigger('sort', sorts);
+        this.trigger('sort', sorts, false /* indirect sort */);
     }
 
 

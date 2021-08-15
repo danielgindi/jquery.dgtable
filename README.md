@@ -155,6 +155,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `filterclear`: A filter was cleared
 * `sort`: The data was sorted
   * 1st argument: Array of sort constructs `[{ "column": "column's name", "descending": true/false }, ...]`
+  * 2nd argument: Boolean that determines whether this is a direct sort or indirect (sort() vs resort(), addRows(), etc.). If `false`, this is an indirect sort.
 * `headercontextmenu`: A context menu should be shown for a header cell
   * 1st argument: The column's name
   * 2nd argument: pageX of the pointer event
