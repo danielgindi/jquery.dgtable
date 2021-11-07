@@ -3981,25 +3981,10 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         p._bindCellHoverOut(el);
         p._bindCellHoverOut(previewCell);
 
-        $previewCell.on('mousewheel', (event) => {
-            let originalEvent = event.originalEvent;
-            let xy = originalEvent.wheelDelta || -originalEvent.detail,
-                x = originalEvent.wheelDeltaX || (originalEvent.axis === 1 ? xy : 0),
-                y = originalEvent.wheelDeltaY || (originalEvent.axis === 2 ? xy : 0);
-
-            if (xy) {
-                this.hideCellPreview();
-            }
-
-            if (y && p.table.scrollHeight > p.table.clientHeight) {
-                let scrollTop = (y * -1) + p.$table.scrollTop();
-                p.$table.scrollTop(scrollTop);
-            }
-
-            if (x && p.table.scrollWidth > p.table.clientWidth) {
-                let scrollLeft = (x * -1) + p.$table.scrollLeft();
-                p.$table.scrollLeft(scrollLeft);
-            }
+        // Avoid interfering with wheel scrolling the table
+        $previewCell.on('wheel', () => {
+            // Let the table naturally scroll with the wheel
+            this.hideCellPreview();
         });
     }
 };
