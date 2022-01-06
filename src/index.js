@@ -28,6 +28,8 @@ let hasIeDragAndDropBug = ieVersion && ieVersion < 10;
 let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
+const IsSafeSymbol = ('safe');
+
 function webkitRenderBugfix(el) {
     // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars
     //   are still calculated even though they are not there yet. This is the last resort.
@@ -1116,12 +1118,15 @@ DGTable.prototype.removeColumn = function (column, render) {
  * @returns {DGTable} self
  */
 DGTable.prototype.setCellFormatter = function (formatter) {
+    if (!formatter) {
+        formatter = val => (typeof val === 'string') ? htmlEncode(val) : val;
+        formatter[IsSafeSymbol] = true;
+    }
+
     /**
      * @private
      * @field {Function} cellFormatter */
-    this.o.cellFormatter = formatter || function (val) {
-        return (typeof val === 'string') ? htmlEncode(val) : val;
-    };
+    this.o.cellFormatter = formatter;
 
     return this;
 };
@@ -1801,7 +1806,21 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
         colValue = colValue && colValue[dataPath[dataPathIndex]];
     }
 
-    let content = this.o.cellFormatter(colValue, column.name, rowData);
+    const formatter = this.o.cellFormatter;
+    let content;
+
+    if (formatter[IsSafeSymbol]) {
+        content = formatter(colValue, column.name, rowData);
+    } else {
+        try {
+            content = formatter(colValue, column.name, rowData);
+        } catch (err) {
+            content = '[ERROR]';
+            // eslint-disable-next-line no-console
+            console.error('Failed to generate content for cell ' + column.name, err);
+        }
+    }
+
     if (content === undefined || content === null) {
         content = '';
     }
