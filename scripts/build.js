@@ -152,6 +152,7 @@ const Path = require('path');
             globals: {
                 jquery: 'jQuery',
                 '@danielgindi/dom-utils/lib/ScrollHelper': 'domUtilsScrollHelper',
+                '@danielgindi/dom-utils/lib/Css': 'domUtilsCss',
             },
             exports: task.outputExports,
         });
