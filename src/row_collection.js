@@ -85,7 +85,7 @@ RowCollection.prototype.filteredCollection = function (filterFunc, args) {
 };
 
 /**
- * @type {function(columnName: string, descending: boolean, defaultComparator: function(a,b):boolean)|null|undefined}
+ * @type {function(columnName: string, descending: boolean, defaultComparator: function(a,b):number)|null|undefined}
  */
 RowCollection.prototype.onComparatorRequired = null;
 
