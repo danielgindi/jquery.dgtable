@@ -288,9 +288,9 @@ DGTable.prototype.initialize = function (options) {
 
     /** @field {RowCollection} _rows */
     p.rows = new RowCollection({ sortColumn: sortColumns });
-    p.rows.onComparatorRequired = function(column, descending){
+    p.rows.onComparatorRequired = (column, descending, defaultComparator) => {
         if (o.onComparatorRequired) {
-            return o.onComparatorRequired(column, descending);
+            return o.onComparatorRequired(column, descending, defaultComparator);
         }
     };
 
