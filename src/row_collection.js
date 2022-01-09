@@ -70,7 +70,7 @@ RowCollection.prototype.reset = function (rows) {
 RowCollection.prototype.filteredCollection = function (filterFunc, args) {
     if (filterFunc && args) {
         let rows = new RowCollection({ sortColumn: this.sortColumn });
-        
+
         for (let i = 0, len = this.length, row; i < len; i++) {
             row = this[i];
             if (filterFunc(row, args)) {
@@ -85,7 +85,7 @@ RowCollection.prototype.filteredCollection = function (filterFunc, args) {
 };
 
 /**
- * @type {Function|null|undefined}
+ * @type {function(columnName: string, descending: boolean, defaultComparator: function(a,b):boolean)|null|undefined}
  */
 RowCollection.prototype.onComparatorRequired = null;
 
@@ -134,11 +134,12 @@ RowCollection.prototype.sort = function (silent) {
 
         for (i = 0; i < this.sortColumn.length; i++) {
             comparator = null;
+            const defaultComparator = getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending);
             if (this.onComparatorRequired) {
-                comparator = this.onComparatorRequired(this.sortColumn[i].column, this.sortColumn[i].descending);
+                comparator = this.onComparatorRequired(this.sortColumn[i].column, this.sortColumn[i].descending, defaultComparator);
             }
             if (!comparator) {
-                comparator = getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending);
+                comparator = defaultComparator;
             }
             comparators.push(comparator.bind(this));
         }

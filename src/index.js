@@ -223,7 +223,7 @@ DGTable.prototype.initialize = function (options) {
 
     /**
      * @private
-     * @field {Function(String,Boolean)Function(a,b)Boolean} onComparatorRequired */
+     * @field {function(columnName: string, descending: boolean, defaultComparator: function(a,b):boolean):(function(a,b):boolean)} onComparatorRequired */
     o.onComparatorRequired = options.onComparatorRequired === undefined ? null : options.onComparatorRequired;
     if (!o.onComparatorRequired && typeof options['comparatorCallback'] === 'function') {
         o.onComparatorRequired = options['comparatorCallback'];
@@ -1641,7 +1641,7 @@ DGTable.prototype.getResizableColumns = function () {
 /**
  * @public
  * @expose
- * @param {{function(string,boolean):{function(a:*,b:*):boolean}}} comparatorCallback a callback function that returns the comparator for a specific column
+ * @param {{function(columnName: string, descending: boolean, defaultComparator: function(a,b):boolean):{function(a,b):boolean}}} comparatorCallback a callback function that returns the comparator for a specific column
  * @returns {DGTable} self
  */
 DGTable.prototype.setComparatorCallback = function (comparatorCallback) {

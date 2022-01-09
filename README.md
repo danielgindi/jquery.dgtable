@@ -92,7 +92,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * **rowsBufferSize**: `Number=10` The size of the rows buffer, for virtual table
 * **minColumnWidth**: `Number=35` In pixels, the minimum width for a column
 * **resizeAreaWidth**: `Number=8` The size of the area where you can drag to resize.
-* **onComparatorRequired**: `Function(String columnName, Boolean descending):{Function(a,b):boolean}` A callback that can pass a comparator function for each column and mode as required.
+* **onComparatorRequired**: `function(columnName: string, descending: boolean, defaultComparator: function(a,b):boolean):{function(a,b):boolean}` A callback that can pass a comparator function for each column and mode as required.
 * **resizerClassName**: `String='dgtable-resize'` Class name for the dragged resizing element (showing when resizing a column)
 * **tableClassName**: `String='dgtable'` Class name for the table
 * **allowCellPreview**: `Boolean=true` When set, hovering on truncated cells will show a preview of the full content.
