@@ -845,6 +845,7 @@ DGTable.prototype.renderRows = function (first, last) {
 
     let tableClassName = o.tableClassName,
         rowClassName = tableClassName + '-row',
+        altRowClassName = tableClassName + '-row-alt',
         cellClassName = tableClassName + '-cell',
         rows = p.filteredRows || p.rows,
         isDataFiltered = !!p.filteredRows,
@@ -878,6 +879,9 @@ DGTable.prototype.renderRows = function (first, last) {
 
         let row = createElement('div');
         row.className = rowClassName;
+        if (i % 2 === 1)
+            row.className += ' ' + altRowClassName;
+
         row['rowIndex'] = i;
         row['physicalRowIndex'] = physicalRowIndex;
 

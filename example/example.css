@@ -103,6 +103,10 @@ body {
     height: 28px;
 }
 
+.dgtable-row-alt {
+    background: rgba(0, 0, 0, 0.02);
+}
+
 .dgtable-row:first-child {
     border-top: 0;
     height: 29px;
