@@ -6,7 +6,12 @@
 <title>DGTable.js Example</title>
 <link rel="stylesheet" href="example_borders.css">
 <script src="dependencies/jquery.js"></script>
-<script type="text/javascript" src="../dist/jquery.dgtable.umd.js"></script>
+    <script type="text/javascript" src="../node_modules/@danielgindi/dom-utils/dist/lib.umd.js"></script>
+    <script>
+        window.domUtilsScrollHelper = domutils.ScrollHelper;
+        window.domUtilsCss = domutils.Css;
+    </script>
+    <script type="text/javascript" src="../dist/jquery.dgtable.umd.js"></script>
 <!-- <script type="text/javascript" src="../release/DGTable.min.js"></script> -->
 <script>
     var sampleData = [
