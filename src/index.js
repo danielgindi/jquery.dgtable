@@ -854,8 +854,7 @@ DGTable.prototype.renderRows = function (first, last) {
         isVirtual = o.virtualTable,
         virtualRowHeightFirst = p.virtualRowHeightFirst,
         virtualRowHeight = p.virtualRowHeight,
-        top,
-        physicalRowIndex;
+        top;
 
     let colCount = visibleColumns.length;
     for (let colIndex = 0, column; colIndex < colCount; colIndex++) {
@@ -875,7 +874,7 @@ DGTable.prototype.renderRows = function (first, last) {
          i++) {
 
         let rowData = rows[i];
-        physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
+        let physicalRowIndex = isDataFiltered ? rowData['__i'] : i;
 
         let row = createElement('div');
         row.className = rowClassName;
@@ -920,8 +919,9 @@ DGTable.prototype.renderRows = function (first, last) {
 
         this.trigger('rowcreate', i, physicalRowIndex, row, rowData);
 
+        let rowIndex = i;
         row.addEventListener('click', event => {
-            this.trigger('rowclick', event, i, physicalRowIndex, row, rowData);
+            this.trigger('rowclick', event, rowIndex, physicalRowIndex, row, rowData);
         });
     }
 
