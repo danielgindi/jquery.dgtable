@@ -126,13 +126,15 @@ function getDefaultComparator(column, descending) {
 
 /**
  * @param {Boolean=false} silent
- * @returns {RowCollection} self
+ * @returns {Function|undefined} the comparator that was used
  */
 RowCollection.prototype.sort = function (silent) {
-    if (this.sortColumn.length) {
-        let comparators = [], i, comparator;
+    let comparator;
 
-        for (i = 0; i < this.sortColumn.length; i++) {
+    if (this.sortColumn.length) {
+        let comparators = [];
+
+        for (let i = 0; i < this.sortColumn.length; i++) {
             comparator = null;
             const defaultComparator = getDefaultComparator(this.sortColumn[i], this.sortColumn[i].descending);
             if (this.onComparatorRequired) {
@@ -145,13 +147,14 @@ RowCollection.prototype.sort = function (silent) {
         }
 
         if (comparators.length === 1) {
-            nativeSort.call(this, comparators[0]);
+            comparator = comparators[0];
+            nativeSort.call(this, comparator);
         } else {
             let len = comparators.length,
                 value;
 
             comparator = function(leftRow, rightRow) {
-                for (i = 0; i < len; i++) {
+                for (let i = 0; i < len; i++) {
                     value = comparators[i](leftRow, rightRow);
                     if (value !== 0) {
                         return value;
@@ -165,11 +168,12 @@ RowCollection.prototype.sort = function (silent) {
 
         if (!silent) {
             if (this.onSort) {
-                this.onSort();
+                this.onSort(comparator);
             }
         }
     }
-    return this;
+
+    return comparator;
 };
 
 export default RowCollection;

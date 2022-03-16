@@ -1420,8 +1420,9 @@ DGTable.prototype.sort = function (column, descending, add) {
 
     p.rows.sortColumn = currentSort;
 
+    let comparator;
     if (currentSort.length) {
-        p.rows.sort(!!p.filteredRows);
+        comparator = p.rows.sort(!!p.filteredRows);
         if (p.filteredRows) {
             p.filteredRows.sort(!!p.filteredRows);
         }
@@ -1432,7 +1433,7 @@ DGTable.prototype.sort = function (column, descending, add) {
     for (let i = 0; i < currentSort.length; i++) {
         sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
     }
-    this.trigger('sort', sorts, true /* direct sort */);
+    this.trigger('sort', sorts, true /* direct sort */, comparator);
 
     return this;
 };
@@ -1456,9 +1457,10 @@ DGTable.prototype.resort = function () {
             }
         }
 
+        let comparator;
         p.rows.sortColumn = currentSort;
         if (currentSort.length) {
-            p.rows.sort(!!p.filteredRows);
+            comparator = p.rows.sort(!!p.filteredRows);
             if (p.filteredRows) {
                 p.filteredRows.sort(!!p.filteredRows);
             }
@@ -1469,9 +1471,8 @@ DGTable.prototype.resort = function () {
         for (let i = 0; i < currentSort.length; i++) {
             sorts.push({ 'column': currentSort[i].column, 'descending': currentSort[i].descending });
         }
-        this.trigger('sort', sorts, false /* indirect sort */);
+        this.trigger('sort', sorts, false /* indirect sort */, comparator);
     }
-
 
     return this;
 };
