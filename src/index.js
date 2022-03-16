@@ -919,6 +919,10 @@ DGTable.prototype.renderRows = function (first, last) {
         bodyFragment.appendChild(row);
 
         this.trigger('rowcreate', i, physicalRowIndex, row, rowData);
+
+        row.addEventListener('click', event => {
+            this.trigger('rowclick', event, i, physicalRowIndex, row, rowData);
+        });
     }
 
     return bodyFragment;

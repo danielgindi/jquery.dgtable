@@ -129,6 +129,12 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * 2nd argument: Row's index in the data set
   * 3nd argument: Row's DOM element
   * 4th argument: Row's data
+* `rowclick`: A row has just been created
+  * 1st argument: Native `MouseEvent`
+  * 2nd argument: Row's index in the currently filtered data set
+  * 3rd argument: Row's index in the data set
+  * 4th argument: Row's DOM element
+  * 5th argument: Row's data
 * `rowdestroy`: Called just before removing a physical row element from the table
   * 1st argument: Row's DOM element
 * `addrows`: Data rows have been added to the table
