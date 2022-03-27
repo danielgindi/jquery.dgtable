@@ -3818,6 +3818,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         p.abortCellPreview = false;
 
         let $el = $(el), $elInner = $(elInner);
+        const rowNode = el.parentNode;
         let previewCell = createElement('div'), $previewCell = $(previewCell);
         previewCell.innerHTML = el.innerHTML;
         previewCell.className = o.cellPreviewClassName;
@@ -3897,7 +3898,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         if (css) {
             let bgColor = $(el).css('background-color');
             if (bgColor === p.transparentBgColor1 || bgColor === p.transparentBgColor2) {
-                bgColor = $(el.parentNode).css('background-color');
+                bgColor = $(rowNode).css('background-color');
             }
             if (bgColor === p.transparentBgColor1 || bgColor === p.transparentBgColor2) {
                 bgColor = '#fff';
@@ -3926,9 +3927,9 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             });
         }
 
-        previewCell['rowIndex'] = el.parentNode['rowIndex'];
-        let physicalRowIndex = previewCell['physicalRowIndex'] = el.parentNode['physicalRowIndex'];
-        previewCell['columnName'] = p.visibleColumns[nativeIndexOf.call(el.parentNode.childNodes, el)].name;
+        previewCell['rowIndex'] = rowNode['rowIndex'];
+        let physicalRowIndex = previewCell['physicalRowIndex'] = rowNode['physicalRowIndex'];
+        previewCell['columnName'] = p.visibleColumns[nativeIndexOf.call(rowNode.childNodes, el)].name;
 
         try {
             let selection = SelectionHelper.saveSelection(el);
@@ -3948,6 +3949,14 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
         if (p.abortCellPreview) {
             $previewCell.remove();
             return;
+        }
+
+        if (physicalRowIndex != null) {
+            previewCell.addEventListener('click', event => {
+                this.trigger('rowclick', event,
+                    rowNode['rowIndex'], physicalRowIndex,
+                    rowNode, p.rows[physicalRowIndex]);
+            });
         }
 
         let $parent = this.$el;
