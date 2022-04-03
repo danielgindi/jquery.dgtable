@@ -3892,7 +3892,7 @@ DGTable.prototype._cellMouseOverEvent = function(el) {
             'z-index': '-1',
             'left': '0',
             'top': '0',
-            'cursor': 'default',
+            'cursor': $el.css('cursor'),
         };
 
         if (css) {
