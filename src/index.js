@@ -492,7 +492,10 @@ DGTable.prototype.off = function (eventName, callback) {
 };
 
 DGTable.prototype.trigger = function (eventName) {
-    let events = this.p.events;
+    const p = this.p;
+    if (!p) return;
+
+    let events = p.events;
 
     if (hasOwnProperty.call(events, eventName)) {
         let callbacks = events[eventName];
