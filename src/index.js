@@ -262,13 +262,11 @@ DGTable.prototype.initialize = function (options) {
 
         let tmpSortColumns = options.sortColumn;
 
-        if (tmpSortColumns && typeof tmpSortColumns !== 'object') {
+        if (tmpSortColumns && !Array.isArray(tmpSortColumns)) {
             tmpSortColumns = [tmpSortColumns];
         }
 
-        if (tmpSortColumns instanceof Array ||
-            typeof tmpSortColumns === 'object') {
-
+        if (tmpSortColumns) {
             for (let i = 0, len = tmpSortColumns.length; i < len; i++) {
                 let sortColumn = tmpSortColumns[i];
                 if (typeof sortColumn === 'string') {
