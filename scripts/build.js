@@ -147,7 +147,7 @@ const Path = require('path');
 
         let generated = await bundle.generate({
             name: task.outputName,
-            sourcemap: task.sourceMap,
+            sourcemap: task.sourceMap ? 'hidden' : false,
             format: task.outputFormat,
             globals: {
                 jquery: 'jQuery',
@@ -159,7 +159,7 @@ const Path = require('path');
 
         let code = generated.output[0].code;
 
-        if (task.sourceMap === true && generated.output[0].map) {
+        if (task.sourceMap && generated.output[0].map) {
             let sourceMapOutPath = task.dest + '.map';
             FsExtra.writeFileSync(sourceMapOutPath, generated.output[0].map.toString());
             code += '\n//# sourceMappingURL=' + Path.basename(sourceMapOutPath);
