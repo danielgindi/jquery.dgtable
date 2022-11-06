@@ -28,7 +28,9 @@ let hasIeDragAndDropBug = ieVersion && ieVersion < 10;
 let createElement = document.createElement.bind(document);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
-const IsSafeSymbol = ('safe');
+const IsSafeSymbol = Symbol('safe');
+const HoverInEventSymbol = Symbol('hover_in');
+const HoverOutEventSymbol = Symbol('hover_out');
 
 function webkitRenderBugfix(el) {
     // BUGFIX: WebKit has a bug where it does not relayout, and this affects us because scrollbars
@@ -121,9 +123,7 @@ DGTable.prototype.initialize = function (options) {
         .data('dgtable', that);
 
     // For jQuery.UI or jquery.removeevent
-    $el.on('remove', function () {
-        that.destroy();
-    });
+    $el.on('remove', () => that.destroy());
 
     p.onMouseMoveResizeAreaBound = this._onMouseMoveResizeArea.bind(this);
     p.onEndDragColumnHeaderBound = this._onEndDragColumnHeader.bind(this);
@@ -133,92 +133,97 @@ DGTable.prototype.initialize = function (options) {
 
     /**
      * @private
-     * @field {Boolean} _tableSkeletonNeedsRendering */
+     * @field {boolean} _tableSkeletonNeedsRendering */
     p.tableSkeletonNeedsRendering = true;
 
     /**
      * @private
-     * @field {Boolean} virtualTable */
+     * @field {boolean} virtualTable */
     o.virtualTable = options.virtualTable === undefined ? true : !!options.virtualTable;
 
     /**
      * @private
-     * @field {Number} rowsBufferSize */
+     * @field {number} estimatedRowHeight */
+    o.estimatedRowHeight = options.estimatedRowHeight === undefined ? 40 : options.estimatedRowHeight;
+
+    /**
+     * @private
+     * @field {number} rowsBufferSize */
     o.rowsBufferSize = options.rowsBufferSize || 3;
 
     /**
      * @private
-     * @field {Number} minColumnWidth */
+     * @field {number} minColumnWidth */
     o.minColumnWidth = Math.max(options.minColumnWidth || 35, 0);
 
     /**
      * @private
-     * @field {Number} resizeAreaWidth */
+     * @field {number} resizeAreaWidth */
     o.resizeAreaWidth = options.resizeAreaWidth || 8;
 
     /**
      * @private
-     * @field {Boolean} resizableColumns */
+     * @field {boolean} resizableColumns */
     o.resizableColumns = options.resizableColumns === undefined ? true : !!options.resizableColumns;
 
     /**
      * @private
-     * @field {Boolean} movableColumns */
+     * @field {boolean} movableColumns */
     o.movableColumns = options.movableColumns === undefined ? true : !!options.movableColumns;
 
     /**
      * @private
-     * @field {Number} sortableColumns */
+     * @field {number} sortableColumns */
     o.sortableColumns = options.sortableColumns === undefined ? 1 : (parseInt(options.sortableColumns, 10) || 1);
 
     /**
      * @private
-     * @field {Boolean} adjustColumnWidthForSortArrow */
+     * @field {boolean} adjustColumnWidthForSortArrow */
     o.adjustColumnWidthForSortArrow = options.adjustColumnWidthForSortArrow === undefined ? true : !!options.adjustColumnWidthForSortArrow;
 
     /**
      * @private
-     * @field {Boolean} convertColumnWidthsToRelative */
+     * @field {boolean} convertColumnWidthsToRelative */
     o.convertColumnWidthsToRelative = options.convertColumnWidthsToRelative === undefined ? false : !!options.convertColumnWidthsToRelative;
 
     /**
      * @private
-     * @field {Boolean} autoFillTableWidth */
+     * @field {boolean} autoFillTableWidth */
     o.autoFillTableWidth = options.autoFillTableWidth === undefined ? false : !!options.autoFillTableWidth;
 
     /**
      * @private
-     * @field {String} cellClasses */
+     * @field {string} cellClasses */
     o.cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
     /**
      * @private
-     * @field {String} resizerClassName */
+     * @field {string} resizerClassName */
     o.resizerClassName = options.resizerClassName === undefined ? 'dgtable-resize' : options.resizerClassName;
 
     /**
      * @private
-     * @field {String} tableClassName */
+     * @field {string} tableClassName */
     o.tableClassName = options.tableClassName === undefined ? 'dgtable' : options.tableClassName;
 
     /**
      * @private
-     * @field {Boolean} allowCellPreview */
+     * @field {boolean} allowCellPreview */
     o.allowCellPreview = options.allowCellPreview === undefined ? true : options.allowCellPreview;
 
     /**
      * @private
-     * @field {Boolean} allowHeaderCellPreview */
+     * @field {boolean} allowHeaderCellPreview */
     o.allowHeaderCellPreview = options.allowHeaderCellPreview === undefined ? true : options.allowHeaderCellPreview;
 
     /**
      * @private
-     * @field {String} cellPreviewClassName */
+     * @field {string} cellPreviewClassName */
     o.cellPreviewClassName = options.cellPreviewClassName === undefined ? 'dgtable-cell-preview' : options.cellPreviewClassName;
 
     /**
      * @private
-     * @field {Boolean} cellPreviewAutoBackground */
+     * @field {boolean} cellPreviewAutoBackground */
     o.cellPreviewAutoBackground = options.cellPreviewAutoBackground === undefined ? true : options.cellPreviewAutoBackground;
 
     /**
@@ -231,17 +236,17 @@ DGTable.prototype.initialize = function (options) {
 
     /**
      * @private
-     * @field {Boolean} width */
+     * @field {boolean} width */
     o.width = options.width === undefined ? DGTable.Width.NONE : options.width;
 
     /**
      * @private
-     * @field {Boolean} relativeWidthGrowsToFillWidth */
+     * @field {boolean} relativeWidthGrowsToFillWidth */
     o.relativeWidthGrowsToFillWidth = options.relativeWidthGrowsToFillWidth === undefined ? true : !!options.relativeWidthGrowsToFillWidth;
 
     /**
      * @private
-     * @field {Boolean} relativeWidthShrinksToFillWidth */
+     * @field {boolean} relativeWidthShrinksToFillWidth */
     o.relativeWidthShrinksToFillWidth = options.relativeWidthShrinksToFillWidth === undefined ? false : !!options.relativeWidthShrinksToFillWidth;
 
     this.setCellFormatter(options.cellFormatter);
@@ -249,7 +254,7 @@ DGTable.prototype.initialize = function (options) {
     this.setFilter(options.filter);
 
     /** @private
-     * @field {Number} height */
+     * @field {number} height */
     o.height = options.height;
 
     // Prepare columns
@@ -296,6 +301,12 @@ DGTable.prototype.initialize = function (options) {
      * @field {RowCollection} _filteredRows */
     p.filteredRows = null;
 
+    this._setupHovers();
+};
+
+DGTable.prototype._setupHovers = function () {
+    const that = this, p = that.p;
+
     /*
      Setup hover mechanism.
      We need this to be high performance, as there may be MANY cells to call this on, on creation and destruction.
@@ -303,12 +314,11 @@ DGTable.prototype.initialize = function (options) {
      */
 
     /**
-     * @param {MouseEvent} evt
+     * @param {MouseEvent} event
      * @this {HTMLElement}
      * */
-    let hoverMouseOverHandler = function (evt) {
-        evt = evt || event;
-        let relatedTarget = evt.fromElement || evt.relatedTarget;
+    let hoverMouseOverHandler = function (event) {
+        let relatedTarget = event.fromElement || event.relatedTarget;
         if (relatedTarget === this || $.contains(this, relatedTarget)) return;
         if (this['__previewCell'] && (relatedTarget === this['__previewCell'] || $.contains(this['__previewCell'], relatedTarget))) return;
         that._cellMouseOverEvent.call(that, this);
@@ -326,100 +336,54 @@ DGTable.prototype.initialize = function (options) {
         that._cellMouseOutEvent.call(that, this);
     };
 
-    if ('addEventListener' in window) {
+    /**
+     * @param {HTMLElement} el cell or header-cell
+     * */
+    p._bindCellHoverIn = function (el) {
+        if (!el[HoverInEventSymbol]) {
+            el.addEventListener('mouseover', el[HoverInEventSymbol] = hoverMouseOverHandler.bind(el));
+        }
+    };
 
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * */
-        p._bindCellHoverIn = function (el) {
-            if (!el['__hoverIn']) {
-                el.addEventListener('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
-            }
-        };
+    /**
+     * @param {HTMLElement} el cell or header-cell
+     * */
+    p._unbindCellHoverIn = function (el) {
+        if (el[HoverInEventSymbol]) {
+            el.removeEventListener('mouseover', el[HoverInEventSymbol]);
+            el[HoverInEventSymbol] = null;
+        }
+    };
 
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * */
-        p._unbindCellHoverIn = function (el) {
-            if (el['__hoverIn']) {
-                el.removeEventListener('mouseover', el['__hoverIn']);
-                el['__hoverIn'] = null;
-            }
-        };
+    /**
+     * @param {HTMLElement} el cell or header-cell
+     * @returns {DGTable} self
+     * */
+    p._bindCellHoverOut = function (el) {
+        if (!el[HoverOutEventSymbol]) {
+            el.addEventListener('mouseout', el[HoverOutEventSymbol] = hoverMouseOutHandler.bind(el['__cell'] || el));
+        }
+        return this;
+    };
 
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * @returns {DGTable} self
-         * */
-        p._bindCellHoverOut = function (el) {
-            if (!el['__hoverOut']) {
-                el.addEventListener('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
-            }
-            return this;
-        };
-
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * @returns {DGTable} self
-         * */
-        p._unbindCellHoverOut = function (el) {
-            if (el['__hoverOut']) {
-                el.removeEventListener('mouseout', el['__hoverOut']);
-                el['__hoverOut'] = null;
-            }
-            return this;
-        };
-
-    } else {
-
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * */
-        p._bindCellHoverIn = function (el) {
-            if (!el['__hoverIn']) {
-                el.attachEvent('mouseover', el['__hoverIn'] = hoverMouseOverHandler.bind(el));
-            }
-        };
-
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * */
-        p._unbindCellHoverIn = function (el) {
-            if (el['__hoverIn']) {
-                el.detachEvent('mouseover', el['__hoverIn']);
-                el['__hoverIn'] = null;
-            }
-        };
-
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * */
-        p._bindCellHoverOut = function (el) {
-            if (!el['__hoverOut']) {
-                el.attachEvent('mouseout', el['__hoverOut'] = hoverMouseOutHandler.bind(el['__cell'] || el));
-            }
-        };
-
-        /**
-         * @param {HTMLElement} el cell or header-cell
-         * @returns {DGTable} self
-         * */
-        p._unbindCellHoverOut = function (el) {
-            if (el['__hoverOut']) {
-                el.detachEvent('mouseout', el['__hoverOut']);
-                el['__hoverOut'] = null;
-            }
-            return this;
-        };
-
-    }
+    /**
+     * @param {HTMLElement} el cell or header-cell
+     * @returns {DGTable} self
+     * */
+    p._unbindCellHoverOut = function (el) {
+        if (el[HoverOutEventSymbol]) {
+            el.removeEventListener('mouseout', el[HoverOutEventSymbol]);
+            el[HoverOutEventSymbol] = null;
+        }
+        return this;
+    };
 };
 
 /**
  * Add an event listener
  * @public
  * @expose
- * @param {String} eventName
+ * @param {string} eventName
  * @param {Function} callback
  * @returns {DGTable}
  */
@@ -444,7 +408,7 @@ DGTable.prototype.on = function (eventName, callback) {
  * Add an event listener for a one shot
  * @public
  * @expose
- * @param {String} eventName
+ * @param {string} eventName
  * @param {Function} callback
  * @returns {DGTable}
  */
@@ -469,7 +433,7 @@ DGTable.prototype.once = function (eventName, callback) {
  * Remove an event listener
  * @public
  * @expose
- * @param {String} eventName
+ * @param {string} eventName
  * @param {Function} callback
  * @returns {DGTable}
  */
@@ -512,8 +476,8 @@ DGTable.prototype.trigger = function (eventName) {
 /**
  * Detect column width mode
  * @private
- * @param {Number|String} width
- * @param {Number} minWidth
+ * @param {Number|string} width
+ * @param {number} minWidth
  * @returns {Object} parsed width
  */
 DGTable.prototype._parseColumnWidth = function (width, minWidth) {
@@ -819,7 +783,7 @@ DGTable.prototype.render = function () {
  * Forces a full render of the table
  * @public
  * @expose
- * @param {Boolean=true} render - Should render now?
+ * @param {boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
 DGTable.prototype.clearAndRender = function (render) {
@@ -837,8 +801,8 @@ DGTable.prototype.clearAndRender = function (render) {
 /**
  * Render rows
  * @private
- * @param {Number} first first row to render
- * @param {Number} last last row to render
+ * @param {number} first first row to render
+ * @param {number} last last row to render
  * @returns {DocumentFragment} fragment containing all rendered rows
  */
 DGTable.prototype.renderRows = function (first, last) {
@@ -956,7 +920,7 @@ DGTable.prototype._calculateVirtualHeight = function () {
 /**
  * Calculate the size required for the table body width (which is the row's width)
  * @private
- * @returns {Number} calculated width
+ * @returns {number} calculated width
  */
 DGTable.prototype._calculateTbodyWidth = function () {
     const p = this.p;
@@ -1019,7 +983,7 @@ DGTable.prototype._calculateTbodyWidth = function () {
  * @public
  * @expose
  * @param {COLUMN_OPTIONS[]} columns - Column definitions array
- * @param {Boolean=true} render - Should render now?
+ * @param {boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
 DGTable.prototype.setColumns = function (columns, render) {
@@ -1059,8 +1023,8 @@ DGTable.prototype.setColumns = function (columns, render) {
  * @public
  * @expose
  * @param {COLUMN_OPTIONS} columnData column properties
- * @param {String|Number} [before=-1] column name or order to be inserted before
- * @param {Boolean=true} render - Should render now?
+ * @param {string|number} [before=-1] column name or order to be inserted before
+ * @param {boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
 DGTable.prototype.addColumn = function (columnData, before, render) {
@@ -1098,8 +1062,8 @@ DGTable.prototype.addColumn = function (columnData, before, render) {
  * Remove a column from the table
  * @public
  * @expose
- * @param {String} column column name
- * @param {Boolean=true} render - Should render now?
+ * @param {string} column column name
+ * @param {boolean=true} render - Should render now?
  * @returns {DGTable} self
  */
 DGTable.prototype.removeColumn = function (column, render) {
@@ -1123,7 +1087,7 @@ DGTable.prototype.removeColumn = function (column, render) {
  * Sets a new cell formatter.
  * @public
  * @expose
- * @param {function(value: *, columnName: String, row: Object):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+ * @param {function(value: *, columnName: string, row: Object):string|null} [formatter=null] - The cell formatter. Should return an HTML.
  * @returns {DGTable} self
  */
 DGTable.prototype.setCellFormatter = function (formatter) {
@@ -1144,7 +1108,7 @@ DGTable.prototype.setCellFormatter = function (formatter) {
  * Sets a new header cell formatter.
  * @public
  * @expose
- * @param {function(label: String, columnName: String):String|null} [formatter=null] - The cell formatter. Should return an HTML.
+ * @param {function(label: string, columnName: string):string|null} [formatter=null] - The cell formatter. Should return an HTML.
  * @returns {DGTable} self
  */
 DGTable.prototype.setHeaderCellFormatter = function (formatter) {
@@ -1161,7 +1125,7 @@ DGTable.prototype.setHeaderCellFormatter = function (formatter) {
 /**
  * @public
  * @expose
- * @param {function(row:Object,args:Object):Boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
+ * @param {function(row:Object,args:Object):boolean|null} [filterFunc=null] - The filter function to work with filters. Default is a by-colum filter.
  * @returns {DGTable} self
  */
 DGTable.prototype.setFilter = function (filterFunc) {
@@ -1253,8 +1217,8 @@ DGTable.prototype._refilter = function() {
  * Set a new label to a column
  * @public
  * @expose
- * @param {String} column Name of the column
- * @param {String} label New label for the column
+ * @param {string} column Name of the column
+ * @param {string} label New label for the column
  * @returns {DGTable} self
  */
 DGTable.prototype.setColumnLabel = function (column, label) {
@@ -1350,9 +1314,9 @@ DGTable.prototype.moveColumn = function (src, dest, visibleOnly = true) {
  * Sort the table
  * @public
  * @expose
- * @param {String?} column Name of the column to sort on (or null to remove sort arrow)
- * @param {Boolean=} descending Sort in descending order
- * @param {Boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
+ * @param {string?} column Name of the column to sort on (or null to remove sort arrow)
+ * @param {boolean=} descending Sort in descending order
+ * @param {boolean} [add=false] Should this sort be on top of the existing sort? (For multiple column sort)
  * @returns {DGTable} self
  */
 DGTable.prototype.sort = function (column, descending, add) {
@@ -1503,8 +1467,8 @@ DGTable.prototype._ensureVisibleColumns = function () {
  * Show or hide a column
  * @public
  * @expose
- * @param {String} column Unique column name
- * @param {Boolean} visible New visibility mode for the column
+ * @param {string} column Unique column name
+ * @param {boolean} visible New visibility mode for the column
  * @returns {DGTable} self
  */
 DGTable.prototype.setColumnVisible = function (column, visible) {
@@ -1529,7 +1493,7 @@ DGTable.prototype.setColumnVisible = function (column, visible) {
  * Get the visibility mode of a column
  * @public
  * @expose
- * @returns {Boolean} true if visible
+ * @returns {boolean} true if visible
  */
 DGTable.prototype.isColumnVisible = function (column) {
     const p = this.p;
@@ -1544,7 +1508,7 @@ DGTable.prototype.isColumnVisible = function (column) {
  * Globally set the minimum column width
  * @public
  * @expose
- * @param {Number} minColumnWidth Minimum column width
+ * @param {number} minColumnWidth Minimum column width
  * @returns {DGTable} self
  */
 DGTable.prototype.setMinColumnWidth = function (minColumnWidth) {
@@ -1561,7 +1525,7 @@ DGTable.prototype.setMinColumnWidth = function (minColumnWidth) {
  * Get the current minimum column width
  * @public
  * @expose
- * @returns {Number} Minimum column width
+ * @returns {number} Minimum column width
  */
 DGTable.prototype.getMinColumnWidth = function () {
     return this.o.minColumnWidth;
@@ -1571,7 +1535,7 @@ DGTable.prototype.getMinColumnWidth = function () {
  * Set the limit on concurrent columns sorted
  * @public
  * @expose
- * @param {Number} sortableColumns How many sortable columns to allow?
+ * @param {number} sortableColumns How many sortable columns to allow?
  * @returns {DGTable} self
  */
 DGTable.prototype.setSortableColumns = function (sortableColumns) {
@@ -1592,7 +1556,7 @@ DGTable.prototype.setSortableColumns = function (sortableColumns) {
  * Get the limit on concurrent columns sorted
  * @public
  * @expose
- * @returns {Number} How many sortable columns are allowed?
+ * @returns {number} How many sortable columns are allowed?
  */
 DGTable.prototype.getSortableColumns = function () {
     return this.o.sortableColumns;
@@ -1601,7 +1565,7 @@ DGTable.prototype.getSortableColumns = function () {
 /**
  * @public
  * @expose
- * @param {Boolean?} movableColumns=true are the columns movable?
+ * @param {boolean?} movableColumns=true are the columns movable?
  * @returns {DGTable} self
  */
 DGTable.prototype.setMovableColumns = function (movableColumns) {
@@ -1617,7 +1581,7 @@ DGTable.prototype.setMovableColumns = function (movableColumns) {
 /**
  * @public
  * @expose
- * @returns {Boolean} are the columns movable?
+ * @returns {boolean} are the columns movable?
  */
 DGTable.prototype.getMovableColumns = function () {
     return this.o.movableColumns;
@@ -1626,7 +1590,7 @@ DGTable.prototype.getMovableColumns = function () {
 /**
  * @public
  * @expose
- * @param {Boolean} resizableColumns=true are the columns resizable?
+ * @param {boolean} resizableColumns=true are the columns resizable?
  * @returns {DGTable} self
  */
 DGTable.prototype.setResizableColumns = function (resizableColumns) {
@@ -1642,7 +1606,7 @@ DGTable.prototype.setResizableColumns = function (resizableColumns) {
 /**
  * @public
  * @expose
- * @returns {Boolean} are the columns resizable?
+ * @returns {boolean} are the columns resizable?
  */
 DGTable.prototype.getResizableColumns = function () {
     return this.o.resizableColumns;
@@ -1666,8 +1630,8 @@ DGTable.prototype.setComparatorCallback = function (comparatorCallback) {
  * Set a new width to a column
  * @public
  * @expose
- * @param {String} column name of the column to resize
- * @param {Number|String} width new column as pixels, or relative size (0.5, 50%)
+ * @param {string} column name of the column to resize
+ * @param {number|string} width new column as pixels, or relative size (0.5, 50%)
  * @returns {DGTable} self
  */
 DGTable.prototype.setColumnWidth = function (column, width) {
@@ -1698,8 +1662,8 @@ DGTable.prototype.setColumnWidth = function (column, width) {
 /**
  * @public
  * @expose
- * @param {String} column name of the column
- * @returns {String|null} the serialized width of the specified column, or null if column not found
+ * @param {string} column name of the column
+ * @returns {string|null} the serialized width of the specified column, or null if column not found
  */
 DGTable.prototype.getColumnWidth = function (column) {
     const p = this.p;
@@ -1714,7 +1678,7 @@ DGTable.prototype.getColumnWidth = function (column) {
 /**
  * @public
  * @expose
- * @param {String} column name of the column
+ * @param {string} column name of the column
  * @returns {SERIALIZED_COLUMN|null} configuration for all columns
  */
 DGTable.prototype.getColumnConfig = function (column) {
@@ -1842,8 +1806,8 @@ DGTable.prototype._getHtmlForCell = function (rowData, column) {
  * Returns the y pos of a row by index
  * @public
  * @expose
- * @param {Number} rowIndex - index of the row
- * @returns {Number|null} Y pos
+ * @param {number} rowIndex - index of the row
+ * @returns {number|null} Y pos
  */
 DGTable.prototype.getRowYPos = function (rowIndex) {
     const p = this.p;
@@ -1860,7 +1824,7 @@ DGTable.prototype.getRowYPos = function (rowIndex) {
  * Returns the row data for a specific row
  * @public
  * @expose
- * @param {Number} row index of the row
+ * @param {number} row index of the row
  * @returns {Object} Row data
  */
 DGTable.prototype.getDataForRow = function (row) {
@@ -1874,7 +1838,7 @@ DGTable.prototype.getDataForRow = function (row) {
  * Gets the number of rows
  * @public
  * @expose
- * @returns {Number} Row count
+ * @returns {number} Row count
  */
 DGTable.prototype.getRowCount = function () {
     const p = this.p;
@@ -1886,7 +1850,7 @@ DGTable.prototype.getRowCount = function () {
  * @public
  * @expose
  * @param {Object} rowData - Row data to find
- * @returns {Number} Row index
+ * @returns {number} Row index
  */
 DGTable.prototype.getIndexForRow = function (rowData) {
     const p = this.p;
@@ -1897,7 +1861,7 @@ DGTable.prototype.getIndexForRow = function (rowData) {
  * Gets the number of filtered rows
  * @public
  * @expose
- * @returns {Number} Filtered row count
+ * @returns {number} Filtered row count
  */
 DGTable.prototype.getFilteredRowCount = function () {
     const p = this.p;
@@ -1909,7 +1873,7 @@ DGTable.prototype.getFilteredRowCount = function () {
  * @public
  * @expose
  * @param {Object} rowData - Row data to find
- * @returns {Number} Row index
+ * @returns {number} Row index
  */
 DGTable.prototype.getIndexForFilteredRow = function (rowData) {
     const p = this.p;
@@ -1920,7 +1884,7 @@ DGTable.prototype.getIndexForFilteredRow = function (rowData) {
  * Returns the row data for a specific row
  * @public
  * @expose
- * @param {Number} row index of the filtered row
+ * @param {number} row index of the filtered row
  * @returns {Object} Row data
  */
 DGTable.prototype.getDataForFilteredRow = function (row) {
@@ -1942,7 +1906,7 @@ DGTable.prototype.getHeaderRowElement = function () {
 /**
  * @private
  * @param {Element} el
- * @returns {Number} width
+ * @returns {number} width
  */
 DGTable.prototype._horizontalPadding = function(el) {
     return ((parseFloat($.css(el, 'padding-left')) || 0) +
@@ -1952,7 +1916,7 @@ DGTable.prototype._horizontalPadding = function(el) {
 /**
  * @private
  * @param {Element} el
- * @returns {Number} width
+ * @returns {number} width
  */
 DGTable.prototype._horizontalBorderWidth = function(el) {
     return ((parseFloat($.css(el, 'border-left')) || 0) +
@@ -1961,7 +1925,7 @@ DGTable.prototype._horizontalBorderWidth = function(el) {
 
 /**
  * @private
- * @returns {Number} width
+ * @returns {number} width
  */
 DGTable.prototype._calculateWidthAvailableForColumns = function() {
     const o = this.o, p = this.p;
@@ -2056,8 +2020,8 @@ DGTable.prototype.tableWidthChanged = (function () {
     /**
      * @public
      * @expose
-     * @param {Boolean} [forceUpdate=false]
-     * @param {Boolean} [renderColumns=true]
+     * @param {boolean} [forceUpdate=false]
+     * @param {boolean} [renderColumns=true]
      * @returns {DGTable} self
      */
     return function(forceUpdate, renderColumns) {
@@ -2320,9 +2284,9 @@ DGTable.prototype.tableHeightChanged = function () {
  * @public
  * @expose
  * @param {Object[]} data - array of rows to add to the table
- * @param {Number} [at=-1] - where to add the rows at
- * @param {Boolean} [resort=false] - should resort all rows?
- * @param {Boolean} [render=true]
+ * @param {number} [at=-1] - where to add the rows at
+ * @param {boolean} [resort=false] - should resort all rows?
+ * @param {boolean} [render=true]
  * @returns {DGTable} self
  */
 DGTable.prototype.addRows = function (data, at, resort, render) {
@@ -2407,9 +2371,9 @@ DGTable.prototype.addRows = function (data, at, resort, render) {
  * Removes a row from the table
  * @public
  * @expose
- * @param {Number} physicalRowIndex - index
- * @param {Number} count - how many rows to remove
- * @param {Boolean=true} render
+ * @param {number} physicalRowIndex - index
+ * @param {number} count - how many rows to remove
+ * @param {boolean=true} render
  * @returns {DGTable} self
  */
 DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
@@ -2488,8 +2452,8 @@ DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
  * Removes a row from the table
  * @public
  * @expose
- * @param {Number} physicalRowIndex - index
- * @param {Boolean=true} render
+ * @param {number} physicalRowIndex - index
+ * @param {boolean=true} render
  * @returns {DGTable} self
  */
 DGTable.prototype.removeRow = function (physicalRowIndex, render) {
@@ -2500,7 +2464,7 @@ DGTable.prototype.removeRow = function (physicalRowIndex, render) {
  * Refreshes the row specified
  * @public
  * @expose
- * @param {Number} physicalRowIndex index
+ * @param {number} physicalRowIndex index
  * @returns {DGTable} self
  */
 DGTable.prototype.refreshRow = function(physicalRowIndex) {
@@ -2553,7 +2517,7 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
  * Get the DOM element for the specified row, if it exists
  * @public
  * @expose
- * @param {Number} physicalRowIndex index
+ * @param {number} physicalRowIndex index
  * @returns {Element|null} row or null
  */
 DGTable.prototype.getRowElement = function(physicalRowIndex) {
@@ -2624,7 +2588,7 @@ DGTable.prototype.refreshAllVirtualRows = function () {
  * @public
  * @expose
  * @param {Object[]} data array of rows to add to the table
- * @param {Boolean} [resort=false] should resort all rows?
+ * @param {boolean} [resort=false] should resort all rows?
  * @returns {DGTable} self
  */
 DGTable.prototype.setRows = function (data, resort) {
@@ -2652,7 +2616,7 @@ DGTable.prototype.setRows = function (data, resort) {
  * @public
  * @expose
  * @param {string} id Id of the element containing your data
- * @returns {String|null} the url, or null if not supported
+ * @returns {string|null} the url, or null if not supported
  */
 DGTable.prototype.getUrlForElementContent = function (id) {
     let blob,
@@ -2678,7 +2642,7 @@ DGTable.prototype.getUrlForElementContent = function (id) {
 /**
  * @public
  * @expose
- * @returns {Boolean} A value indicating whether Web Workers are supported
+ * @returns {boolean} A value indicating whether Web Workers are supported
  */
 DGTable.prototype.isWorkerSupported = function() {
     return window['Worker'] instanceof Function;
@@ -2787,7 +2751,7 @@ DGTable.prototype._onTableScrolledHorizontally = function () {
  * Reverse-calculate the column to resize from mouse position
  * @private
  * @param {jQuery_Event} e jQuery mouse event
- * @returns {String} name of the column which the mouse is over, or null if the mouse is not in resize position
+ * @returns {string} name of the column which the mouse is over, or null if the mouse is not in resize position
  */
 DGTable.prototype._getColumnByResizePosition = function (e) {
 
@@ -3382,8 +3346,8 @@ DGTable.prototype._clearSortArrows = function () {
 
 /**
  * @private
- * @param {String} column the name of the sort column
- * @param {Boolean} descending table is sorted descending
+ * @param {string} column the name of the sort column
+ * @param {boolean} descending table is sorted descending
  * @returns {DGTable} self
  */
 DGTable.prototype._showSortArrow = function (column, descending) {
@@ -3411,7 +3375,7 @@ DGTable.prototype._showSortArrow = function (column, descending) {
 
 /**
  * @private
- * @param {Number} cellIndex index of the column in the DOM
+ * @param {number} cellIndex index of the column in the DOM
  * @returns {DGTable} self
  */
 DGTable.prototype._resizeColumnElements = function (cellIndex) {
@@ -3786,7 +3750,7 @@ DGTable.prototype._updateTableWidth = function (parentSizeMayHaveChanged) {
 
 /**
  * @private
- * @returns {Boolean}
+ * @returns {boolean}
  */
 DGTable.prototype._isTableRtl = function() {
     return this.p.$table.css('direction') === 'rtl';
@@ -3795,7 +3759,7 @@ DGTable.prototype._isTableRtl = function() {
 /**
  * @private
  * @param {Object} column column object
- * @returns {String}
+ * @returns {string}
  */
 DGTable.prototype._serializeColumnWidth = function(column) {
     return column.widthMode === ColumnWidthMode.AUTO ? 'auto' :
@@ -4081,15 +4045,15 @@ DGTable.prototype.hideCellPreview = function() {
 
 /**
  * @typedef {Object} SERIALIZED_COLUMN
- * @property {Number|null|undefined} [order=0]
- * @property {String|null|undefined} [width='auto']
- * @property {Boolean|null|undefined} [visible=true]
+ * @property {number|null|undefined} [order=0]
+ * @property {string|null|undefined} [width='auto']
+ * @property {boolean|null|undefined} [visible=true]
  * */
 
 /**
  * @typedef {Object} SERIALIZED_COLUMN_SORT
- * @property {String|null|undefined} [column='']
- * @property {Boolean|null|undefined} [descending=false]
+ * @property {string|null|undefined} [column='']
+ * @property {boolean|null|undefined} [descending=false]
  * */
 
 /**
@@ -4104,7 +4068,7 @@ const ColumnWidthMode = {
 };
 
 /**
- * @enum {DGTable.Width|String|undefined}
+ * @enum {DGTable.Width|string|undefined}
  * @const
  * @typedef {DGTable.Width}
  */
@@ -4117,57 +4081,58 @@ DGTable.Width = {
 /**
  * @expose
  * @typedef {Object} COLUMN_SORT_OPTIONS
- * @property {String|null|undefined} column
- * @property {Boolean|null|undefined} [descending=false]
+ * @property {string|null|undefined} column
+ * @property {boolean|null|undefined} [descending=false]
  * */
 
 /**
  * @expose
  * @typedef {Object} COLUMN_OPTIONS
- * @property {String|null|undefined} width
- * @property {String|null|undefined} name
- * @property {String|null|undefined} label
- * @property {String|null|undefined} dataPath - defaults to `name`
- * @property {String|null|undefined} comparePath - defaults to `dataPath`
- * @property {Number|String|null|undefined} comparePath
- * @property {Boolean|null|undefined} [resizable=true]
- * @property {Boolean|null|undefined} [movable=true]
- * @property {Boolean|null|undefined} [sortable=true]
- * @property {Boolean|null|undefined} [visible=true]
- * @property {String|null|undefined} [cellClasses]
- * @property {Boolean|null|undefined} [ignoreMin=false]
+ * @property {string|null|undefined} width
+ * @property {string|null|undefined} name
+ * @property {string|null|undefined} label
+ * @property {string|null|undefined} dataPath - defaults to `name`
+ * @property {string|null|undefined} comparePath - defaults to `dataPath`
+ * @property {number|string|null|undefined} comparePath
+ * @property {boolean|null|undefined} [resizable=true]
+ * @property {boolean|null|undefined} [movable=true]
+ * @property {boolean|null|undefined} [sortable=true]
+ * @property {boolean|null|undefined} [visible=true]
+ * @property {string|null|undefined} [cellClasses]
+ * @property {boolean|null|undefined} [ignoreMin=false]
  * */
 
 /**
  * @typedef {Object} DGTable.Options
  * @property {COLUMN_OPTIONS[]} [columns]
- * @property {Number} [height]
+ * @property {number} [height]
  * @property {DGTable.Width} [width]
- * @property {Boolean|null|undefined} [virtualTable=true]
- * @property {Boolean|null|undefined} [resizableColumns=true]
- * @property {Boolean|null|undefined} [movableColumns=true]
- * @property {Number|null|undefined} [sortableColumns=1]
- * @property {Boolean|null|undefined} [adjustColumnWidthForSortArrow=true]
- * @property {Boolean|null|undefined} [relativeWidthGrowsToFillWidth=true]
- * @property {Boolean|null|undefined} [relativeWidthShrinksToFillWidth=false]
- * @property {Boolean|null|undefined} [convertColumnWidthsToRelative=false]
- * @property {Boolean|null|undefined} [autoFillTableWidth=false]
- * @property {String|null|undefined} [cellClasses]
- * @property {String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} [sortColumn]
+ * @property {boolean|null|undefined} [virtualTable=true]
+ * @property {number|null|undefined} [estimatedRowHeight=40]
+ * @property {boolean|null|undefined} [resizableColumns=true]
+ * @property {boolean|null|undefined} [movableColumns=true]
+ * @property {number|null|undefined} [sortableColumns=1]
+ * @property {boolean|null|undefined} [adjustColumnWidthForSortArrow=true]
+ * @property {boolean|null|undefined} [relativeWidthGrowsToFillWidth=true]
+ * @property {boolean|null|undefined} [relativeWidthShrinksToFillWidth=false]
+ * @property {boolean|null|undefined} [convertColumnWidthsToRelative=false]
+ * @property {boolean|null|undefined} [autoFillTableWidth=false]
+ * @property {string|null|undefined} [cellClasses]
+ * @property {string|string[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} [sortColumn]
  * @property {Function|null|undefined} [cellFormatter=null]
  * @property {Function|null|undefined} [headerCellFormatter=null]
- * @property {Number|null|undefined} [rowsBufferSize=10]
- * @property {Number|null|undefined} [minColumnWidth=35]
- * @property {Number|null|undefined} [resizeAreaWidth=8]
+ * @property {number|null|undefined} [rowsBufferSize=10]
+ * @property {number|null|undefined} [minColumnWidth=35]
+ * @property {number|null|undefined} [resizeAreaWidth=8]
  * @property {{function(string,boolean):{function(a:*,b:*):boolean}}} [onComparatorRequired]
- * @property {String|null|undefined} [resizerClassName=undefined]
- * @property {String|null|undefined} [tableClassName=undefined]
- * @property {Boolean|null|undefined} [allowCellPreview=true]
- * @property {Boolean|null|undefined} [allowHeaderCellPreview=true]
- * @property {String|null|undefined} [cellPreviewClassName=undefined]
- * @property {Boolean|null|undefined} [cellPreviewAutoBackground=true]
+ * @property {string|null|undefined} [resizerClassName=undefined]
+ * @property {string|null|undefined} [tableClassName=undefined]
+ * @property {boolean|null|undefined} [allowCellPreview=true]
+ * @property {boolean|null|undefined} [allowHeaderCellPreview=true]
+ * @property {string|null|undefined} [cellPreviewClassName=undefined]
+ * @property {boolean|null|undefined} [cellPreviewAutoBackground=true]
  * @property {Element|null|undefined} [el=undefined]
- * @property {String|null|undefined} [className=undefined]
+ * @property {string|null|undefined} [className=undefined]
  * @property {Function|null|undefined} [filter=undefined]
  * */
 
@@ -4176,13 +4141,13 @@ DGTable.Width = {
      *  currentTarget: Element,
      *  data: Object.<string, *>,
      *  delegateTarget: Element,
-     *  isDefaultPrevented: Boolean,
-     *  isImmediatePropagationStopped: Boolean,
-     *  isPropagationStopped: Boolean,
+     *  isDefaultPrevented: boolean,
+     *  isImmediatePropagationStopped: boolean,
+     *  isPropagationStopped: boolean,
      *  namespace: string,
      *  originalEvent: MouseEvent|TouchEvent|Event,
-     *  pageX: Number,
-     *  pageY: Number,
+     *  pageX: number,
+     *  pageY: number,
      *  preventDefault: Function,
      *  props: Object.<string, *>,
      *  relatedTarget: Element,
@@ -4190,9 +4155,9 @@ DGTable.Width = {
      *  stopImmediatePropagation: Function,
      *  stopPropagation: Function,
      *  target: Element,
-     *  timeStamp: Number,
+     *  timeStamp: number,
      *  type: string,
-     *  which: Number
+     *  which: number
      * }} jQuery_Event
  * */
 

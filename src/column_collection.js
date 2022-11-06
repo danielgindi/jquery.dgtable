@@ -25,12 +25,12 @@ ColumnCollection.prototype.initialize = function () {
 
 /**
  * Get the column by this name
- * @param {String} column column name
+ * @param {string} column column name
  * @returns {Object} the column object
  */
 ColumnCollection.prototype.get = function (column) {
     for (let i = 0, len = this.length; i < len; i++) {
-        if (this[i].name == column) {
+        if (this[i].name === column) {
             return this[i];
         }
     }
@@ -39,12 +39,12 @@ ColumnCollection.prototype.get = function (column) {
 
 /**
  * Get the index of the column by this name
- * @param {String} column column name
+ * @param {string} column column name
  * @returns {int} the index of this column
  */
 ColumnCollection.prototype.indexOf = function (column) {
     for (let i = 0, len = this.length; i < len; i++) {
-        if (this[i].name == column) {
+        if (this[i].name === column) {
             return i;
         }
     }
@@ -53,12 +53,12 @@ ColumnCollection.prototype.indexOf = function (column) {
 
 /**
  * Get the column by the specified order
- * @param {Number} order the column's order
+ * @param {number} order the column's order
  * @returns {Object} the column object
  */
 ColumnCollection.prototype.getByOrder = function (order) {
     for (let i = 0, len = this.length; i < len; i++) {
-        if (this[i].order == order) {
+        if (this[i].order === order) {
             return this[i];
         }
     }

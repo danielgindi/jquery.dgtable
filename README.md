@@ -53,55 +53,55 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 #### `INIT_OPTIONS`
 
 * **columns**: `COLUMN_OPTIONS[]` (Array of COLUMN_OPTIONS objects)
-  * **name**: `String` Name of the column
-  * **label**: `String=name` Used for the header of this column
-  * **dataPath**: `String=name` Path to the data to show (Defaults to `name`)
-  * **comparePath**: `String=name` Path to the data to use for comparison (Defaults to `dataPath`)
-  * **width**: `Number|String`
+  * **name**: `string` Name of the column
+  * **label**: `string=name` Used for the header of this column
+  * **dataPath**: `string=name` Path to the data to show (Defaults to `name`)
+  * **comparePath**: `string=name` Path to the data to use for comparison (Defaults to `dataPath`)
+  * **width**: `number|string`
     * A simple number (i.e `10`, `30`, `50`) will set an absolute width for the column.
     * A percentage (i.e `'30%'`) or a 0-1 decimal value (i.e `0.2`, `0.7`) will set a relative width for the column, out of the full table's width.
     * Any other value, like `0`, `null` etc. will set an automatic width mode, base of the header's content length.
-  * **resizable**: `Boolean=true` Is this column resizable?
-  * **sortable**: `Boolean=true` Is this column sortable?
-  * **movable**: `Boolean=true` Is this column movable?
-  * **visible**: `Boolean=true` Is this column visible?
-  * **cellClasses**: `String` Classes to add to the DOM element of this cell
-  * **ignoreMin**: `Boolean=false` Should this column ignore the minimum width specified for the table columns?
-* **height**: `Number` Suggested height for the table
+  * **resizable**: `boolean=true` Is this column resizable?
+  * **sortable**: `boolean=true` Is this column sortable?
+  * **movable**: `boolean=true` Is this column movable?
+  * **visible**: `boolean=true` Is this column visible?
+  * **cellClasses**: `string` Classes to add to the DOM element of this cell
+  * **ignoreMin**: `boolean=false` Should this column ignore the minimum width specified for the table columns?
+* **height**: `number` Suggested height for the table
 * **width**: `DGTable.Width=DGTable.Width.NONE` The way that the width of the table will be handled
   * `DGTable.Width.NONE`: No special handling
   * `DGTable.Width.AUTO`: Sets the width automatically
   * `DGTable.Width.SCROLL`: Creates a horizontal scroll when required
-* **virtualTable**: `Boolean=true` When set, the table will work in virtual mode, which means only the visible rows are rendered. Rows must have fixed height in this mode.
-* **resizableColumns**: `Boolean=true` Turns on or off the resizable columns globally.
-* **movableColumns**: `Boolean=true` Turns on or off the movable columns globally.
-* **sortableColumns**: `Number=1` How many columns can you sort by, one after another?
-* **adjustColumnWidthForSortArrow**: `Boolean=true` When set, the columns will automatically grow to accommodate for the sort arrow.
-* **relativeWidthGrowsToFillWidth**: `Boolean=true` When set, relative width columns automatically grow to fill the table's width.
-* **relativeWidthShrinksToFillWidth**: `Boolean=false` When set, relative width columns automatically shrink to fill the table's width.
-* **convertColumnWidthsToRelative**: `Boolean=false` When set, auto-width columns are automatically converted to relatives.
-* **autoFillTableWidth**: `Boolean=false` When set, columns are stretched proportionally to fill the table width (only if there is space left). Will supersede `relativeWidthGrowsToFillWidth` in the future.
-* **cellClasses**: `String` Classes to add to the DOM element of all cells
-* **sortColumn**: `String|String[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
+* **virtualTable**: `boolean=true` When set, the table will work in virtual mode, which means only the visible rows are rendered. Rows must have fixed height in this mode.
+* **resizableColumns**: `boolean=true` Turns on or off the resizable columns globally.
+* **movableColumns**: `boolean=true` Turns on or off the movable columns globally.
+* **sortableColumns**: `number=1` How many columns can you sort by, one after another?
+* **adjustColumnWidthForSortArrow**: `boolean=true` When set, the columns will automatically grow to accommodate for the sort arrow.
+* **relativeWidthGrowsToFillWidth**: `boolean=true` When set, relative width columns automatically grow to fill the table's width.
+* **relativeWidthShrinksToFillWidth**: `boolean=false` When set, relative width columns automatically shrink to fill the table's width.
+* **convertColumnWidthsToRelative**: `boolean=false` When set, auto-width columns are automatically converted to relatives.
+* **autoFillTableWidth**: `boolean=false` When set, columns are stretched proportionally to fill the table width (only if there is space left). Will supersede `relativeWidthGrowsToFillWidth` in the future.
+* **cellClasses**: `string` Classes to add to the DOM element of all cells
+* **sortColumn**: `string|string[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]` Columns to sort by
   * Can be a column or an array of columns.
-  * Each column is a `String` or a `COLUMN_SORT_OPTIONS`:
-  * **column**: `String` Column name
-  * **descending**: `Boolean=false` Is this column sorted in descending order?
-* **cellFormatter**: `Function(String value, String columnName, Object rowData)String` *(optional)* A formatter function which will return the HTML for the cell. By default the formatter is a plain HTML formatter.
-* **headerCellFormatter**: `Function(String value, String columnName)String` *(optional)* A formatter function which will return the HTML for the cell's header. By default the formatter is a plain HTML formatter.
-* **rowsBufferSize**: `Number=10` The size of the rows buffer, for virtual table
-* **minColumnWidth**: `Number=35` In pixels, the minimum width for a column
-* **resizeAreaWidth**: `Number=8` The size of the area where you can drag to resize.
+  * Each column is a `string` or a `COLUMN_SORT_OPTIONS`:
+  * **column**: `string` Column name
+  * **descending**: `boolean=false` Is this column sorted in descending order?
+* **cellFormatter**: `Function(string value, string columnName, Object rowData)string` *(optional)* A formatter function which will return the HTML for the cell. By default the formatter is a plain HTML formatter.
+* **headerCellFormatter**: `Function(string value, string columnName)string` *(optional)* A formatter function which will return the HTML for the cell's header. By default the formatter is a plain HTML formatter.
+* **rowsBufferSize**: `number=10` The size of the rows buffer, for virtual table
+* **minColumnWidth**: `number=35` In pixels, the minimum width for a column
+* **resizeAreaWidth**: `number=8` The size of the area where you can drag to resize.
 * **onComparatorRequired**: `function(columnName: string, descending: boolean, defaultComparator: function(a,b):number):{function(a,b):number}` A callback that can pass a comparator function for each column and mode as required.
-* **resizerClassName**: `String='dgtable-resize'` Class name for the dragged resizing element (showing when resizing a column)
-* **tableClassName**: `String='dgtable'` Class name for the table
-* **allowCellPreview**: `Boolean=true` When set, hovering on truncated cells will show a preview of the full content.
-* **allowHeaderCellPreview**: `Boolean=true` Allow for toggling off **allowCellPreview** for headers specifically.
-* **cellPreviewAutoBackground**: `Boolean=true` When set, the preview cell will receive its background automatically from the cell.
-* **cellPreviewClassName**: `String='dgtable-cell-preview'` Class name for the cell preview element
-* **className**: `String='dgtable-wrapper'` Element class name.
+* **resizerClassName**: `string='dgtable-resize'` Class name for the dragged resizing element (showing when resizing a column)
+* **tableClassName**: `string='dgtable'` Class name for the table
+* **allowCellPreview**: `boolean=true` When set, hovering on truncated cells will show a preview of the full content.
+* **allowHeaderCellPreview**: `boolean=true` Allow for toggling off **allowCellPreview** for headers specifically.
+* **cellPreviewAutoBackground**: `boolean=true` When set, the preview cell will receive its background automatically from the cell.
+* **cellPreviewClassName**: `string='dgtable-cell-preview'` Class name for the cell preview element
+* **className**: `string='dgtable-wrapper'` Element class name.
 * **el**: `Element?` Optional element to take over
-* **filter**: `Function(row: Object, args: Object): Boolean` *(optional)* A filter function for using with the `filter` method
+* **filter**: `Function(row: Object, args: Object): boolean` *(optional)* A filter function for using with the `filter` method
 
 #### Events triggered by DGTable:
 
@@ -161,7 +161,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `filterclear`: A filter was cleared
 * `sort`: The data was sorted
   * 1st argument: `Array` of sort constructs `[{ "column": "column's name", "descending": true/false }, ...]`
-  * 2nd argument: `Boolean` that determines whether this is a primary sort or a resort (sort()/header click, vs resort(), addRows(), etc.). If `true`, this is a resort.
+  * 2nd argument: `boolean` that determines whether this is a primary sort or a resort (sort()/header click, vs resort(), addRows(), etc.). If `true`, this is a resort.
   * 3rd argument: `Function` - the comparator that was used to sort.
 * `headercontextmenu`: A context menu should be shown for a header cell
   * 1st argument: The column's name
@@ -174,114 +174,114 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `once(eventName, {Function?} callback)`: Adds a one-shot event listener
 * `off(eventName, {Function?} callback)`: Removes an event listener
 * `render()`: Renders the view. Should be called after adding to the DOM, and when the viewport has changed and the table has no knowledge of it.
-* `clearAndRender({Boolean} render = true)`: Forces a full render of the table
-* `setColumns({COLUMN_OPTIONS[]} columns, {Boolean} render = true) {DGTable}`: Sets the table columns
-* `addColumn({COLUMN_OPTIONS} columnData, {String|Number} before = -1, {Boolean} render = true) {DGTable}`: Add a column to the table
+* `clearAndRender({boolean} render = true)`: Forces a full render of the table
+* `setColumns({COLUMN_OPTIONS[]} columns, {boolean} render = true) {DGTable}`: Sets the table columns
+* `addColumn({COLUMN_OPTIONS} columnData, {string|number} before = -1, {boolean} render = true) {DGTable}`: Add a column to the table
   * **columnData**: Column properties. Same manner as in the **columns** options when initializing the DGTable
   * **before**: Column name or order to be inserted before.
   * *returns* Self, to allow for call chaining.
-* `removeColumn({String} column, {Boolean} render = true) {DGTable}`: Remove a column from the table
+* `removeColumn({string} column, {boolean} render = true) {DGTable}`: Remove a column from the table
   * **column**: Column name
   * *returns* Self, to allow for call chaining.
-* `setFilter({Function(row: Object, args: Object): Boolean} filterFunc) {DGTable}`: Sets a new filtering function, set null for default.
+* `setFilter({Function(row: Object, args: Object): boolean} filterFunc) {DGTable}`: Sets a new filtering function, set null for default.
   * **filterFunc**: The filtering function receives a row and an options object, and returns true for any row that passes the filter.
   * *returns* Self, to allow for call chaining.
-* `setCellFormatter({Function(value: *, columnName: String, row: Object):String|null} formatter) {DGTable}`: Sets a new cell formatter.
+* `setCellFormatter({Function(value: *, columnName: string, row: Object):string|null} formatter) {DGTable}`: Sets a new cell formatter.
   * **formatter**: The cell formatter. Should return an HTML.
   * *returns* Self, to allow for call chaining.
-* `setHeaderCellFormatter({Function(label: String, columnName: String):String|null} formatter) {DGTable}`: Sets a new header cell formatter.
+* `setHeaderCellFormatter({Function(label: string, columnName: string):string|null} formatter) {DGTable}`: Sets a new header cell formatter.
   * **formatter**: The cell formatter. Should return an HTML.
   * *returns* Self, to allow for call chaining.
 * `filter({Object} args) {DGTable}`: Filter the visible rows in the table
   * **args**: Options to pass to the filtering function
   * *returns* Self, to allow for call chaining.
-* `filter({{column: String, keyword: String, caseSensitive: Boolean}} args) {DGTable}`: Syntax for default filtering function.
+* `filter({{column: string, keyword: string, caseSensitive: boolean}} args) {DGTable}`: Syntax for default filtering function.
   * **args.column**: Name of the column to filter on
   * **args.keyword**: Tests the specified column if contains this keyword
   * **args.caseSensitive**: Use caseSensitive filtering
   * *returns* Self, to allow for call chaining.
 * `clearFilter() {DGTable}`: Clears the current filter
   * *returns* Self, to allow for call chaining.
-* `setColumnLabel({String} column, {String} label) {DGTable}`: Set a new label to a column
+* `setColumnLabel({string} column, {string} label) {DGTable}`: Set a new label to a column
   * **column**: Name of the column
   * **label**: New label for the column
   * *returns* Self, to allow for call chaining.
-* `moveColumn({String|Number} src, {String|Number} dest, visibleOnly = true) {DGTable}`: Move a column to a new position
+* `moveColumn({string|number} src, {string|number} dest, visibleOnly = true) {DGTable}`: Move a column to a new position
   * **src**: Name or position of the column to be moved
   * **dest**: Name of the column currently in the desired position, or the position itself
   * **visibleOnly**: Should consider only visible columns and visible-relative indexes
   * *returns* Self, to allow for call chaining.
-* `sort({String?} column, {Boolean?} descending, {Boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
+* `sort({string?} column, {boolean?} descending, {boolean=false} add) {DGTable}`: Sort the table. This does not render automatically, so you may need to call render() too.
   * **src**: Name of the column to sort on
   * **descending**: Sort in descending order (if not specified, defaults to false or reverses current descending mode if sorting by same column)
   * **add**: Should this sort be on top of the existing sort? (For multiple column sort)
   * *returns* Self, to allow for call chaining.
 * `resort() {DGTable}`: Re-sort the table using current sort specifiers. This does not render automatically, so you may need to call render() too.
   * *returns* Self, to allow for call chaining.
-* `setColumnVisible({String} column, {Boolean} visible) {DGTable}`: Show or hide a column
+* `setColumnVisible({string} column, {boolean} visible) {DGTable}`: Show or hide a column
   * **column**: Unique column name
   * **visible**: New visibility mode for the column
   * *returns* Self, to allow for call chaining.
-* `isColumnVisible({String} column, {Boolean} visible) {Boolean}`: Get the visibility mode of a column
+* `isColumnVisible({string} column, {boolean} visible) {boolean}`: Get the visibility mode of a column
   * *returns* True if visible
-* `setMinColumnWidth({Number} minColumnWidth) {DGTable}`: Globally set the minimum column width
+* `setMinColumnWidth({number} minColumnWidth) {DGTable}`: Globally set the minimum column width
   * **minColumnWidth**: Minimum column width
   * *returns* Self, to allow for call chaining.
-* `getMinColumnWidth() {Number}`: Get the current minimum column width
+* `getMinColumnWidth() {number}`: Get the current minimum column width
   * *returns* Minimum column width
-* `setSortableColumns({Number} sortableColumns) {DGTable}`: Set the limit on concurrent columns sortedh
+* `setSortableColumns({number} sortableColumns) {DGTable}`: Set the limit on concurrent columns sortedh
   * **sortableColumns**: Minimum column width
   * *returns* Self, to allow for call chaining.
-* `getSortableColumns() {Number}`: Get the limit on concurrent columns sorted
+* `getSortableColumns() {number}`: Get the limit on concurrent columns sorted
   * *returns* How many sortable columns are allowed?
 * `getHeaderRowElement() {Element}`: Get the DOM element of the header row
   * *returns* a DOM element
-* `setMovableColumns({Boolean} movableColumns) {DGTable}`: *Undocumented yet*
-* `getMovableColumns() {Boolean}`: *Undocumented yet*
-* `setResizableColumns({Boolean} resizableColumns) {DGTable}`: *Undocumented yet*
-* `getResizableColumns() {Boolean}`: *Undocumented yet*
-* `setComparatorCallback({Function(String,Boolean)Function(a,b)Boolean} comparatorCallback) {DGTable}`: *Undocumented yet*
-* `setColumnWidth({String} column, {Number|String} width) {DGTable}`: *Undocumented yet*
-* `getColumnWidth({String} column) {String|null}`: *Undocumented yet*
-* `getColumnConfig({String} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
+* `setMovableColumns({boolean} movableColumns) {DGTable}`: *Undocumented yet*
+* `getMovableColumns() {boolean}`: *Undocumented yet*
+* `setResizableColumns({boolean} resizableColumns) {DGTable}`: *Undocumented yet*
+* `getResizableColumns() {boolean}`: *Undocumented yet*
+* `setComparatorCallback({Function(string,boolean)Function(a,b)boolean} comparatorCallback) {DGTable}`: *Undocumented yet*
+* `setColumnWidth({string} column, {number|string} width) {DGTable}`: *Undocumented yet*
+* `getColumnWidth({string} column) {string|null}`: *Undocumented yet*
+* `getColumnConfig({string} column name) {SERIALIZED_COLUMN}`: *Undocumented yet*
 * `getColumnsConfig() {Object}`: *Undocumented yet*
 * `getSortedColumns() {Array.<SERIALIZED_COLUMN_SORT>}`: *Undocumented yet*
-* `getHtmlForRowCell(row: Number, columnName: String) {String}`: Returns the HTML for specified cell in a row.
+* `getHtmlForRowCell(row: number, columnName: string) {string}`: Returns the HTML for specified cell in a row.
   * **row**: Index of row
   * **columnName**: Name of cell
   * *returns* HTML for cell. By default cell content is *not* HTML encoded, you should encode appropriately in your `cellFormatter`.
-* `getHtmlForRowDataCell(rowData: Object, columnName: String) {string|null}`: Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
+* `getHtmlForRowDataCell(rowData: Object, columnName: string) {string|null}`: Returns the HTML string for a specific cell. Can be used externally for special cases (i.e. when setting a fresh HTML in the cell preview through the callback).
   * **rowData**: Actual row data
   * **columnName**: Name of column
   * *returns*  string for the specified cell
-* `getDataForRow(row: Number): Object`: Gets the row data for a specific row
+* `getDataForRow(row: number): Object`: Gets the row data for a specific row
   * *returns* row data of the row at physical index **row**
-* `getRowCount(): Number`: Gets the number of rows
+* `getRowCount(): number`: Gets the number of rows
   * *returns* the number of rows
-* `getIndexForRow(row: Object): Number`: Finds the index of the specified row
+* `getIndexForRow(row: Object): number`: Finds the index of the specified row
   * *returns* the index of the specified row
-* `getFilteredRowCount(): Number`: Gets the number of filtered rows
+* `getFilteredRowCount(): number`: Gets the number of filtered rows
   * *returns* the number of rows in the filtered set (defaults to full row count if no filtering is active)
-* `getIndexForFilteredRow(row: Object): Number`: Finds the index of the specified row within the filtered results
+* `getIndexForFilteredRow(row: Object): number`: Finds the index of the specified row within the filtered results
   * *returns* the index of the specified row
-* `getDataForFilteredRow(row: Number): Object`: *Undocumented yet*
-* `getRowElement(physicalRowIndex: Number): Element`: Returns the element of the specified row
-* `getRowYPos(physicalRowIndex: Number): Number?`: Returns the Y pos of the specified row
+* `getDataForFilteredRow(row: number): Object`: *Undocumented yet*
+* `getRowElement(physicalRowIndex: number): Element`: Returns the element of the specified row
+* `getRowYPos(physicalRowIndex: number): number?`: Returns the Y pos of the specified row
 * `tableWidthChanged() {DGTable}`: *Undocumented yet*
 * `tableHeightChanged() {DGTable}`: *Undocumented yet*
-* `addRows({Object[]} data, {Number} at = -1, {Boolean} resort = false, {Boolean} render = true) {DGTable}`: Adds the specified rows at the specified position, and optionally resorts the data
-* `removeRow({Number} physicalRowIndex, {Boolean} render = true) {DGTable}`: Removes one row at the specified position
-* `removeRows({Number} physicalRowIndex, {Number} count, {Boolean} render = true) {DGTable}`: Removes rows at the specified position
-* `refreshRow({Number} physicalRowIndex) {DGTable}`: Refreshes the row specified
+* `addRows({Object[]} data, {number} at = -1, {boolean} resort = false, {boolean} render = true) {DGTable}`: Adds the specified rows at the specified position, and optionally resorts the data
+* `removeRow({number} physicalRowIndex, {boolean} render = true) {DGTable}`: Removes one row at the specified position
+* `removeRows({number} physicalRowIndex, {number} count, {boolean} render = true) {DGTable}`: Removes rows at the specified position
+* `refreshRow({number} physicalRowIndex) {DGTable}`: Refreshes the row specified
   * *returns* Self
 * `refreshAllVirtualRows() {DGTable}`: Refreshes all virtual rows
   * *returns* Self
-* `setRows(data: Object[], resort: Boolean=false) {DGTable}`: Rests the table rows to the provided array of rows.
+* `setRows(data: Object[], resort: boolean=false) {DGTable}`: Rests the table rows to the provided array of rows.
   * **data**: New rows for the table
   * **resort**: Should re-sort the table?
   * *returns* Self, to allow for call chaining.
 * `getUrlForElementContent({string} id) {string?}`: *Undocumented yet*
-* `isWorkerSupported() {Boolean}`: *Undocumented yet*
+* `isWorkerSupported() {boolean}`: *Undocumented yet*
 * `createWebWorker({string} url) {Worker?}`: *Undocumented yet*
 * `unbindWebWorker({Worker} worker) {DGTable}`: *Undocumented yet*
 * `hideCellPreview() {DGTable}`: Hide any cell preview showing currently, or prevent showing a cell preview from within the `cellpreview` event.
