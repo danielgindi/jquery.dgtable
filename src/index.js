@@ -405,7 +405,7 @@ DGTable.prototype._setupVirtualTable = function () {
         list: p.table,
         itemsParent: p.tbody,
         autoVirtualWrapperWidth: false,
-        virtual: true,
+        virtual: o.virtualTable,
         buffer: o.rowsBufferSize,
         estimatedItemHeight: o.estimatedRowHeight ? o.estimatedRowHeight : (p.virtualRowHeight || 40),
         itemElementCreatorFn: () => {
