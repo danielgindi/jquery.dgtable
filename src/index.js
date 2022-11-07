@@ -145,7 +145,7 @@ DGTable.prototype.initialize = function (options) {
     /**
      * @private
      * @field {number} estimatedRowHeight */
-    o.estimatedRowHeight = options.estimatedRowHeight === undefined ? 40 : options.estimatedRowHeight;
+    o.estimatedRowHeight = options.estimatedRowHeight || undefined;
 
     /**
      * @private
@@ -407,7 +407,7 @@ DGTable.prototype._setupVirtualTable = function () {
         autoVirtualWrapperWidth: false,
         virtual: true,
         buffer: o.rowsBufferSize,
-        estimatedItemHeight: o.estimatedRowHeight || 40,
+        estimatedItemHeight: o.estimatedRowHeight ? o.estimatedRowHeight : (p.virtualRowHeight || 40),
         itemElementCreatorFn: () => {
             return createElement('div');
         },
@@ -3343,6 +3343,41 @@ DGTable.prototype._renderSkeletonBody = function () {
         o = that.o;
 
     let tableClassName = o.tableClassName;
+
+    // Calculate virtual row heights
+    if (o.virtualTable && !p.virtualRowHeight) {
+        let createDummyRow = function() {
+            let row = createElement('div'),
+                cell = row.appendChild(createElement('div')),
+                cellInner = cell.appendChild(createElement('div'));
+            row.className = tableClassName + '-row';
+            cell.className = tableClassName + '-cell';
+            cellInner.innerHTML = '0';
+            row.style.visibility = 'hidden';
+            row.style.position = 'absolute';
+            return row;
+        };
+
+        let $dummyTbody, $dummyWrapper = $('<div>')
+            .addClass(that.el.className)
+            .css({ 'z-index': -1, 'position': 'absolute', left: '0', top: '-9999px', width: '1px', overflow: 'hidden' })
+            .append(
+                $('<div>').addClass(tableClassName).append(
+                    $dummyTbody = $('<div>').addClass(tableClassName + '-body').css('width', 99999),
+                ),
+            );
+
+        $dummyWrapper.appendTo(document.body);
+
+        let row1 = createDummyRow(), row2 = createDummyRow(), row3 = createDummyRow();
+        $dummyTbody.append(row1, row2, row3);
+
+        p.virtualRowHeightFirst = getElementHeight(row1, true, true, true);
+        p.virtualRowHeight = getElementHeight(row2, true, true, true);
+        p.virtualRowHeightLast = getElementHeight(row3, true, true, true);
+
+        $dummyWrapper.remove();
+    }
 
     // Create inner table and tbody
     if (!p.$table) {
