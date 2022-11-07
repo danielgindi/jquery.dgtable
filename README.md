@@ -8,6 +8,7 @@ This is a table View for jQuery, which is meant to be high-performance, and allo
 * Resizing columns
 * Full cell preview when hovering
 * Native RTL support
+* Variable row height
 
 Other features implemented are:
 * Mix absolute column widths with relative column widths
@@ -18,7 +19,6 @@ Other features implemented are:
 
 A few notes:
 * TODO: Have a simple and accurate API documentation here in the readme
-* Currently in virtual table mode - I cannot handle variable height rows.
 
 ## Dev environment
 
@@ -73,6 +73,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
   * `DGTable.Width.AUTO`: Sets the width automatically
   * `DGTable.Width.SCROLL`: Creates a horizontal scroll when required
 * **virtualTable**: `boolean=true` When set, the table will work in virtual mode, which means only the visible rows are rendered. Rows must have fixed height in this mode.
+* **estimatedRowHeight**: `number=40` Sets the estimated row height for the table. This is used for virtual table mode, to calculate the estimated scroll size.
 * **resizableColumns**: `boolean=true` Turns on or off the resizable columns globally.
 * **movableColumns**: `boolean=true` Turns on or off the movable columns globally.
 * **sortableColumns**: `number=1` How many columns can you sort by, one after another?

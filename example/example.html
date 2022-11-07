@@ -340,6 +340,7 @@
                 {name: 'city', label: 'Example', width: '40%'}
             ],
             height: 500,
+            estimatedRowHeight: 29,
             width: DGTable.Width.SCROLL,
             //virtualTable: false,
             cellFormatter: function (val, colName) {
@@ -353,6 +354,12 @@
         table.on('rowcreate', function (rowIndex, physicalRowIndex, row, rowData) {
             if (rowData['last'] === 'Banks') {
                 $(row).find('[data-column=last]').css('background', 'rgba(0, 210, 0, 0.8)');
+            }
+
+            if (rowIndex % 7 === 6) {
+                row.style.height = '65px';
+            } else {
+                row.style.height = '';
             }
         });
 

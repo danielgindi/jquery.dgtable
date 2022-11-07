@@ -117,7 +117,7 @@ body {
 .dgtable-cell, .dgtable-cell-preview {
     box-sizing: border-box;
     padding: 5px 4px 3px;
-    height: 28px;
+    height: 100%;
     font-size: 16px;
     line-height: 19px;
 }
