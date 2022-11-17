@@ -462,7 +462,7 @@ DGTable.prototype._setupVirtualTable = function () {
         },
     });
 
-    p.virtualListHelper.setCount(p.rows.length);
+    p.virtualListHelper.setCount((p.filteredRows ?? p.rows).length);
 
     p.notifyRendererOfColumnsConfig();
 };
@@ -767,7 +767,7 @@ DGTable.prototype.render = function () {
             .tableWidthChanged(true, false) // Take this chance to calculate required column widths
             ._renderSkeletonHeaderCells();
 
-        p.virtualListHelper.invalidate();
+        p.virtualListHelper.setCount((p.filteredRows ?? p.rows).length);
 
         this._updateLastCellWidthFromScrollbar(true);
 
