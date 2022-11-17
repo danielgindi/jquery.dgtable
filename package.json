@@ -18,11 +18,11 @@
   },
   "scripts": {
     "build": "npm run lint && node ./scripts/build.js",
-    "lint": "eslint -f codeframe ./",
-    "lint-fix": "eslint -f codeframe --fix ./",
-    "postinstall": "husky install",
-    "prepublishOnly": "pinst --disable && npm run build",
-    "postpublish": "pinst --enable"
+    "lint": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || eslint -f codeframe ./",
+    "lint-fix": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || eslint -f codeframe --fix ./",
+    "postinstall": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || husky install",
+    "prepublishOnly": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || pinst --disable && npm run build",
+    "postpublish": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || pinst --enable"
   },
   "bugs": {
     "url": "https://github.com/danielgindi/jquery.dgtable/issues"
