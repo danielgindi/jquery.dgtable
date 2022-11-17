@@ -414,7 +414,7 @@ DGTable.prototype._setupVirtualTable = function () {
         onItemRender: (row, index) => {
             const rows = p.filteredRows || p.rows,
                 isDataFiltered = !!p.filteredRows,
-                allowCellPreview = p.allowCellPreview;
+                allowCellPreview = o.allowCellPreview;
 
             row.className = rowClassName;
             if ((index % 2) === 1)
