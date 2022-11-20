@@ -2307,9 +2307,10 @@ DGTable.prototype.removeRow = function (physicalRowIndex, render) {
  * @public
  * @expose
  * @param {number} physicalRowIndex index
+ * @param {boolean} render should render the changes immediately?
  * @returns {DGTable} self
  */
-DGTable.prototype.refreshRow = function(physicalRowIndex) {
+DGTable.prototype.refreshRow = function(physicalRowIndex, render = true) {
     let that = this,
         p = that.p;
 
@@ -2324,6 +2325,9 @@ DGTable.prototype.refreshRow = function(physicalRowIndex) {
     }
 
     p.virtualListHelper.refreshItemAt(rowIndex);
+
+    if (render)
+        p.virtualListHelper.render();
 
     return this;
 };
