@@ -659,8 +659,6 @@ DGTable.prototype.close = DGTable.prototype.remove = DGTable.prototype.destroy =
 
     this._destroyHeaderCells();
 
-    p.virtualListHelper.destroy();
-
     if (p.$table) {
         p.$table.empty();
     }
