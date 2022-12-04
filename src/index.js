@@ -302,6 +302,9 @@ DGTable.prototype.initialize = function (options) {
      * @field {RowCollection} _filteredRows */
     p.filteredRows = null;
 
+    p.scrollbarWidth = 0;
+    p.lastVirtualScrollHeight = 0;
+
     this._setupHovers();
 };
 
@@ -459,6 +462,15 @@ DGTable.prototype._setupVirtualTable = function () {
             that._unbindCellEventsForRow(row);
 
             that.trigger('rowdestroy', row);
+        },
+
+        onScrollHeightChange: height => {
+            // only recalculate scrollbar width if height increased. we reset it in other situations.
+            if (height > p._lastVirtualScrollHeight && !p.scrollbarWidth) {
+                this._updateLastCellWidthFromScrollbar();
+            }
+
+            p._lastVirtualScrollHeight = height;
         },
     });
 
@@ -2275,8 +2287,6 @@ DGTable.prototype.removeRows = function (physicalRowIndex, count, render) {
                 ._updateLastCellWidthFromScrollbar()
                 .render()
                 ._updateTableWidth(false); // Update table width to suit the required width considering vertical scrollbar
-
-
         } else {
             this.render()
                 ._updateLastCellWidthFromScrollbar()
@@ -3450,7 +3460,9 @@ DGTable.prototype._updateVirtualHeight = function() {
         return this;
 
     if (o.virtualTable) {
-        p.tbody.style.height = p.virtualListHelper.estimateFullHeight() + 'px';
+        const virtualHeight =  p.virtualListHelper.estimateFullHeight();
+        p.lastVirtualScrollHeight = virtualHeight;
+        p.tbody.style.height = virtualHeight + 'px';
     } else {
         p.tbody.style.height = '';
     }
