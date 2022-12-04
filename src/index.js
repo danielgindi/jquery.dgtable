@@ -767,8 +767,8 @@ DGTable.prototype.render = function () {
 
         p.virtualListHelper.setCount((p.filteredRows ?? p.rows).length);
 
+        this._updateVirtualHeight();
         this._updateLastCellWidthFromScrollbar(true);
-
         this._updateTableWidth(true);
 
         // Show sort arrows
@@ -1182,8 +1182,7 @@ DGTable.prototype.moveColumn = function (src, dest, visibleOnly = true) {
             this._ensureVisibleColumns();
 
             if (o.virtualTable) {
-                this.clearAndRender()
-                    ._updateLastCellWidthFromScrollbar(true);
+                this.clearAndRender();
             } else {
                 let headerCell = p.$headerRow.find('>div.' + o.tableClassName + '-header-cell');
                 let beforePos = srcOrder < destOrder ? destOrder + 1 : destOrder,
