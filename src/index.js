@@ -1299,7 +1299,8 @@ DGTable.prototype.sort = function (column, descending, add) {
         }
     }
 
-    p.virtualListHelper.invalidate().render();
+    if (p.virtualListHelper)
+        p.virtualListHelper.invalidate().render();
 
     // Build output for event, with option names that will survive compilers
     let sorts = [];
