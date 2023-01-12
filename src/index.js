@@ -194,6 +194,11 @@ DGTable.prototype.initialize = function (options) {
 
     /**
      * @private
+     * @field {boolean} allowCancelSort */
+    o.allowCancelSort = options.allowCancelSort === undefined ? true : !!options.allowCancelSort;
+
+    /**
+     * @private
      * @field {string} cellClasses */
     o.cellClasses = options.cellClasses === undefined ? '' : options.cellClasses;
 
@@ -1240,12 +1245,6 @@ DGTable.prototype.sort = function (column, descending, add) {
     let currentSort = p.rows.sortColumn;
 
     if (col) {
-
-        if (currentSort.length && currentSort[currentSort.length - 1].column === column) {
-            // Recognize current descending mode, if currently sorting by this column
-            descending = descending === undefined ? !currentSort[currentSort.length - 1].descending : descending;
-        }
-
         if (add) { // Add the sort to current sort stack
 
             for (let i = 0; i < currentSort.length; i++) {
@@ -1253,6 +1252,7 @@ DGTable.prototype.sort = function (column, descending, add) {
                     if (i < currentSort.length - 1) {
                         currentSort.length = 0;
                     } else {
+                        descending = currentSort[currentSort.length - 1].descending;
                         currentSort.splice(currentSort.length - 1, 1);
                     }
                     break;
@@ -2823,8 +2823,26 @@ DGTable.prototype._onClickColumnHeader = function (event) {
         let headerCell = $(event.target).closest('div.' + o.tableClassName + '-header-cell,div.' + o.cellPreviewClassName)[0];
         if (o.sortableColumns) {
             let column = p.columns.get(headerCell['columnName']);
+            let currentSort = p.rows.sortColumn;
             if (column && column.sortable) {
-                this.sort(headerCell['columnName'], undefined, true).render();
+                let shouldAdd = true;
+
+                let lastSort = currentSort.length ? currentSort[currentSort.length - 1] : null;
+
+                if (lastSort && lastSort.column === column.name) {
+                    if (!lastSort.descending || !o.allowCancelSort) {
+                        lastSort.descending = !lastSort.descending;
+                    } else {
+                        shouldAdd = false;
+                        currentSort.splice(currentSort.length - 1, 1);
+                    }
+                }
+
+                if (shouldAdd) {
+                    this.sort(column.name, undefined, true).render();
+                } else {
+                    this.sort(); // just refresh current situation
+                }
             }
         }
     }
@@ -3919,6 +3937,7 @@ DGTable.Width = {
  * @property {boolean|null|undefined} [relativeWidthShrinksToFillWidth=false]
  * @property {boolean|null|undefined} [convertColumnWidthsToRelative=false]
  * @property {boolean|null|undefined} [autoFillTableWidth=false]
+ * @property {boolean|null|undefined} [allowCancelSort=true]
  * @property {string|null|undefined} [cellClasses]
  * @property {string|string[]|COLUMN_SORT_OPTIONS|COLUMN_SORT_OPTIONS[]} [sortColumn]
  * @property {Function|null|undefined} [cellFormatter=null]
