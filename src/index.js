@@ -1861,7 +1861,12 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
     let $header = $('<div>').addClass(tableClassName + '-header').appendTo($thisWrapper);
     let $headerRow = $('<div>').addClass(tableClassName + '-header-row').appendTo($header);
     for (let i = 0; i < p.visibleColumns.length; i++) {
-        $headerRow.append($('<div><div></div></div>').addClass(tableClassName + '-header-cell').addClass(p.visibleColumns[i].cellClasses || ''));
+        const column = p.visibleColumns[i];
+        const $cell = $('<div><div></div></div>')
+            .addClass(tableClassName + '-header-cell')
+            .addClass(column.cellClasses || '');
+        $cell[0]['columnName'] = column.name;
+        $headerRow.append($cell);
     }
     $thisWrapper.appendTo(document.body);
 
@@ -1877,6 +1882,11 @@ DGTable.prototype._calculateWidthAvailableForColumns = function() {
                 (parseFloat($cell.css('border-right-width')) || 0) +
                 (parseFloat($cell.css('border-left-width')) || 0) +
                 (this._horizontalPadding($cell[0])); // CELL's padding
+
+            const colName = $cell[0]['columnName'];
+            const column = p.columns.get(colName);
+            if (column)
+                detectedWidth -= column.arrowProposedWidth || 0;
         }
     }
 
@@ -2953,6 +2963,7 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
         let rtl = this._isTableRtl();
 
         let selectedHeaderCell = column.element,
+            selectedHeaderCellInner = selectedHeaderCell[0].firstChild,
             commonAncestor = p.$resizer.parent();
         let posCol = selectedHeaderCell.offset(), posRelative = commonAncestor.offset();
         posRelative.left += parseFloat(commonAncestor.css('border-left-width')) || 0;
@@ -2968,11 +2979,12 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
         baseX -= Math.ceil(resizerWidth / 2);
 
         if (rtl) {
-
             if (!isBoxing) {
                 actualX += this._horizontalPadding(selectedHeaderCell[0]);
-                actualX += parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
-                actualX += parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
+                const innerComputedStyle = getComputedStyle(selectedHeaderCellInner || selectedHeaderCell[0]);
+                actualX += parseFloat(innerComputedStyle.borderLeftWidth) || 0;
+                actualX += parseFloat(innerComputedStyle.borderRightWidth) || 0;
+                actualX += column.arrowProposedWidth || 0; // Sort-arrow width
             }
 
             baseX += getElementWidth(selectedHeaderCell[0], true, true, true);
@@ -2984,11 +2996,12 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
 
             width = baseX - actualX;
         } else {
-
             if (!isBoxing) {
                 actualX -= this._horizontalPadding(selectedHeaderCell[0]);
-                actualX -= parseFloat(selectedHeaderCell.css('border-left-width')) || 0;
-                actualX -= parseFloat(selectedHeaderCell.css('border-right-width')) || 0;
+                const innerComputedStyle = getComputedStyle(selectedHeaderCellInner || selectedHeaderCell[0]);
+                actualX -= parseFloat(innerComputedStyle.borderLeftWidth) || 0;
+                actualX -= parseFloat(innerComputedStyle.borderRightWidth) || 0;
+                actualX -= column.arrowProposedWidth || 0; // Sort-arrow width
             }
 
             minX = baseX + (column.ignoreMin ? 0 : this.o.minColumnWidth);
@@ -3024,6 +3037,8 @@ DGTable.prototype._onEndDragColumnHeader = function (event) {
             }
 
             sizeLeft = Math.max(1, sizeLeft);
+            if (sizeLeft === 1)
+                sizeLeft = p.table.clientWidth;
             sizeToSet = width / sizeLeft;
 
             if (relatives > 0) {
