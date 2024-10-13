@@ -3,21 +3,21 @@
 'use strict';
 
 import jQuery from 'jquery';
-import { find, htmlEncode, includes } from './util';
-import RowCollection from './row_collection';
-import ColumnCollection from './column_collection';
-import SelectionHelper from './SelectionHelper';
+import { find, htmlEncode, includes } from './util.js';
+import RowCollection from './row_collection.js';
+import ColumnCollection from './column_collection.js';
+import SelectionHelper from './SelectionHelper.js';
 import {
     getScrollHorz,
     setScrollHorz,
-} from '@danielgindi/dom-utils/lib/ScrollHelper';
+} from '@danielgindi/dom-utils/lib/ScrollHelper.js';
 import {
     getElementWidth,
     getElementHeight,
     setElementWidth,
-} from '@danielgindi/dom-utils/lib/Css';
+} from '@danielgindi/dom-utils/lib/Css.js';
 import VirtualListHelper from '@danielgindi/virtual-list-helper';
-import ByColumnFilter from './by_column_filter';
+import ByColumnFilter from './by_column_filter.js';
 
 const nativeIndexOf = Array.prototype.indexOf;
 const $ = jQuery;
