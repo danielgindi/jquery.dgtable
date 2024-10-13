@@ -158,8 +158,8 @@ import { fileURLToPath } from 'node:url';
             format: task.outputFormat,
             globals: {
                 jquery: 'jQuery',
-                '@danielgindi/dom-utils/lib/ScrollHelper': 'domUtilsScrollHelper',
-                '@danielgindi/dom-utils/lib/Css': 'domUtilsCss',
+                '@danielgindi/dom-utils/lib/ScrollHelper.js': 'domUtilsScrollHelper',
+                '@danielgindi/dom-utils/lib/Css.js': 'domUtilsCss',
             },
             exports: task.outputExports,
         });
