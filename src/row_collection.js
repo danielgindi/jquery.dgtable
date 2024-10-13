@@ -97,11 +97,6 @@ RowCollection.prototype.onComparatorRequired = null;
  */
 RowCollection.prototype.customSortingProvider = null;
 
-/**
- * @type {Function|null|undefined}
- */
-RowCollection.prototype.onSort = null;
-
 let nativeSort = RowCollection.prototype.sort;
 
 function getDefaultComparator(column, descending) {
@@ -133,10 +128,9 @@ function getDefaultComparator(column, descending) {
 }
 
 /**
- * @param {Boolean=false} silent
  * @returns {Function|undefined} the comparator that was used
  */
-RowCollection.prototype.sort = function (silent) {
+RowCollection.prototype.sort = function () {
     let comparator;
 
     if (this.sortColumn.length) {
@@ -180,12 +174,6 @@ RowCollection.prototype.sort = function (silent) {
             }
         } else {
             sorter(this);
-        }
-
-        if (!silent) {
-            if (this.onSort) {
-                this.onSort(comparator);
-            }
         }
     }
 
