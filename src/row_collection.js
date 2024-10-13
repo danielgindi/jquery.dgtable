@@ -64,7 +64,7 @@ RowCollection.prototype.reset = function (rows) {
 
 /**
  * @param {Function} filterFunc - Filtering function
- * @param {Object|null} args? - Options to pass to the function
+ * @param {Object|null?} args - Options to pass to the function
  * @returns {RowCollection} success result
  */
 RowCollection.prototype.filteredCollection = function (filterFunc, args) {
@@ -88,6 +88,10 @@ RowCollection.prototype.filteredCollection = function (filterFunc, args) {
  * @type {function(columnName: string, descending: boolean, defaultComparator: function(a,b):number)|null|undefined}
  */
 RowCollection.prototype.onComparatorRequired = null;
+/**
+ * @type {function(data: any[], sort: function(any[])):any[]|null|undefined}
+ */
+RowCollection.prototype.customSortingProvider = null;
 
 /**
  * @type {Function|null|undefined}
@@ -148,7 +152,6 @@ RowCollection.prototype.sort = function (silent) {
 
         if (comparators.length === 1) {
             comparator = comparators[0];
-            nativeSort.call(this, comparator);
         } else {
             let len = comparators.length,
                 value;
@@ -162,8 +165,17 @@ RowCollection.prototype.sort = function (silent) {
                 }
                 return value;
             };
+        }
 
-            nativeSort.call(this, comparator);
+        const sorter = data => nativeSort.call(data, comparator);
+
+        if (this.customSortingProvider) {
+            let results = this.customSortingProvider(this, sorter);
+            if (results !== this) {
+                this.splice(0, this.length, ...results);
+            }
+        } else {
+            sorter(this);
         }
 
         if (!silent) {

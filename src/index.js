@@ -1519,15 +1519,33 @@ DGTable.prototype.getResizableColumns = function () {
 };
 
 /**
+ * Sets a functions that supplies comparators dynamically
  * @public
  * @expose
- * @param {{function(columnName: string, descending: boolean, defaultComparator: function(a,b):number):{function(a,b):number}}} comparatorCallback a callback function that returns the comparator for a specific column
+ * @param {{function(columnName: string, descending: boolean, defaultComparator: function(a,b):number):{function(a,b):number}}|null|undefined} comparatorCallback a function that returns the comparator for a specific column
  * @returns {DGTable} self
  */
-DGTable.prototype.setComparatorCallback = function (comparatorCallback) {
+DGTable.prototype.setOnComparatorRequired = function (comparatorCallback) {
     let o = this.o;
     if (o.onComparatorRequired !== comparatorCallback) {
         o.onComparatorRequired = comparatorCallback;
+    }
+    return this;
+};
+
+DGTable.prototype.setComparatorCallback = DGTable.prototype.setOnComparatorRequired;
+
+/**
+ * sets custom sorting function for a data set
+ * @public
+ * @expose
+ * @param {{function(data: any[], sort: function(any[])):any[]}|null|undefined} customSortingProvider provides a custom sorting function (not the comparator, but a sort() alternative) for a data set
+ * @returns {DGTable} self
+ */
+DGTable.prototype.setCustomSortingProvider = function (customSortingProvider) {
+    let o = this.o;
+    if (o.customSortingProvider !== customSortingProvider) {
+        o.customSortingProvider = customSortingProvider;
     }
     return this;
 };
