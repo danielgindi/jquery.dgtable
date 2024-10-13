@@ -149,7 +149,7 @@ import { fileURLToPath } from 'node:url';
             },
             input: inputFile,
             plugins: plugins,
-            external: ['jquery', 'jQuery', /^@danielgindi\/dom-utils(\/|$)/],
+            external: ['jquery', 'jQuery', /^@danielgindi\/dom-utils(\/|$)/, /^@danielgindi\/virtual-list-helper(\/|$)/],
         });
 
         let generated = await bundle.generate({
@@ -160,6 +160,7 @@ import { fileURLToPath } from 'node:url';
                 jquery: 'jQuery',
                 '@danielgindi/dom-utils/lib/ScrollHelper.js': 'domUtilsScrollHelper',
                 '@danielgindi/dom-utils/lib/Css.js': 'domUtilsCss',
+                '@danielgindi/virtual-list-helper': 'VirtualListHelper',
             },
             exports: task.outputExports,
         });
