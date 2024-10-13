@@ -240,6 +240,8 @@ DGTable.prototype.initialize = function (options) {
         o.onComparatorRequired = options['comparatorCallback'];
     }
 
+    o.customSortingProvider = options.customSortingProvider === undefined ? null : options.customSortingProvider;
+
     /**
      * @private
      * @field {boolean} width */
@@ -300,6 +302,13 @@ DGTable.prototype.initialize = function (options) {
     p.rows.onComparatorRequired = (column, descending, defaultComparator) => {
         if (o.onComparatorRequired) {
             return o.onComparatorRequired(column, descending, defaultComparator);
+        }
+    };
+    p.rows.customSortingProvider = (data, sort) => {
+        if (o.customSortingProvider) {
+            return o.customSortingProvider(data, sort);
+        } else {
+            return sort(data);
         }
     };
 
@@ -1539,7 +1548,7 @@ DGTable.prototype.setComparatorCallback = DGTable.prototype.setOnComparatorRequi
  * sets custom sorting function for a data set
  * @public
  * @expose
- * @param {{function(data: any[], sort: function(any[])):any[]}|null|undefined} customSortingProvider provides a custom sorting function (not the comparator, but a sort() alternative) for a data set
+ * @param {{function(data: any[], sort: function(any[]):any[]):any[]}|null|undefined} customSortingProvider provides a custom sorting function (not the comparator, but a sort() alternative) for a data set
  * @returns {DGTable} self
  */
 DGTable.prototype.setCustomSortingProvider = function (customSortingProvider) {
@@ -3978,7 +3987,8 @@ DGTable.Width = {
  * @property {number|null|undefined} [rowsBufferSize=10]
  * @property {number|null|undefined} [minColumnWidth=35]
  * @property {number|null|undefined} [resizeAreaWidth=8]
- * @property {{function(string,boolean):{function(a:*,b:*):boolean}}} [onComparatorRequired]
+ * @property {function(columnName: string, descending: boolean, defaultComparator: function(a,b):number):{function(a,b):number}} [onComparatorRequired]
+ * @property {function(data: any[], sort: function(any[]):any[]):any[]} [customSortingProvider]
  * @property {string|null|undefined} [resizerClassName=undefined]
  * @property {string|null|undefined} [tableClassName=undefined]
  * @property {boolean|null|undefined} [allowCellPreview=true]

@@ -69,7 +69,11 @@ RowCollection.prototype.reset = function (rows) {
  */
 RowCollection.prototype.filteredCollection = function (filterFunc, args) {
     if (filterFunc && args) {
-        let rows = new RowCollection({ sortColumn: this.sortColumn });
+        let rows = new RowCollection({
+            sortColumn: this.sortColumn,
+            onComparatorRequired: this.onComparatorRequired,
+            customSortingProvider: this.customSortingProvider,
+        });
 
         for (let i = 0, len = this.length, row; i < len; i++) {
             row = this[i];
@@ -89,7 +93,7 @@ RowCollection.prototype.filteredCollection = function (filterFunc, args) {
  */
 RowCollection.prototype.onComparatorRequired = null;
 /**
- * @type {function(data: any[], sort: function(any[])):any[]|null|undefined}
+ * @type {function(data: any[], sort: function(any[]):any[]):any[]|null|undefined}
  */
 RowCollection.prototype.customSortingProvider = null;
 

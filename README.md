@@ -244,7 +244,7 @@ To create a new table, just use `var myTable = new DGTable(INIT_OPTIONS)`.
 * `getResizableColumns() {boolean}`: *Undocumented yet*
 * `setOnComparatorRequired({function(columnName: string, descending: boolean, defaultComparator: function(a,b):number):{function(a,b):number}}|null comparatorCallback) {DGTable}`: Sets a functions that supplies comparators dynamically
   * **comparatorCallback**: a function that returns the comparator for a specific column
-* `setCustomSortingProvider({{function(data: any[], sort: function(any[])):any[]}|null} customSortingProvider) {DGTable}`: sets custom sorting function for a data set
+* `setCustomSortingProvider({{function(data: any[], sort: function(any[]):any[]):any[]}|null} customSortingProvider) {DGTable}`: sets custom sorting function for a data set
   * **customSortingProvider**: provides a custom sorting function (not the comparator, but a sort() alternative) for a data set
 * `setColumnWidth({string} column, {number|string} width) {DGTable}`: *Undocumented yet*
 * `getColumnWidth({string} column) {string|null}`: *Undocumented yet*
