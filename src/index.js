@@ -2207,8 +2207,8 @@ DGTable.prototype.tableHeightChanged = function () {
         o.height = height;
 
         if (p.tbody) {
-            // At least 1 pixel - to show scrollers correctly.
-            p.tbody.style.height = Math.max(o.height - getElementHeight(p.$headerRow[0], true, true, true), 1) + 'px';
+            // At least 1 pixel - to show scrollbars correctly.
+            p.tbody.style.height = Math.max(o.height - getElementHeight(p.$header[0], true, true, true), 1) + 'px';
         }
 
         if (o.virtualTable) {
