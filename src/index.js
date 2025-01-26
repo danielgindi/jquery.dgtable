@@ -3465,7 +3465,7 @@ DGTable.prototype._renderSkeletonBody = function () {
             table.className += ' virtual';
         }
 
-        let tableHeight = (o.height - getElementHeight(p.$headerRow[0], true, true, true));
+        let tableHeight = (o.height - getElementHeight(p.$header[0], true, true, true));
         if ($table.css('box-sizing') !== 'border-box') {
             tableHeight -= parseFloat($table.css('border-top-width')) || 0;
             tableHeight -= parseFloat($table.css('border-bottom-width')) || 0;
